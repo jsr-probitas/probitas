@@ -30,7 +30,7 @@ export async function main(args: string[]): Promise<number> {
     boolean: ["help", "version"],
     alias: {
       h: "help",
-      v: "version",
+      V: "version",
     },
     stopEarly: true,
   });

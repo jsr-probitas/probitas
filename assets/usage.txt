@@ -9,7 +9,7 @@ Commands:
 
 Options:
   -h, --help     Show help message
-  -v, --version  Show version
+  -V, --version  Show version
 
 Environment Variables:
   NO_COLOR         Disable colored output

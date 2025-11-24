@@ -51,13 +51,13 @@ describe("main", () => {
       assertEquals(output[0].includes("Usage:"), true);
     });
 
-    it("shows version with -v flag", async () => {
+    it("shows version with -V flag", async () => {
       const output: string[] = [];
       using _logStub = stub(console, "log", (...args: unknown[]) => {
         output.push(args.join(" "));
       });
 
-      const exitCode = await main(["-v"]);
+      const exitCode = await main(["-V"]);
 
       assertEquals(exitCode, EXIT_CODE.SUCCESS);
       assertEquals(output.length, 1);
@@ -255,7 +255,7 @@ describe("main", () => {
         output.push(args.join(" "));
       });
 
-      const exitCode = await main(["-v", "run"]);
+      const exitCode = await main(["-V", "run"]);
 
       assertEquals(exitCode, EXIT_CODE.SUCCESS);
     });
