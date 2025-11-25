@@ -138,6 +138,7 @@
       "jsr:@std/expect@^1.0.17",
       "jsr:@std/fmt@^1.0.8",
       "jsr:@std/fs@^1.0.20",
+      "jsr:@std/http@^1.0.10",
       "jsr:@std/jsonc@^1.0.2",
       "jsr:@std/path@^1.1.3",
       "jsr:@std/semver@^1.0.7",

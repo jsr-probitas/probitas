@@ -5,10 +5,10 @@
  */
 
 import { assertEquals, assertExists } from "@std/assert";
-import { describe, it } from "@std/testing/bdd";
+import { afterAll, beforeAll, describe, it } from "@std/testing/bdd";
 import { HTTPClient } from "./client.ts";
 
-describe("HTTPClient", () => {
+describe("HTTPClient", { permissions: { net: true } }, () => {
   describe("constructor", () => {
     it("should create client with base URL", async () => {
       await using client = new HTTPClient("https://api.example.com");
@@ -139,7 +139,7 @@ describe("HTTPClient", () => {
   });
 });
 
-describe("HTTPClient - branch coverage", () => {
+describe("HTTPClient - branch coverage", { permissions: { net: true } }, () => {
   describe("request building", () => {
     it("should build URL with query parameters", async () => {
       await using client = new HTTPClient("https://api.example.com/v1");
@@ -299,8 +299,109 @@ describe("HTTPClient - branch coverage", () => {
 });
 
 describe("HTTPClient - HTTP requests", { permissions: { net: true } }, () => {
+  let server: Deno.HttpServer;
+  let baseUrl: string;
+
+  beforeAll(() => {
+    server = Deno.serve({ port: 0 }, (req: Request): Response => {
+      const url = new URL(req.url);
+
+      if (url.pathname === "/get") {
+        return new Response(
+          JSON.stringify({
+            method: "GET",
+            url: req.url,
+            headers: Object.fromEntries(req.headers),
+            args: Object.fromEntries(url.searchParams),
+          }),
+          {
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      if (url.pathname === "/post") {
+        return new Response(
+          JSON.stringify({
+            method: "POST",
+            url: req.url,
+            headers: Object.fromEntries(req.headers),
+          }),
+          {
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      if (url.pathname === "/put") {
+        return new Response(
+          JSON.stringify({
+            method: "PUT",
+            url: req.url,
+            headers: Object.fromEntries(req.headers),
+          }),
+          {
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      if (url.pathname === "/patch") {
+        return new Response(
+          JSON.stringify({
+            method: "PATCH",
+            url: req.url,
+            headers: Object.fromEntries(req.headers),
+          }),
+          {
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      if (url.pathname === "/delete") {
+        return new Response(
+          JSON.stringify({
+            method: "DELETE",
+            url: req.url,
+            headers: Object.fromEntries(req.headers),
+          }),
+          {
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      if (url.pathname === "/headers") {
+        return new Response(
+          JSON.stringify({
+            headers: Object.fromEntries(req.headers),
+          }),
+          {
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      const statusMatch = url.pathname.match(/^\/status\/(\d+)$/);
+      if (statusMatch) {
+        const code = parseInt(statusMatch[1]);
+        return new Response(null, { status: code });
+      }
+
+      return new Response("Not Found", { status: 404 });
+    });
+
+    const addr = server.addr as Deno.NetAddr;
+    baseUrl = `http://localhost:${addr.port}`;
+  });
+
+  afterAll(async () => {
+    await server.shutdown();
+  });
+
   it("should handle real GET request", async () => {
-    const client = new HTTPClient("https://httpbin.org");
+    const client = new HTTPClient(baseUrl);
 
     try {
       const result = await client.get<{ url: string }>("/get");
@@ -314,7 +415,7 @@ describe("HTTPClient - HTTP requests", { permissions: { net: true } }, () => {
   });
 
   it("should handle HEAD request", async () => {
-    const client = new HTTPClient("https://httpbin.org");
+    const client = new HTTPClient(baseUrl);
 
     try {
       const result = await client.head("/get");
@@ -326,7 +427,7 @@ describe("HTTPClient - HTTP requests", { permissions: { net: true } }, () => {
   });
 
   it("should handle POST request with JSON body", async () => {
-    const client = new HTTPClient("https://httpbin.org");
+    const client = new HTTPClient(baseUrl);
 
     try {
       const result = await client.post<{ json: unknown }>("/post", {
@@ -341,7 +442,7 @@ describe("HTTPClient - HTTP requests", { permissions: { net: true } }, () => {
   });
 
   it("should handle request with custom headers", async () => {
-    const client = new HTTPClient("https://httpbin.org");
+    const client = new HTTPClient(baseUrl);
     client.setHeaders({ "X-Custom-Header": "test-value" });
 
     try {
@@ -355,7 +456,7 @@ describe("HTTPClient - HTTP requests", { permissions: { net: true } }, () => {
   });
 
   it("should handle response with content type", async () => {
-    const client = new HTTPClient("https://httpbin.org");
+    const client = new HTTPClient(baseUrl);
 
     try {
       const result = await client.get("/get");
@@ -369,7 +470,7 @@ describe("HTTPClient - HTTP requests", { permissions: { net: true } }, () => {
   });
 
   it("should measure request duration", async () => {
-    const client = new HTTPClient("https://httpbin.org");
+    const client = new HTTPClient(baseUrl);
 
     try {
       const result = await client.get("/get");
