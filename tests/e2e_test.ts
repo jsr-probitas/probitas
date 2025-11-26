@@ -119,7 +119,7 @@ Deno.test("E2E - Tag-based filtering", async () => {
   );
   const summary = await runner.run(smokeScenarios);
 
-  assertEquals(summary.passed, 2); // smoke タグを持つシナリオが実行される
+  assertEquals(summary.passed, 2); // Scenarios with smoke tag are executed
 });
 
 // Test 5: Error handling and failure

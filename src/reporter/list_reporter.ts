@@ -62,7 +62,7 @@ export class ListReporter extends BaseReporter {
       : "";
     const time = ` ${this.theme.dim(`[${result.duration.toFixed(3)}ms]`)}`;
     const retries = result.retries > 0
-      ? this.theme.warning(` (${result.retries}回リトライ)`)
+      ? this.theme.warning(` (${result.retries} retries)`)
       : "";
 
     await this.write(

@@ -739,12 +739,12 @@ describe("ScenarioRunner", () => {
         maxConcurrency: 0,
       });
 
-      // すべてのシナリオが完了していることを確認
+      // Verify all scenarios completed
       assertEquals(summary.total, 3);
       assertEquals(summary.passed, 2);
       assertEquals(summary.failed, 1);
 
-      // すべてのシナリオが開始され、完了していることを確認
+      // Verify all scenarios started and completed
       assertEquals(executionOrder.includes("Fast Success started"), true);
       assertEquals(executionOrder.includes("Fast Success completed"), true);
       assertEquals(executionOrder.includes("Fast Failure started"), true);
@@ -752,7 +752,7 @@ describe("ScenarioRunner", () => {
       assertEquals(executionOrder.includes("Slow Success started"), true);
       assertEquals(executionOrder.includes("Slow Success completed"), true);
 
-      // すべてのシナリオが並列実行されていることを確認（開始時刻が近い）
+      // Verify scenarios ran in parallel (start times are close together)
       const startTimes = [
         executionTimes["Fast Success start"],
         executionTimes["Fast Failure start"],
@@ -761,8 +761,8 @@ describe("ScenarioRunner", () => {
       const maxStartTimeDiff = Math.max(...startTimes) -
         Math.min(...startTimes);
 
-      // 開始時刻の差が100ms以内（並列実行の証拠）
-      // 順次実行なら少なくとも60ms以上の差がある
+      // Start time difference should be within 100ms (proof of parallel execution)
+      // Sequential execution would have at least 60ms difference
       assertEquals(maxStartTimeDiff < 100, true);
     });
   });
