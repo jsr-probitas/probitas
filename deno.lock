@@ -5,6 +5,7 @@
     "jsr:@core/unknownutil@4": "4.3.0",
     "jsr:@core/unknownutil@^4.3.0": "4.3.0",
     "jsr:@cspotcode/outdent@0.8": "0.8.0",
+    "jsr:@lambdalisue/sandbox@^3.0.1": "3.0.1",
     "jsr:@std/assert@^1.0.14": "1.0.16",
     "jsr:@std/assert@^1.0.15": "1.0.16",
     "jsr:@std/assert@^1.0.16": "1.0.16",
@@ -21,6 +22,7 @@
     "jsr:@std/internal@^1.0.12": "1.0.12",
     "jsr:@std/json@^1.0.2": "1.0.2",
     "jsr:@std/jsonc@^1.0.2": "1.0.2",
+    "jsr:@std/path@1": "1.1.3",
     "jsr:@std/path@^1.1.2": "1.1.3",
     "jsr:@std/path@^1.1.3": "1.1.3",
     "jsr:@std/semver@^1.0.7": "1.0.7",
@@ -40,10 +42,10 @@
     "@cspotcode/outdent@0.8.0": {
       "integrity": "bbb3dea1443b4191a091644dfeaf3f182cca83e9003d211c50786c21792695f6"
     },
-    "@std/assert@1.0.15": {
-      "integrity": "d64018e951dbdfab9777335ecdb000c0b4e3df036984083be219ce5941e4703b",
+    "@lambdalisue/sandbox@3.0.1": {
+      "integrity": "0735e8b101daccf673543d2cd77074900fcc5f63eb2306f52ca09539463bcac8",
       "dependencies": [
-        "jsr:@std/internal@^1.0.12"
+        "jsr:@std/path@1"
       ]
     },
     "@std/assert@1.0.16": {
@@ -131,6 +133,7 @@
       "jsr:@core/errorutil@^1.2.1",
       "jsr:@core/unknownutil@^4.3.0",
       "jsr:@cspotcode/outdent@0.8",
+      "jsr:@lambdalisue/sandbox@^3.0.1",
       "jsr:@std/assert@^1.0.16",
       "jsr:@std/async@^1.0.15",
       "jsr:@std/cli@^1.0.24",

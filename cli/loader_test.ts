@@ -9,19 +9,15 @@
 import outdent from "outdent";
 import { assertEquals, assertRejects } from "@std/assert";
 import { describe, it } from "@std/testing/bdd";
-import { resolve } from "@std/path";
-import { defer } from "../src/helper/defer.ts";
+import { sandbox } from "@lambdalisue/sandbox";
 import { loadScenarios } from "./loader.ts";
 
 describe("scenario loader", () => {
   describe("loadScenarios", () => {
     it("loads scenarios from glob pattern", async () => {
-      const tempDir = await Deno.makeTempDir();
-      await using _cleanup = defer(async () => {
-        await Deno.remove(tempDir, { recursive: true });
-      });
+      await using sbox = await sandbox();
 
-      const scenarioPath = resolve(tempDir, "test.scenario.ts");
+      const scenarioPath = sbox.resolve("test.scenario.ts");
       const content = outdent`
         export default {
           name: "Test Scenario",
@@ -32,7 +28,7 @@ describe("scenario loader", () => {
       `;
       await Deno.writeTextFile(scenarioPath, content);
 
-      const scenarios = await loadScenarios(tempDir, {
+      const scenarios = await loadScenarios(sbox.path, {
         includes: ["**/*.scenario.ts"],
       });
 
@@ -41,13 +37,10 @@ describe("scenario loader", () => {
     });
 
     it("applies exclude patterns", async () => {
-      const tempDir = await Deno.makeTempDir();
-      await using _cleanup = defer(async () => {
-        await Deno.remove(tempDir, { recursive: true });
-      });
+      await using sbox = await sandbox();
 
-      const scenario1 = resolve(tempDir, "scenario1.scenario.ts");
-      const scenario2 = resolve(tempDir, "skip_scenario2.scenario.ts");
+      const scenario1 = sbox.resolve("scenario1.scenario.ts");
+      const scenario2 = sbox.resolve("skip_scenario2.scenario.ts");
 
       const content = (name: string, path: string) =>
         outdent`
@@ -65,7 +58,7 @@ describe("scenario loader", () => {
         content("Skip Scenario 2", scenario2),
       );
 
-      const scenarios = await loadScenarios(tempDir, {
+      const scenarios = await loadScenarios(sbox.path, {
         includes: ["**/*.scenario.ts"],
         excludes: ["**/skip_*"],
       });
@@ -75,12 +68,9 @@ describe("scenario loader", () => {
     });
 
     it("loads single ScenarioDefinition as default export", async () => {
-      const tempDir = await Deno.makeTempDir();
-      await using _cleanup = defer(async () => {
-        await Deno.remove(tempDir, { recursive: true });
-      });
+      await using sbox = await sandbox();
 
-      const scenarioPath = resolve(tempDir, "single.scenario.ts");
+      const scenarioPath = sbox.resolve("single.scenario.ts");
       const content = outdent`
         export default {
           name: "Single Scenario",
@@ -91,19 +81,16 @@ describe("scenario loader", () => {
       `;
       await Deno.writeTextFile(scenarioPath, content);
 
-      const scenarios = await loadScenarios(tempDir);
+      const scenarios = await loadScenarios(sbox.path);
 
       assertEquals(scenarios.length, 1);
       assertEquals(scenarios[0].name, "Single Scenario");
     });
 
     it("throws error for invalid syntax in scenario file", async () => {
-      const tempDir = await Deno.makeTempDir();
-      await using _cleanup = defer(async () => {
-        await Deno.remove(tempDir, { recursive: true });
-      });
+      await using sbox = await sandbox();
 
-      const scenarioPath = resolve(tempDir, "invalid.scenario.ts");
+      const scenarioPath = sbox.resolve("invalid.scenario.ts");
       await Deno.writeTextFile(
         scenarioPath,
         "export default { invalid: syntax here",
@@ -111,7 +98,7 @@ describe("scenario loader", () => {
 
       await assertRejects(
         async () => {
-          await loadScenarios(tempDir);
+          await loadScenarios(sbox.path);
         },
         Error,
         "Failed to load scenario from",

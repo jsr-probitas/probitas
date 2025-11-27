@@ -13,8 +13,7 @@ import outdent from "outdent";
 import { assertEquals } from "@std/assert";
 import { describe, it } from "@std/testing/bdd";
 import { stub } from "@std/testing/mock";
-import { resolve } from "@std/path";
-import { defer } from "../../src/helper/defer.ts";
+import { sandbox } from "@lambdalisue/sandbox";
 import { listCommand } from "./list.ts";
 
 const createScenario = (name: string, file: string, tags: string[] = []) =>
@@ -37,13 +36,10 @@ const createScenario = (name: string, file: string, tags: string[] = []) =>
 
 describe("list command", () => {
   it("displays scenarios in text format", async () => {
-    const tempDir = await Deno.makeTempDir();
-    await using _cleanup = defer(async () => {
-      await Deno.remove(tempDir, { recursive: true });
-    });
+    await using sbox = await sandbox();
 
-    const scenario1 = resolve(tempDir, "test1.scenario.ts");
-    const scenario2 = resolve(tempDir, "test2.scenario.ts");
+    const scenario1 = sbox.resolve("test1.scenario.ts");
+    const scenario2 = sbox.resolve("test2.scenario.ts");
     await Deno.writeTextFile(scenario1, createScenario("Test 1", scenario1));
     await Deno.writeTextFile(scenario2, createScenario("Test 2", scenario2));
 
@@ -52,7 +48,7 @@ describe("list command", () => {
       output.push(args.join(" "));
     });
 
-    const exitCode = await listCommand([], tempDir);
+    const exitCode = await listCommand([], sbox.path);
 
     assertEquals(exitCode, 0);
     const outputText = output.join("\n");
@@ -61,12 +57,9 @@ describe("list command", () => {
   });
 
   it("outputs scenarios in JSON format with --json flag", async () => {
-    const tempDir = await Deno.makeTempDir();
-    await using _cleanup = defer(async () => {
-      await Deno.remove(tempDir, { recursive: true });
-    });
+    await using sbox = await sandbox();
 
-    const scenarioPath = resolve(tempDir, "test.scenario.ts");
+    const scenarioPath = sbox.resolve("test.scenario.ts");
     await Deno.writeTextFile(
       scenarioPath,
       createScenario("JSON Test", scenarioPath, ["api"]),
@@ -77,7 +70,7 @@ describe("list command", () => {
       output.push(args.join(" "));
     });
 
-    const exitCode = await listCommand(["--json"], tempDir);
+    const exitCode = await listCommand(["--json"], sbox.path);
 
     assertEquals(exitCode, 0);
     const outputText = output.join("\n");
@@ -88,33 +81,27 @@ describe("list command", () => {
   });
 
   it("returns 0 even when no scenarios found", async () => {
-    const tempDir = await Deno.makeTempDir();
-    await using _cleanup = defer(async () => {
-      await Deno.remove(tempDir, { recursive: true });
-    });
+    await using sbox = await sandbox();
 
     const output: string[] = [];
     using _logStub = stub(console, "log", (...args: unknown[]) => {
       output.push(args.join(" "));
     });
 
-    const exitCode = await listCommand([], tempDir);
+    const exitCode = await listCommand([], sbox.path);
 
     assertEquals(exitCode, 0);
   });
 
   it("shows help text with --help flag", async () => {
-    const tempDir = await Deno.makeTempDir();
-    await using _cleanup = defer(async () => {
-      await Deno.remove(tempDir, { recursive: true });
-    });
+    await using sbox = await sandbox();
 
     const output: string[] = [];
     using _logStub = stub(console, "log", (...args: unknown[]) => {
       output.push(args.join(" "));
     });
 
-    const exitCode = await listCommand(["--help"], tempDir);
+    const exitCode = await listCommand(["--help"], sbox.path);
 
     assertEquals(exitCode, 0);
     const outputText = output.join("\n");

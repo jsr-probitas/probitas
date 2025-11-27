@@ -13,8 +13,7 @@ import outdent from "outdent";
 import { assertEquals } from "@std/assert";
 import { describe, it } from "@std/testing/bdd";
 import { stub } from "@std/testing/mock";
-import { resolve } from "@std/path";
-import { defer } from "../../src/helper/defer.ts";
+import { sandbox } from "@lambdalisue/sandbox";
 import { EXIT_CODE } from "../constants.ts";
 import { runCommand } from "./run.ts";
 
@@ -39,29 +38,23 @@ const createScenario = (name: string, file: string, failing = false) =>
 describe("run command", () => {
   describe("exit codes", () => {
     it("returns 0 when all scenarios pass", async () => {
-      const tempDir = await Deno.makeTempDir();
-      await using _cleanup = defer(async () => {
-        await Deno.remove(tempDir, { recursive: true });
-      });
+      await using sbox = await sandbox();
 
-      const scenarioPath = resolve(tempDir, "test.scenario.ts");
+      const scenarioPath = sbox.resolve("test.scenario.ts");
       await Deno.writeTextFile(
         scenarioPath,
         createScenario("Passing Test", scenarioPath),
       );
 
-      const exitCode = await runCommand([], tempDir);
+      const exitCode = await runCommand([], sbox.path);
 
       assertEquals(exitCode, EXIT_CODE.SUCCESS);
     });
 
     it("returns 1 when scenarios fail", async () => {
-      const tempDir = await Deno.makeTempDir();
-      await using _cleanup = defer(async () => {
-        await Deno.remove(tempDir, { recursive: true });
-      });
+      await using sbox = await sandbox();
 
-      const scenarioPath = resolve(tempDir, "fail.scenario.ts");
+      const scenarioPath = sbox.resolve("fail.scenario.ts");
       await Deno.writeTextFile(
         scenarioPath,
         createScenario("Failing Test", scenarioPath, true),
@@ -72,18 +65,15 @@ describe("run command", () => {
         output.push(args.join(" "));
       });
 
-      const exitCode = await runCommand([], tempDir);
+      const exitCode = await runCommand([], sbox.path);
 
       assertEquals(exitCode, EXIT_CODE.FAILURE);
     });
 
     it("returns 2 on usage error", async () => {
-      const tempDir = await Deno.makeTempDir();
-      await using _cleanup = defer(async () => {
-        await Deno.remove(tempDir, { recursive: true });
-      });
+      await using sbox = await sandbox();
 
-      const scenarioPath = resolve(tempDir, "test.scenario.ts");
+      const scenarioPath = sbox.resolve("test.scenario.ts");
       await Deno.writeTextFile(
         scenarioPath,
         `export default scenario("Test").step("Test", () => {}).build();`,
@@ -91,24 +81,21 @@ describe("run command", () => {
 
       const exitCode = await runCommand(
         ["--config", "/nonexistent/path"],
-        tempDir,
+        sbox.path,
       );
 
       assertEquals(exitCode, EXIT_CODE.USAGE_ERROR);
     });
 
     it("returns 4 when no scenarios found", async () => {
-      const tempDir = await Deno.makeTempDir();
-      await using _cleanup = defer(async () => {
-        await Deno.remove(tempDir, { recursive: true });
-      });
+      await using sbox = await sandbox();
 
       const output: string[] = [];
       using _errorStub = stub(console, "error", (...args: unknown[]) => {
         output.push(args.join(" "));
       });
 
-      const exitCode = await runCommand([], tempDir);
+      const exitCode = await runCommand([], sbox.path);
 
       assertEquals(exitCode, EXIT_CODE.NOT_FOUND);
     });
@@ -116,17 +103,14 @@ describe("run command", () => {
 
   describe("help and usage", () => {
     it("shows help text with -h flag", async () => {
-      const tempDir = await Deno.makeTempDir();
-      await using _cleanup = defer(async () => {
-        await Deno.remove(tempDir, { recursive: true });
-      });
+      await using sbox = await sandbox();
 
       const output: string[] = [];
       using _logStub = stub(console, "log", (...args: unknown[]) => {
         output.push(args.join(" "));
       });
 
-      const exitCode = await runCommand(["-h"], tempDir);
+      const exitCode = await runCommand(["-h"], sbox.path);
 
       assertEquals(exitCode, EXIT_CODE.SUCCESS);
       const outputText = output.join("\n");
