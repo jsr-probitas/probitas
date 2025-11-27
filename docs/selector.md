@@ -140,6 +140,53 @@ probitas run -s "!tag:slow"
 probitas run -s !tag:slow
 ```
 
+## File Patterns vs Selectors
+
+Probitas provides two filtering mechanisms that work in sequence:
+
+### 1. File Patterns (`--include` / `--exclude`)
+
+Controls which **files** are discovered and loaded.
+
+```bash
+probitas list --include "e2e/**/*.scenario.ts"
+probitas run --exclude "**/*.skip.scenario.ts"
+```
+
+- Applied during file discovery phase
+- Uses glob patterns
+- Default include: `**/*.scenario.ts`
+- Default exclude: none (config can specify defaults)
+
+### 2. Selectors (`-s` / `--selector`)
+
+Filters loaded **scenarios** by tags, names, or file paths.
+
+```bash
+probitas run -s "tag:smoke"
+probitas run -s "!tag:slow"
+```
+
+- Applied after scenarios are loaded
+- Uses selector syntax with `!` negation
+- Supports AND (`,`) and OR (multiple `-s`)
+
+### Execution Order
+
+1. **File discovery**: `--include` / `--exclude` determines which files to load
+2. **Scenario loading**: Load scenario definitions from discovered files
+3. **Selector filtering**: `-s` / `--selector` filters loaded scenarios
+
+### Example: Combining Both
+
+```bash
+# Discover files in api/ directory, then filter by smoke tag
+probitas run --include "api/**/*.scenario.ts" -s "tag:smoke"
+
+# Exclude skip files, then exclude slow scenarios
+probitas run --exclude "**/*.skip.ts" -s "!tag:slow"
+```
+
 ## Migration
 
 Migrating from the previous `-x/--exclude` option:

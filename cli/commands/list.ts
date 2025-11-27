@@ -5,22 +5,14 @@
  */
 
 import { parseArgs } from "@std/cli";
+import { resolve } from "@std/path";
 import type { ScenarioDefinition } from "../../src/runner/types.ts";
 import { EXIT_CODE } from "../constants.ts";
 import { loadConfig } from "../config.ts";
+import { discoverScenarioFiles } from "../discover.ts";
 import { loadScenarios } from "../loader.ts";
 import { applySelectors } from "../selector.ts";
-import type { ProbitasConfig } from "../types.ts";
 import { readAsset } from "../utils.ts";
-
-/**
- * Options for the list command
- */
-export interface ListCommandOptions {
-  selectors?: string[];
-  json?: boolean;
-  config?: string;
-}
 
 /**
  * Execute the list command
@@ -38,12 +30,17 @@ export async function listCommand(
   try {
     // Parse command-line arguments
     const parsed = parseArgs(args, {
-      string: ["config", "selector"],
+      string: ["config", "include", "exclude", "selector"],
       boolean: ["help", "json"],
-      collect: ["selector"],
+      collect: ["include", "exclude", "selector"],
       alias: {
         h: "help",
         s: "selector",
+      },
+      default: {
+        include: undefined,
+        exclude: undefined,
+        selector: undefined,
       },
     });
 
@@ -60,37 +57,34 @@ export async function listCommand(
       }
     }
 
-    // Read environment variables (lower priority than CLI args)
-    const envConfig = {
-      config: Deno.env.get("PROBITAS_CONFIG"),
-    };
-
-    // Priority: CLI args > env vars > defaults
-    const options: ListCommandOptions = {
-      selectors: parsed.selector,
-      json: parsed.json,
-      config: parsed.config || envConfig.config,
-    };
-
     // Load configuration
-    const config = await loadConfig(cwd, options.config);
-    const mergedConfig = { ...config } as ProbitasConfig;
+    const configFile = parsed.config ?? Deno.env.get("PROBITAS_CONFIG");
+    const config = await loadConfig(cwd, configFile);
 
-    // Load scenarios
-    const scenarios = await loadScenarios(cwd, {
-      includes: mergedConfig.includes,
-      excludes: mergedConfig.excludes,
-    });
+    // Determine includes/excludes: CLI > config
+    const includes = parsed.include ?? config?.includes;
+    const excludes = parsed.exclude ?? config?.excludes;
+
+    // Discover scenario files
+    const paths = parsed
+      ._
+      .map(String)
+      .map((p) => resolve(cwd, p));
+    const scenarioFiles = await discoverScenarioFiles(
+      paths.length ? paths : [cwd],
+      {
+        includes,
+        excludes,
+      },
+    );
+    const scenarios = await loadScenarios(scenarioFiles);
 
     // Apply selectors to filter scenarios
-    const selectors = options.selectors && options.selectors.length > 0
-      ? options.selectors
-      : mergedConfig.selectors || [];
-
+    const selectors = parsed.selector ?? config?.selectors ?? [];
     const filteredScenarios = applySelectors(scenarios, selectors);
 
-    // Output results
-    if (options.json) {
+    // Output results (list always succeeds even with 0 scenarios)
+    if (parsed.json) {
       outputJson(filteredScenarios);
     } else {
       outputText(scenarios, filteredScenarios);

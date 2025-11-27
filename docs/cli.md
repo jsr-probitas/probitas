@@ -56,11 +56,11 @@ Executes scenario files.
 # Basic execution (all scenarios under current directory)
 probitas run
 
-# Specify a file pattern
-probitas run "scenarios/**/*.scenario.ts"
+# Specify a file
+probitas run test.scenario.ts
 
-# Specify multiple patterns
-probitas run "scenarios/**/*.scenario.ts" "e2e/**/*.scenario.ts"
+# Specify directories
+probitas run scenarios/ e2e/
 
 # Select scenarios by tag
 probitas run --selector tag:api
@@ -137,23 +137,19 @@ formats.
 
 **Arguments**:
 
-- `[files...]`: Scenario files or directories to execute (optional)
+- `[paths...]`: Scenario files or directories to execute (optional)
   - File: Direct specification (e.g., `test.scenario.ts`)
-  - glob pattern: Use wildcards (e.g., `**/*.scenario.ts`)
   - Directory: Execute all scenarios within (e.g., `tests/`)
   - Multiple specifications allowed (space-separated)
 
-##### File Patterns (glob)
+##### File Specification
 
 ```bash
 # Specific file
 probitas run scenarios/login.scenario.ts
 
-# glob pattern
-probitas run "scenarios/**/*.scenario.ts"
-
-# Multiple patterns
-probitas run "scenarios/**/*.scenario.ts" "e2e/**/*.scenario.ts"
+# Multiple files
+probitas run test1.scenario.ts test2.scenario.ts
 ```
 
 ##### Directory Specification
@@ -181,29 +177,15 @@ probitas run scenarios/ smoke/critical.scenario.ts
 
 ##### Default Behavior
 
-When no files or directories are specified, searches from the current directory:
+When no paths are specified, searches from the current directory:
 
 ```bash
-# These are equivalent
+# Default: searches current directory with **/*.scenario.ts pattern
 probitas run
 probitas run ./
-probitas run "**/*.scenario.ts"
 ```
 
 #### Options
-
-##### File Pattern Specification
-
-```bash
-# Default: "**/*.scenario.ts"
-probitas run
-
-# Custom pattern
-probitas run "scenarios/**/*.test.ts"
-
-# Multiple patterns
-probitas run "unit/**/*.ts" "integration/**/*.ts"
-```
 
 ##### `--selector <selector>` / `-s`
 

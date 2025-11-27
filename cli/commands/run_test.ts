@@ -117,4 +117,85 @@ describe("run command", () => {
       assertEquals(outputText.includes("probitas run"), true);
     });
   });
+
+  describe("file pattern options", () => {
+    it("uses --include pattern to filter files", async () => {
+      await using sbox = await sandbox();
+
+      await Deno.mkdir(sbox.resolve("api"), { recursive: true });
+      await Deno.mkdir(sbox.resolve("e2e"), { recursive: true });
+
+      const apiScenario = sbox.resolve("api/test.scenario.ts");
+      const e2eScenario = sbox.resolve("e2e/test.scenario.ts");
+      await Deno.writeTextFile(
+        apiScenario,
+        createScenario("API Test", apiScenario),
+      );
+      await Deno.writeTextFile(
+        e2eScenario,
+        createScenario("E2E Test", e2eScenario),
+      );
+
+      const exitCode = await runCommand(
+        ["--include", "api/**/*.scenario.ts"],
+        sbox.path,
+      );
+
+      assertEquals(exitCode, EXIT_CODE.SUCCESS);
+    });
+
+    it("uses --exclude pattern to exclude files", async () => {
+      await using sbox = await sandbox();
+
+      const regularScenario = sbox.resolve("test.scenario.ts");
+      const skipScenario = sbox.resolve("test.skip.scenario.ts");
+      await Deno.writeTextFile(
+        regularScenario,
+        createScenario("Regular Test", regularScenario),
+      );
+      await Deno.writeTextFile(
+        skipScenario,
+        createScenario("Skip Test", skipScenario),
+      );
+
+      const exitCode = await runCommand(
+        ["--exclude", "**/*.skip.scenario.ts"],
+        sbox.path,
+      );
+
+      assertEquals(exitCode, EXIT_CODE.SUCCESS);
+    });
+
+    it("combines --include and --exclude patterns", async () => {
+      await using sbox = await sandbox();
+
+      await Deno.mkdir(sbox.resolve("api"), { recursive: true });
+      await Deno.mkdir(sbox.resolve("e2e"), { recursive: true });
+
+      const apiScenario = sbox.resolve("api/test.scenario.ts");
+      const apiSkipScenario = sbox.resolve("api/skip.scenario.ts");
+      const e2eScenario = sbox.resolve("e2e/test.scenario.ts");
+      await Deno.writeTextFile(
+        apiScenario,
+        createScenario("API Test", apiScenario),
+      );
+      await Deno.writeTextFile(
+        apiSkipScenario,
+        createScenario("API Skip", apiSkipScenario),
+      );
+      await Deno.writeTextFile(
+        e2eScenario,
+        createScenario("E2E Test", e2eScenario),
+      );
+
+      const exitCode = await runCommand([
+        "--include",
+        "api/**/*.scenario.ts",
+        "--exclude",
+        "**/skip.scenario.ts",
+      ], sbox.path);
+
+      assertEquals(exitCode, EXIT_CODE.SUCCESS);
+    });
+  });
 });

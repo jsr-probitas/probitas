@@ -10,13 +10,6 @@ import { EXIT_CODE } from "../constants.ts";
 import { getVersion, readAsset, readTemplate } from "../utils.ts";
 
 /**
- * Options for the init command
- */
-export interface InitCommandOptions {
-  force?: boolean;
-}
-
-/**
  * Execute the init command
  *
  * @param args - Command-line arguments
@@ -52,15 +45,13 @@ export async function initCommand(
       }
     }
 
-    const options: InitCommandOptions = {
-      force: parsed.force,
-    };
+    const force = parsed.force ?? false;
 
     // Create probitas.config.ts
     const configPath = resolve(cwd, "probitas.config.ts");
     const configContent = await readTemplate("probitas.config.ts");
 
-    if (!options.force) {
+    if (!force) {
       try {
         await Deno.stat(configPath);
         console.error(
@@ -85,7 +76,7 @@ export async function initCommand(
     const denoJsoncContent = (await readTemplate("deno.jsonc"))
       .replace("{{VERSION}}", version);
 
-    if (!options.force) {
+    if (!force) {
       try {
         await Deno.stat(denoJsoncPath);
         console.error(
@@ -104,7 +95,7 @@ export async function initCommand(
     const examplePath = resolve(scenariosDir, "example.scenario.ts");
     const exampleContent = await readTemplate("example.scenario.ts");
 
-    if (!options.force) {
+    if (!force) {
       try {
         await Deno.stat(examplePath);
         console.error(

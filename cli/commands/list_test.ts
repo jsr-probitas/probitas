@@ -107,4 +107,176 @@ describe("list command", () => {
     const outputText = output.join("\n");
     assertEquals(outputText.includes("probitas list"), true);
   });
+
+  describe("file pattern options", () => {
+    it("uses --include pattern to filter files", async () => {
+      await using sbox = await sandbox();
+
+      await Deno.mkdir(sbox.resolve("api"), { recursive: true });
+      await Deno.mkdir(sbox.resolve("e2e"), { recursive: true });
+
+      const apiScenario = sbox.resolve("api/test.scenario.ts");
+      const e2eScenario = sbox.resolve("e2e/test.scenario.ts");
+      await Deno.writeTextFile(
+        apiScenario,
+        createScenario("API Test", apiScenario),
+      );
+      await Deno.writeTextFile(
+        e2eScenario,
+        createScenario("E2E Test", e2eScenario),
+      );
+
+      const output: string[] = [];
+      using _logStub = stub(console, "log", (...args: unknown[]) => {
+        output.push(args.join(" "));
+      });
+
+      const exitCode = await listCommand(
+        ["--include", "api/**/*.scenario.ts"],
+        sbox.path,
+      );
+
+      assertEquals(exitCode, 0);
+      const outputText = output.join("\n");
+      assertEquals(outputText.includes("API Test"), true);
+      assertEquals(outputText.includes("E2E Test"), false);
+    });
+
+    it("uses --exclude pattern to exclude files", async () => {
+      await using sbox = await sandbox();
+
+      const regularScenario = sbox.resolve("test.scenario.ts");
+      const skipScenario = sbox.resolve("test.skip.scenario.ts");
+      await Deno.writeTextFile(
+        regularScenario,
+        createScenario("Regular Test", regularScenario),
+      );
+      await Deno.writeTextFile(
+        skipScenario,
+        createScenario("Skip Test", skipScenario),
+      );
+
+      const output: string[] = [];
+      using _logStub = stub(console, "log", (...args: unknown[]) => {
+        output.push(args.join(" "));
+      });
+
+      const exitCode = await listCommand(
+        ["--exclude", "**/*.skip.scenario.ts"],
+        sbox.path,
+      );
+
+      assertEquals(exitCode, 0);
+      const outputText = output.join("\n");
+      assertEquals(outputText.includes("Regular Test"), true);
+      assertEquals(outputText.includes("Skip Test"), false);
+    });
+
+    it("combines --include and --exclude patterns", async () => {
+      await using sbox = await sandbox();
+
+      await Deno.mkdir(sbox.resolve("api"), { recursive: true });
+      await Deno.mkdir(sbox.resolve("e2e"), { recursive: true });
+
+      const apiScenario = sbox.resolve("api/test.scenario.ts");
+      const apiSkipScenario = sbox.resolve("api/skip.scenario.ts");
+      const e2eScenario = sbox.resolve("e2e/test.scenario.ts");
+      await Deno.writeTextFile(
+        apiScenario,
+        createScenario("API Test", apiScenario),
+      );
+      await Deno.writeTextFile(
+        apiSkipScenario,
+        createScenario("API Skip", apiSkipScenario),
+      );
+      await Deno.writeTextFile(
+        e2eScenario,
+        createScenario("E2E Test", e2eScenario),
+      );
+
+      const output: string[] = [];
+      using _logStub = stub(console, "log", (...args: unknown[]) => {
+        output.push(args.join(" "));
+      });
+
+      const exitCode = await listCommand([
+        "--include",
+        "api/**/*.scenario.ts",
+        "--exclude",
+        "**/skip.scenario.ts",
+      ], sbox.path);
+
+      assertEquals(exitCode, 0);
+      const outputText = output.join("\n");
+      assertEquals(
+        outputText.includes("API Test"),
+        true,
+        "Should include API Test",
+      );
+      assertEquals(
+        outputText.includes("API Skip"),
+        false,
+        "Should not include API Skip (excluded by pattern)",
+      );
+      assertEquals(
+        outputText.includes("E2E Test"),
+        false,
+        "Should not include E2E Test (not in api/)",
+      );
+    });
+
+    it("combines file patterns with selectors", async () => {
+      await using sbox = await sandbox();
+
+      await Deno.mkdir(sbox.resolve("api"), { recursive: true });
+      await Deno.mkdir(sbox.resolve("e2e"), { recursive: true });
+
+      const apiSmokeScenario = sbox.resolve("api/smoke.scenario.ts");
+      const apiSlowScenario = sbox.resolve("api/slow.scenario.ts");
+      const e2eScenario = sbox.resolve("e2e/test.scenario.ts");
+      await Deno.writeTextFile(
+        apiSmokeScenario,
+        createScenario("API Smoke", apiSmokeScenario, ["api", "smoke"]),
+      );
+      await Deno.writeTextFile(
+        apiSlowScenario,
+        createScenario("API Slow", apiSlowScenario, ["api", "slow"]),
+      );
+      await Deno.writeTextFile(
+        e2eScenario,
+        createScenario("E2E Test", e2eScenario, ["e2e"]),
+      );
+
+      const output: string[] = [];
+      using _logStub = stub(console, "log", (...args: unknown[]) => {
+        output.push(args.join(" "));
+      });
+
+      // Include api files, but exclude slow scenarios
+      const exitCode = await listCommand([
+        "--include",
+        "api/**/*.scenario.ts",
+        "-s",
+        "!tag:slow",
+      ], sbox.path);
+
+      assertEquals(exitCode, 0);
+      const outputText = output.join("\n");
+      assertEquals(
+        outputText.includes("API Smoke"),
+        true,
+        "Should include API Smoke",
+      );
+      assertEquals(
+        outputText.includes("API Slow"),
+        false,
+        "Should not include API Slow (selector filter)",
+      );
+      assertEquals(
+        outputText.includes("E2E Test"),
+        false,
+        "Should not include E2E Test (file pattern filter)",
+      );
+    });
+  });
 });

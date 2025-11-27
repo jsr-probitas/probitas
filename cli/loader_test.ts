@@ -14,7 +14,7 @@ import { loadScenarios } from "./loader.ts";
 
 describe("scenario loader", () => {
   describe("loadScenarios", () => {
-    it("loads scenarios from glob pattern", async () => {
+    it("loads single scenario from file", async () => {
       await using sbox = await sandbox();
 
       const scenarioPath = sbox.resolve("test.scenario.ts");
@@ -28,19 +28,46 @@ describe("scenario loader", () => {
       `;
       await Deno.writeTextFile(scenarioPath, content);
 
-      const scenarios = await loadScenarios(sbox.path, {
-        includes: ["**/*.scenario.ts"],
-      });
+      const scenarios = await loadScenarios([scenarioPath]);
 
       assertEquals(scenarios.length, 1);
       assertEquals(scenarios[0].name, "Test Scenario");
     });
 
-    it("applies exclude patterns", async () => {
+    it("loads multiple scenarios from array export", async () => {
       await using sbox = await sandbox();
 
-      const scenario1 = sbox.resolve("scenario1.scenario.ts");
-      const scenario2 = sbox.resolve("skip_scenario2.scenario.ts");
+      const scenarioPath = sbox.resolve("multi.scenario.ts");
+      const content = outdent`
+        export default [
+          {
+            name: "Scenario 1",
+            options: { tags: [], skip: null, setup: null, teardown: null, stepOptions: {} },
+            steps: [],
+            location: { file: "${scenarioPath}" }
+          },
+          {
+            name: "Scenario 2",
+            options: { tags: [], skip: null, setup: null, teardown: null, stepOptions: {} },
+            steps: [],
+            location: { file: "${scenarioPath}" }
+          }
+        ];
+      `;
+      await Deno.writeTextFile(scenarioPath, content);
+
+      const scenarios = await loadScenarios([scenarioPath]);
+
+      assertEquals(scenarios.length, 2);
+      assertEquals(scenarios[0].name, "Scenario 1");
+      assertEquals(scenarios[1].name, "Scenario 2");
+    });
+
+    it("loads from multiple files", async () => {
+      await using sbox = await sandbox();
+
+      const file1 = sbox.resolve("test1.scenario.ts");
+      const file2 = sbox.resolve("test2.scenario.ts");
 
       const content = (name: string, path: string) =>
         outdent`
@@ -52,39 +79,20 @@ describe("scenario loader", () => {
         };
       `;
 
-      await Deno.writeTextFile(scenario1, content("Scenario 1", scenario1));
-      await Deno.writeTextFile(
-        scenario2,
-        content("Skip Scenario 2", scenario2),
-      );
+      await Deno.writeTextFile(file1, content("Scenario 1", file1));
+      await Deno.writeTextFile(file2, content("Scenario 2", file2));
 
-      const scenarios = await loadScenarios(sbox.path, {
-        includes: ["**/*.scenario.ts"],
-        excludes: ["**/skip_*"],
-      });
+      const scenarios = await loadScenarios([file1, file2]);
 
-      assertEquals(scenarios.length, 1);
+      assertEquals(scenarios.length, 2);
       assertEquals(scenarios[0].name, "Scenario 1");
+      assertEquals(scenarios[1].name, "Scenario 2");
     });
 
-    it("loads single ScenarioDefinition as default export", async () => {
-      await using sbox = await sandbox();
+    it("returns empty array for empty file list", async () => {
+      const scenarios = await loadScenarios([]);
 
-      const scenarioPath = sbox.resolve("single.scenario.ts");
-      const content = outdent`
-        export default {
-          name: "Single Scenario",
-          options: { tags: [], skip: null, setup: null, teardown: null, stepOptions: {} },
-          steps: [{ name: "step", fn: () => {}, options: {} }],
-          location: { file: "${scenarioPath}" }
-        };
-      `;
-      await Deno.writeTextFile(scenarioPath, content);
-
-      const scenarios = await loadScenarios(sbox.path);
-
-      assertEquals(scenarios.length, 1);
-      assertEquals(scenarios[0].name, "Single Scenario");
+      assertEquals(scenarios, []);
     });
 
     it("throws error for invalid syntax in scenario file", async () => {
@@ -98,7 +106,17 @@ describe("scenario loader", () => {
 
       await assertRejects(
         async () => {
-          await loadScenarios(sbox.path);
+          await loadScenarios([scenarioPath]);
+        },
+        Error,
+        "Failed to load scenario from",
+      );
+    });
+
+    it("throws error for non-existent file", async () => {
+      await assertRejects(
+        async () => {
+          await loadScenarios(["/nonexistent/file.ts"]);
         },
         Error,
         "Failed to load scenario from",

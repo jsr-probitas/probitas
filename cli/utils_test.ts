@@ -13,8 +13,7 @@ import {
 import { describe, it } from "@std/testing/bdd";
 import {
   getVersion,
-  parseMaxConcurrency,
-  parseMaxFailures,
+  parsePositiveInteger,
   readAsset,
   readTemplate,
   resolveReporter,
@@ -56,55 +55,54 @@ describe("utils", () => {
     });
   });
 
-  const parseMaxTestCases = [
-    {
-      name: "parseMaxConcurrency",
-      fn: parseMaxConcurrency,
-      errorPrefix: "max-concurrency",
-      validStringInput: "4",
-      validStringOutput: 4,
-      validNumericInput: 8,
-      largeInput: "1000",
-      largeOutput: 1000,
-    },
-    {
-      name: "parseMaxFailures",
-      fn: parseMaxFailures,
-      errorPrefix: "max-failures",
-      validStringInput: "5",
-      validStringOutput: 5,
-      validNumericInput: 3,
-      largeInput: "500",
-      largeOutput: 500,
-    },
-  ];
-
-  for (const testCase of parseMaxTestCases) {
-    describe(testCase.name, () => {
-      it("parses string number", () => {
-        const result = testCase.fn(testCase.validStringInput);
-        assertEquals(result, testCase.validStringOutput);
-      });
-
-      it("parses numeric value", () => {
-        const result = testCase.fn(testCase.validNumericInput);
-        assertEquals(result, testCase.validNumericInput);
-      });
-
-      it("returns undefined when undefined is passed", () => {
-        const result = testCase.fn(undefined);
-        assertEquals(result, undefined);
-      });
-
-      it("throws error for invalid number string", () => {
-        assertThrows(
-          () => testCase.fn("abc"),
-          Error,
-          `${testCase.errorPrefix} must be a positive integer`,
-        );
-      });
+  describe("parsePositiveInteger", () => {
+    it("parses string number", () => {
+      const result = parsePositiveInteger("10", "test");
+      assertEquals(result, 10);
     });
-  }
+
+    it("parses numeric value", () => {
+      const result = parsePositiveInteger(5, "test");
+      assertEquals(result, 5);
+    });
+
+    it("returns undefined when undefined is passed", () => {
+      const result = parsePositiveInteger(undefined, "test");
+      assertEquals(result, undefined);
+    });
+
+    it("throws error for invalid number string", () => {
+      assertThrows(
+        () => parsePositiveInteger("abc", "test"),
+        Error,
+        "test must be a positive integer",
+      );
+    });
+
+    it("throws error for decimal number", () => {
+      assertThrows(
+        () => parsePositiveInteger("1.5", "test"),
+        Error,
+        "test must be a positive integer",
+      );
+    });
+
+    it("throws error for zero", () => {
+      assertThrows(
+        () => parsePositiveInteger("0", "test"),
+        Error,
+        "test must be a positive integer",
+      );
+    });
+
+    it("throws error for negative number", () => {
+      assertThrows(
+        () => parsePositiveInteger("-1", "test"),
+        Error,
+        "test must be a positive integer",
+      );
+    });
+  });
 
   describe("readTemplate", () => {
     it("reads template files", async () => {

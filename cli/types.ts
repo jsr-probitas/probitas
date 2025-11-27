@@ -32,11 +32,11 @@ export interface Selector {
  */
 export interface ProbitasConfig
   extends Omit<RunOptions, "reporter" | "signal"> {
-  /** Include patterns (glob, file, directory, or RegExp) */
-  readonly includes?: (string | RegExp)[];
+  /** Include patterns (glob) */
+  readonly includes?: readonly string[];
 
-  /** Exclude patterns (glob, file, directory, or RegExp) */
-  readonly excludes?: (string | RegExp)[];
+  /** Exclude patterns (glob) */
+  readonly excludes?: readonly string[];
 
   /** Reporter (string name or Reporter instance) */
   readonly reporter?: string | Reporter;

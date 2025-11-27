@@ -5,34 +5,16 @@
  */
 
 import { parseArgs } from "@std/cli";
+import { resolve } from "@std/path";
 import { ScenarioRunner } from "../../src/runner/scenario_runner.ts";
-import type { Reporter, RunOptions } from "../../src/runner/types.ts";
+import type { RunOptions } from "../../src/runner/types.ts";
 import type { ReporterOptions } from "../../src/reporter/types.ts";
 import { EXIT_CODE } from "../constants.ts";
 import { loadConfig } from "../config.ts";
+import { discoverScenarioFiles } from "../discover.ts";
 import { loadScenarios } from "../loader.ts";
 import { applySelectors } from "../selector.ts";
-import type { ProbitasConfig } from "../types.ts";
-import {
-  parseMaxConcurrency,
-  parseMaxFailures,
-  readAsset,
-  resolveReporter,
-} from "../utils.ts";
-
-/**
- * Options for the run command
- */
-export interface RunCommandOptions {
-  files?: string[];
-  selectors?: string[];
-  reporter?: string;
-  maxConcurrency?: string | number;
-  maxFailures?: string | number;
-  noColor?: boolean;
-  verbosity?: "quiet" | "normal" | "verbose" | "debug";
-  config?: string;
-}
+import { parsePositiveInteger, readAsset, resolveReporter } from "../utils.ts";
 
 /**
  * Execute the run command
@@ -51,11 +33,13 @@ export async function runCommand(
     // Parse command-line arguments
     const parsed = parseArgs(args, {
       string: [
-        "selector",
         "reporter",
         "config",
         "max-concurrency",
         "max-failures",
+        "include",
+        "exclude",
+        "selector",
       ],
       boolean: [
         "help",
@@ -66,7 +50,7 @@ export async function runCommand(
         "sequential",
         "fail-fast",
       ],
-      collect: ["selector"],
+      collect: ["include", "exclude", "selector"],
       alias: {
         h: "help",
         s: "selector",
@@ -77,7 +61,9 @@ export async function runCommand(
         d: "debug",
       },
       default: {
-        selector: [],
+        include: undefined,
+        exclude: undefined,
+        selector: undefined,
       },
     });
 
@@ -96,135 +82,78 @@ export async function runCommand(
       }
     }
 
-    const files = parsed._;
-
-    // Read environment variables (lower priority than CLI args)
-    const noColor = Deno.env.get("NO_COLOR") !== undefined;
-    const configFile = Deno.env.get("PROBITAS_CONFIG");
-
     // Determine verbosity level
-    let verbosity: "quiet" | "normal" | "verbose" | "debug" = "normal";
-    if (parsed.debug) {
-      verbosity = "debug";
-    } else if (parsed.verbose) {
-      verbosity = "verbose";
-    } else if (parsed.quiet) {
-      verbosity = "quiet";
-    }
-
-    // Priority: CLI args > env vars > defaults
-    const options: RunCommandOptions = {
-      files: files.length > 0 ? files.map(String) : undefined,
-      selectors: parsed.selector,
-      reporter: parsed.reporter,
-      maxConcurrency: parsed.sequential ? 1 : parsed["max-concurrency"],
-      maxFailures: parsed["fail-fast"] ? 1 : parsed["max-failures"],
-      noColor: parsed["no-color"] || noColor,
-      verbosity,
-      config: parsed.config || configFile,
-    };
+    const verbosity = parsed.debug
+      ? "debug"
+      : parsed.verbose
+      ? "verbose"
+      : parsed.quiet
+      ? "quiet"
+      : "normal";
 
     // Load configuration
-    const config = await loadConfig(cwd, options.config);
-    const mergedConfig = { ...config } as ProbitasConfig;
+    const configFile = parsed.config ?? Deno.env.get("PROBITAS_CONFIG");
+    const config = await loadConfig(cwd, configFile);
 
-    // Determine includes from CLI files or config
-    let includes: (string | RegExp)[] | undefined;
-    if (options.files && options.files.length > 0) {
-      includes = options.files;
-    } else {
-      includes = mergedConfig.includes;
-    }
+    // Determine includes/excludes: CLI > config
+    const includes = parsed.include ?? config?.includes;
+    const excludes = parsed.exclude ?? config?.excludes;
 
-    // Load scenarios
-    const scenarios = await loadScenarios(cwd, {
-      includes,
-      excludes: mergedConfig.excludes,
-    });
-
+    // Discover scenario files
+    const paths = parsed
+      ._
+      .map(String)
+      .map((p) => resolve(cwd, p));
+    const scenarioFiles = await discoverScenarioFiles(
+      paths.length ? paths : [cwd],
+      {
+        includes,
+        excludes,
+      },
+    );
+    const scenarios = await loadScenarios(scenarioFiles);
     if (scenarios.length === 0) {
       console.error("No scenarios found");
       return EXIT_CODE.NOT_FOUND;
     }
 
     // Apply selectors to filter scenarios
-    const selectors = options.selectors && options.selectors.length > 0
-      ? options.selectors
-      : mergedConfig.selectors || [];
-
+    const selectors = parsed.selector ?? config?.selectors ?? [];
     const filteredScenarios = applySelectors(scenarios, selectors);
-
     if (filteredScenarios.length === 0) {
       console.error("No scenarios matched the filter");
       return EXIT_CODE.NOT_FOUND;
     }
 
     // Build run options
+    const noColor = parsed["no-color"] || Deno.noColor;
     const reporterOptions: ReporterOptions = {
-      noColor: options.noColor,
-      verbosity: options.verbosity ?? mergedConfig.verbosity ?? "normal",
+      noColor,
+      verbosity: verbosity ?? config?.verbosity ?? "normal",
     };
 
-    let reporter: Reporter;
-    if (options.reporter) {
-      reporter = resolveReporter(options.reporter, reporterOptions);
-    } else if (mergedConfig.reporter) {
-      if (typeof mergedConfig.reporter === "string") {
-        reporter = resolveReporter(mergedConfig.reporter, reporterOptions);
-      } else {
-        reporter = mergedConfig.reporter;
-      }
-    } else {
-      reporter = resolveReporter("list", reporterOptions);
-    }
+    const reporter = resolveReporter(
+      parsed.reporter ?? config?.reporter,
+      reporterOptions,
+    );
 
-    let runOptions: RunOptions = {
+    const maxConcurrency = parsed.sequential
+      ? 1
+      : parsed["max-concurrency"]
+      ? parsePositiveInteger(parsed["max-concurrency"], "max-concurrency")
+      : config?.maxConcurrency;
+
+    const maxFailures = parsed["fail-fast"]
+      ? 1
+      : parsed["max-failures"]
+      ? parsePositiveInteger(parsed["max-failures"], "max-failures")
+      : config?.maxFailures;
+
+    const runOptions: RunOptions = {
       reporter,
+      maxConcurrency,
+      maxFailures,
     };
-
-    // Set maxConcurrency
-    if (options.maxConcurrency) {
-      try {
-        const concurrency = parseMaxConcurrency(options.maxConcurrency);
-        runOptions = {
-          ...runOptions,
-          maxConcurrency: concurrency,
-        };
-      } catch (error) {
-        console.error(
-          error instanceof Error ? error.message : String(error),
-        );
-        return EXIT_CODE.USAGE_ERROR;
-      }
-    } else if (mergedConfig.maxConcurrency) {
-      runOptions = {
-        ...runOptions,
-        maxConcurrency: mergedConfig.maxConcurrency,
-      };
-    }
-
-    // Set maxFailures
-    if (options.maxFailures) {
-      try {
-        const count = parseMaxFailures(options.maxFailures);
-        if (count !== undefined) {
-          runOptions = {
-            ...runOptions,
-            maxFailures: count,
-          };
-        }
-      } catch (error) {
-        console.error(
-          error instanceof Error ? error.message : String(error),
-        );
-        return EXIT_CODE.USAGE_ERROR;
-      }
-    } else if (mergedConfig.maxFailures) {
-      runOptions = {
-        ...runOptions,
-        maxFailures: mergedConfig.maxFailures,
-      };
-    }
 
     // Run scenarios
     const runner = new ScenarioRunner();

@@ -48,56 +48,28 @@ export function resolveReporter(
 }
 
 /**
- * Parse max concurrency option
+ * Parse positive integer option
  *
- * @param maxConcurrency - Max concurrency value
- * @returns Concurrency value or undefined for default
+ * @param value - Value to parse
+ * @param name - Option name for error messages
+ * @returns Parsed integer or undefined if not set
  */
-export function parseMaxConcurrency(
-  maxConcurrency?: string | number,
+export function parsePositiveInteger(
+  value: string | number | undefined,
+  name: string = "value",
 ): number | undefined {
-  if (maxConcurrency === undefined) {
+  if (value === undefined) {
     return undefined;
   }
 
-  if (typeof maxConcurrency === "string" && maxConcurrency.includes(".")) {
-    throw new Error("max-concurrency must be a positive integer");
+  if (typeof value === "string" && value.includes(".")) {
+    throw new Error(`${name} must be a positive integer`);
   }
 
-  const num = typeof maxConcurrency === "number"
-    ? maxConcurrency
-    : parseInt(maxConcurrency, 10);
+  const num = typeof value === "number" ? value : parseInt(value, 10);
 
   if (isNaN(num) || num < 1 || !Number.isInteger(num)) {
-    throw new Error("max-concurrency must be a positive integer");
-  }
-
-  return num;
-}
-
-/**
- * Parse max failures option
- *
- * @param maxFailures - Max failures value
- * @returns Failure count or undefined if not set
- */
-export function parseMaxFailures(
-  maxFailures?: string | number,
-): number | undefined {
-  if (maxFailures === undefined) {
-    return undefined;
-  }
-
-  if (typeof maxFailures === "string" && maxFailures.includes(".")) {
-    throw new Error("max-failures must be a positive integer");
-  }
-
-  const num = typeof maxFailures === "number"
-    ? maxFailures
-    : parseInt(maxFailures, 10);
-
-  if (isNaN(num) || num < 1 || !Number.isInteger(num)) {
-    throw new Error("max-failures must be a positive integer");
+    throw new Error(`${name} must be a positive integer`);
   }
 
   return num;
