@@ -6,19 +6,14 @@
 
 import { parseArgs } from "@std/cli";
 import { resolve } from "@std/path";
-import { ScenarioRunner } from "../../src/runner/scenario_runner.ts";
-import type { RunOptions } from "../../src/runner/types.ts";
-import type { ReporterOptions } from "../../src/reporter/types.ts";
 import { EXIT_CODE } from "../constants.ts";
 import { loadConfig } from "../config.ts";
 import { discoverScenarioFiles } from "../discover.ts";
-import { loadScenarios } from "../loader.ts";
-import { applySelectors } from "../selector.ts";
 import {
+  createTempSubprocessConfig,
   findDenoConfigFile,
   parsePositiveInteger,
   readAsset,
-  resolveReporter,
 } from "../utils.ts";
 
 /**
@@ -118,31 +113,15 @@ export async function runCommand(
         excludes,
       },
     );
-    const scenarios = await loadScenarios(scenarioFiles);
-    if (scenarios.length === 0) {
+
+    if (scenarioFiles.length === 0) {
       console.error("No scenarios found");
       return EXIT_CODE.NOT_FOUND;
     }
 
-    // Apply selectors to filter scenarios
+    // Build subprocess input
     const selectors = parsed.selector ?? config?.selectors ?? [];
-    const filteredScenarios = applySelectors(scenarios, selectors);
-    if (filteredScenarios.length === 0) {
-      console.error("No scenarios matched the filter");
-      return EXIT_CODE.NOT_FOUND;
-    }
-
-    // Build run options
     const noColor = parsed["no-color"] || Deno.noColor;
-    const reporterOptions: ReporterOptions = {
-      noColor,
-      verbosity,
-    };
-
-    const reporter = resolveReporter(
-      parsed.reporter ?? config?.reporter,
-      reporterOptions,
-    );
 
     const maxConcurrency = parsed.sequential
       ? 1
@@ -156,18 +135,65 @@ export async function runCommand(
       ? parsePositiveInteger(parsed["max-failures"], "max-failures")
       : config?.maxFailures;
 
-    const runOptions: RunOptions = {
-      reporter,
+    const subprocessInput = {
+      files: scenarioFiles,
+      selectors,
+      reporter: parsed.reporter ?? config?.reporter,
+      noColor,
+      verbosity,
       maxConcurrency,
       maxFailures,
     };
 
-    // Run scenarios
-    const runner = new ScenarioRunner();
-    const summary = await runner.run(filteredScenarios, runOptions);
+    // Prepare config file for subprocess with scopes
+    await using stack = new AsyncDisposableStack();
 
-    // Return exit code
-    return summary.failed > 0 ? EXIT_CODE.FAILURE : EXIT_CODE.SUCCESS;
+    // Create temporary deno.json with scopes
+    const subprocessConfigPath = await createTempSubprocessConfig(configPath);
+    stack.defer(async () => {
+      await Deno.remove(subprocessConfigPath);
+    });
+
+    // Subprocess path
+    const subprocessPath = new URL(
+      "./run/runner.ts",
+      import.meta.url,
+    ).href;
+
+    // Build subprocess arguments
+    const subprocessArgs = [
+      "run",
+      "-A", // All permissions
+      "--config",
+      subprocessConfigPath,
+      subprocessPath,
+    ];
+
+    // Spawn subprocess
+    const cmd = new Deno.Command("deno", {
+      args: subprocessArgs,
+      cwd,
+      stdin: "piped",
+      stdout: "inherit", // Pass through to parent
+      stderr: "inherit", // Pass through to parent
+    });
+
+    const child = cmd.spawn();
+
+    // Send configuration via stdin
+    const writer = child.stdin.getWriter();
+    await writer.write(
+      new TextEncoder().encode(JSON.stringify(subprocessInput)),
+    );
+    await writer.close();
+
+    // Wait for subprocess to complete
+    const result = await child.status;
+
+    // Map exit code
+    if (result.code === 0) return EXIT_CODE.SUCCESS;
+    if (result.code === 4) return EXIT_CODE.NOT_FOUND;
+    return EXIT_CODE.FAILURE;
   } catch (err: unknown) {
     const m = err instanceof Error ? err.message : String(err);
     console.error(`Unexpected error: ${m}`);

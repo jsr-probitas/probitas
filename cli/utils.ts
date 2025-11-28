@@ -4,7 +4,9 @@
  * @module
  */
 
+import { as, ensure, is, type Predicate } from "@core/unknownutil";
 import { exists } from "@std/fs/exists";
+import { parse as parseJsonc } from "@std/jsonc";
 import { dirname, resolve } from "@std/path";
 import {
   DotReporter,
@@ -14,6 +16,18 @@ import {
 } from "../src/reporter/mod.ts";
 import type { ReporterOptions } from "../src/reporter/types.ts";
 import type { Reporter } from "../src/reporter/types.ts";
+
+type DenoConfig = {
+  imports?: Record<string, string>;
+  scopes?: Record<string, Record<string, string>>;
+};
+
+const isDenoConfig = is.ObjectOf({
+  imports: as.Optional(is.RecordOf(is.String, is.String)),
+  scopes: as.Optional(
+    is.RecordOf(is.RecordOf(is.String, is.String), is.String),
+  ),
+}) satisfies Predicate<DenoConfig>;
 
 const reporterMap: Record<string, (opts?: ReporterOptions) => Reporter> = {
   list: (opts) => new ListReporter(opts),
@@ -157,4 +171,75 @@ export async function findDenoConfigFile(
 
     currentDir = parent;
   }
+}
+
+/**
+ * Get probitas internal dependencies from bundled deno.jsonc
+ *
+ * @returns Record of internal dependencies for scopes
+ */
+async function getProbitasInternalDependencies(): Promise<
+  Record<string, string>
+> {
+  const denoConfigUrl = new URL("../deno.jsonc", import.meta.url);
+  const text = await fetch(denoConfigUrl).then((r) => r.text());
+  const config = ensure(parseJsonc(text), isDenoConfig);
+
+  // Extract only JSR dependencies (exclude local paths like "probitas": "./mod.ts")
+  const imports = config.imports || {};
+  const internalDeps: Record<string, string> = {};
+
+  for (const [key, value] of Object.entries(imports)) {
+    if (value.startsWith("jsr:") && !key.startsWith("probitas")) {
+      internalDeps[key] = value;
+    }
+  }
+
+  return internalDeps;
+}
+
+/**
+ * Create temporary deno.json for subprocess execution
+ *
+ * @param userConfigPath - Path to user's deno.json/deno.jsonc
+ * @returns Path to temporary deno.json file
+ */
+export async function createTempSubprocessConfig(
+  userConfigPath?: string | undefined,
+): Promise<string> {
+  // Read user's raw deno.json to preserve imports/scopes
+  let userDenoConfig: DenoConfig | undefined;
+  if (userConfigPath) {
+    const text = await Deno.readTextFile(userConfigPath);
+    userDenoConfig = ensure(parseJsonc(text), isDenoConfig);
+  }
+
+  // Determine probitas scope key and import path
+  const probitasScope = import.meta.resolve("../");
+  const probitasImport = new URL("../mod.ts", import.meta.url).href;
+
+  // Get probitas internal dependencies
+  const internalDeps = await getProbitasInternalDependencies();
+
+  const mergedConfig = {
+    ...userDenoConfig,
+    imports: {
+      ...(userDenoConfig?.imports ?? {}),
+      probitas: probitasImport, // Override user's probitas import
+    },
+    scopes: {
+      ...(userDenoConfig?.scopes ?? {}),
+      // Probitas internal dependencies (isolated from user)
+      [probitasScope]: internalDeps,
+    },
+  };
+
+  // Create temporary config file
+  const tempConfigPath = await Deno.makeTempFile({ suffix: ".json" });
+  await Deno.writeTextFile(
+    tempConfigPath,
+    JSON.stringify(mergedConfig, null, 2),
+  );
+
+  return tempConfigPath;
 }

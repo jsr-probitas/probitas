@@ -13,6 +13,7 @@ import {
 import { describe, it } from "@std/testing/bdd";
 import { sandbox } from "@lambdalisue/sandbox";
 import {
+  createTempSubprocessConfig,
   findDenoConfigFile,
   getVersion,
   parsePositiveInteger,
@@ -224,6 +225,116 @@ describe("utils", () => {
       });
 
       assertEquals(result, undefined);
+    });
+  });
+
+  describe("createTempSubprocessConfig", () => {
+    it("creates config with probitas import and scopes", async () => {
+      await using stack = new AsyncDisposableStack();
+
+      const configPath = await createTempSubprocessConfig(undefined);
+      stack.defer(async () => {
+        await Deno.remove(configPath);
+      });
+
+      const text = await Deno.readTextFile(configPath);
+      const config = JSON.parse(text);
+
+      // Verify probitas import exists
+      assertEquals(typeof config.imports.probitas, "string");
+      assertStringIncludes(config.imports.probitas, "probitas");
+
+      // Verify scopes exist
+      assertEquals(typeof config.scopes, "object");
+
+      // Should have probitas scope
+      const scopeKeys = Object.keys(config.scopes);
+      assertEquals(scopeKeys.length > 0, true);
+
+      // Scope should contain internal dependencies
+      const firstScope = config.scopes[scopeKeys[0]];
+      assertEquals(typeof firstScope["@core/unknownutil"], "string");
+      assertEquals(typeof firstScope["@std/async"], "string");
+    });
+
+    it("merges user's imports and scopes", async () => {
+      await using sbox = await sandbox();
+      await using stack = new AsyncDisposableStack();
+
+      // Create user's deno.json
+      const userConfigPath = sbox.resolve("deno.json");
+      await Deno.writeTextFile(
+        userConfigPath,
+        JSON.stringify({
+          imports: {
+            "my-lib": "jsr:@my/lib@^1",
+          },
+          scopes: {
+            "jsr:@my/lib/": {
+              "some-dep": "jsr:@some/dep@^1",
+            },
+          },
+        }),
+      );
+
+      const configPath = await createTempSubprocessConfig(userConfigPath);
+      stack.defer(async () => {
+        await Deno.remove(configPath);
+      });
+
+      const text = await Deno.readTextFile(configPath);
+      const config = JSON.parse(text);
+
+      // User's imports should be preserved
+      assertEquals(config.imports["my-lib"], "jsr:@my/lib@^1");
+
+      // Probitas import should be added
+      assertEquals(typeof config.imports.probitas, "string");
+
+      // User's scopes should be preserved
+      assertEquals(
+        config.scopes["jsr:@my/lib/"]["some-dep"],
+        "jsr:@some/dep@^1",
+      );
+
+      // Probitas scopes should be added
+      const probitasScopes = Object.keys(config.scopes).filter((k) =>
+        k.includes("probitas")
+      );
+      assertEquals(probitasScopes.length > 0, true);
+    });
+
+    it("overrides user's probitas import with correct version", async () => {
+      await using sbox = await sandbox();
+      await using stack = new AsyncDisposableStack();
+
+      // Create user's deno.json with old probitas import
+      const userConfigPath = sbox.resolve("deno.json");
+      await Deno.writeTextFile(
+        userConfigPath,
+        JSON.stringify({
+          imports: {
+            "probitas": "./old/path/mod.ts", // Should be overridden
+          },
+        }),
+      );
+
+      const configPath = await createTempSubprocessConfig(userConfigPath);
+      stack.defer(async () => {
+        await Deno.remove(configPath);
+      });
+
+      const text = await Deno.readTextFile(configPath);
+      const config = JSON.parse(text);
+
+      // Probitas import should be overridden (not the old path)
+      assertEquals(typeof config.imports.probitas, "string");
+      assertEquals(config.imports.probitas.includes("./old/path"), false);
+      assertEquals(
+        config.imports.probitas.includes("probitas") ||
+          config.imports.probitas.includes("mod.ts"),
+        true,
+      );
     });
   });
 });

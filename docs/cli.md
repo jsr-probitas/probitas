@@ -9,6 +9,74 @@ discovers, filters, executes scenario files, and reports results.
 
 ## Execution Model
 
+### Subprocess Execution
+
+Probitas executes all scenarios in a single subprocess per run. This ensures:
+
+- **Project Configuration**: Scenarios run with the project's `deno.json`
+  configuration, including import maps
+- **Process Isolation**: CLI process (file discovery, filtering) and scenario
+  execution are separated
+- **Dependency Isolation**: Probitas internal dependencies don't conflict with
+  user's dependencies
+
+**How it works**:
+
+1. Main process discovers scenario files using glob patterns
+2. Config preparation (always creates temporary config):
+   - Reads user's `deno.json`/`deno.jsonc` if exists
+   - Merges user's imports and scopes
+   - Adds probitas import and scoped dependencies
+   - Creates temporary config file
+3. Spawns subprocess: `deno run -A --config <temp-config> runner.ts`
+4. Configuration transfer via stdin (JSON)
+5. Subprocess loads and executes scenarios
+6. Reporter output streams directly to parent process
+7. Temporary config auto-cleanup
+
+**Dependency Isolation with Scopes**:
+
+Probitas uses Deno's `scopes` feature to isolate internal dependencies. This
+means users only need to add `"probitas": "jsr:@lambdalisue/probitas"` to their
+import map:
+
+```jsonc
+{
+  "imports": {
+    "probitas": "jsr:@lambdalisue/probitas",
+    "@std/async": "jsr:@std/async@^0.220" // Your version
+  }
+}
+```
+
+Internally, Probitas uses scopes:
+
+```jsonc
+{
+  "imports": {
+    "probitas": "jsr:@lambdalisue/probitas@^1.0.0",
+    "@std/async": "jsr:@std/async@^0.220" // User's version
+  },
+  "scopes": {
+    "jsr:@lambdalisue/probitas/": {
+      "@std/async": "jsr:@std/async@^1.0.15" // Probitas's version
+    }
+  }
+}
+```
+
+This prevents version conflicts - users and Probitas can use different versions
+of the same dependency.
+
+**Benefits**:
+
+- Scenarios can import using `"probitas"` (via import map)
+- No dependency conflicts with user's project
+- Clean user configuration (only probitas import needed)
+- Consistent execution environment
+
+### Concurrency and Failure Handling
+
 The execution model is defined by two simple parameters:
 
 - **`maxConcurrency`**: Controls parallelism
