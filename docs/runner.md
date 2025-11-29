@@ -111,6 +111,7 @@ Returned from `run()`:
 | `total`     | Total scenarios executed  |
 | `passed`    | Successful scenario count |
 | `failed`    | Failed scenario count     |
+| `skipped`   | Skipped scenario count    |
 | `duration`  | Total execution time (ms) |
 | `scenarios` | Array of ScenarioResult   |
 
@@ -118,13 +119,14 @@ Returned from `run()`:
 
 Per-scenario result:
 
-| Property   | Description                      |
-| ---------- | -------------------------------- |
-| `metadata` | Scenario name, location, options |
-| `status`   | "passed" or "failed"             |
-| `duration` | Scenario execution time (ms)     |
-| `steps`    | Array of StepResult              |
-| `error`    | Error if failed                  |
+| Property     | Description                         |
+| ------------ | ----------------------------------- |
+| `metadata`   | Scenario name, location, options    |
+| `status`     | "passed", "failed", or "skipped"    |
+| `duration`   | Scenario execution time (ms)        |
+| `steps`      | Array of StepResult                 |
+| `error`      | Error if failed                     |
+| `skipReason` | Reason string if skipped (optional) |
 
 ### StepResult
 
@@ -138,6 +140,29 @@ Per-step result:
 | `value`    | Return value (if passed)     |
 | `error`    | Error (if failed)            |
 
+### Skip
+
+The `Skip` class allows scenarios to be skipped programmatically. Throw `Skip`
+from any resource, setup, or step function to skip the scenario.
+
+```ts
+import { Skip } from "@probitas/runner";
+
+step("conditional step", (ctx) => {
+  if (!ctx.resources.featureEnabled) {
+    throw new Skip("Feature not enabled");
+  }
+  // ... step logic
+});
+```
+
+Skipped scenarios:
+
+- Stop execution immediately (remaining entries are not executed)
+- Run all registered cleanups (like normal completion)
+- Count as neither passed nor failed
+- Trigger `onScenarioSkip` reporter event before `onScenarioEnd`
+
 ## Best Practices
 
 1. **Use appropriate concurrency** - Sequential for debugging, parallel for
@@ -145,6 +170,8 @@ Per-step result:
 2. **Set reasonable timeouts** - Balance between slow tests and false positives
 3. **Respect abort signals** - Check `ctx.signal.aborted` in long operations
 4. **Leverage fail-fast** - Use `maxFailures: 1` during development
+5. **Use Skip for conditional tests** - Skip scenarios based on environment or
+   preconditions rather than failing
 
 ## Related
 

@@ -20,6 +20,7 @@ import type {
 } from "./types.ts";
 import { createScenarioContext, createStepContext } from "./context.ts";
 import { executeStepWithRetry } from "./executor.ts";
+import { Skip } from "./skip.ts";
 
 /**
  * Main scenario runner
@@ -80,6 +81,7 @@ export class ScenarioRunner {
       total: scenarioResults.length,
       passed: scenarioResults.filter((r) => r.status === "passed").length,
       failed: scenarioResults.filter((r) => r.status === "failed").length,
+      skipped: scenarioResults.filter((r) => r.status === "skipped").length,
       duration,
       scenarios: scenarioResults,
     };
@@ -156,6 +158,7 @@ export class ScenarioRunner {
     // Use a container to capture partial results if an error occurs
     const resultsContainer: { data: StepResult[] } = { data: [] };
     let scenarioError: Error | undefined;
+    let skipReason: string | undefined;
 
     try {
       // Initialize resources and create scenario context
@@ -212,6 +215,10 @@ export class ScenarioRunner {
                   await reporter.onResourceEnd(entry.value, scenario);
                 }
               } catch (e) {
+                // Skip should propagate without error reporting
+                if (e instanceof Skip) {
+                  throw e;
+                }
                 const error = e instanceof Error ? e : new Error(String(e));
                 if (reporter?.onResourceError) {
                   await reporter.onResourceError(entry.value, error, scenario);
@@ -249,6 +256,10 @@ export class ScenarioRunner {
                   await reporter.onSetupEnd(entry.value, scenario);
                 }
               } catch (e) {
+                // Skip should propagate without error reporting
+                if (e instanceof Skip) {
+                  throw e;
+                }
                 const error = e instanceof Error ? e : new Error(String(e));
                 if (reporter?.onSetupError) {
                   await reporter.onSetupError(entry.value, error, scenario);
@@ -280,6 +291,10 @@ export class ScenarioRunner {
                 // Accumulate result
                 (scenarioCtx.results as unknown[]).push(value);
               } catch (e) {
+                // Skip should not be treated as step error - propagate immediately
+                if (e instanceof Skip) {
+                  throw e;
+                }
                 error = e instanceof Error ? e : new Error(String(e));
               }
 
@@ -318,7 +333,13 @@ export class ScenarioRunner {
         }
       }
     } catch (error) {
-      scenarioError = error instanceof Error ? error : new Error(String(error));
+      if (error instanceof Skip) {
+        skipReason = error.reason;
+      } else {
+        scenarioError = error instanceof Error
+          ? error
+          : new Error(String(error));
+      }
     }
 
     const stepResults = resultsContainer.data;
@@ -326,7 +347,16 @@ export class ScenarioRunner {
 
     // Determine scenario status
     const hasFailedSteps = stepResults.some((r) => r.status === "failed");
-    const status = hasFailedSteps || scenarioError ? "failed" : "passed";
+    const status = skipReason !== undefined
+      ? "skipped"
+      : hasFailedSteps || scenarioError
+      ? "failed"
+      : "passed";
+
+    // Notify reporter of skip if skipped
+    if (status === "skipped" && reporter?.onScenarioSkip) {
+      await reporter.onScenarioSkip(scenario, skipReason);
+    }
 
     const result: ScenarioResult = {
       metadata: this.#scenarioToMetadata(scenario),
@@ -334,6 +364,7 @@ export class ScenarioRunner {
       duration,
       steps: stepResults,
       error: scenarioError,
+      skipReason,
     };
 
     // Notify reporter of scenario end

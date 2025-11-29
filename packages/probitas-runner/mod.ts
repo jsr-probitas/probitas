@@ -9,4 +9,5 @@
 
 export type * from "./types.ts";
 export * from "./errors.ts";
+export { Skip } from "./skip.ts";
 export { ScenarioRunner } from "./scenario_runner.ts";

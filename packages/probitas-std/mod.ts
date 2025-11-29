@@ -19,4 +19,5 @@
  */
 
 export { scenario } from "@probitas/builder";
+export { Skip } from "@probitas/runner";
 export type { StepContext } from "@probitas/builder";

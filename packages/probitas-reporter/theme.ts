@@ -15,6 +15,7 @@ import type { Theme } from "./types.ts";
 export const defaultTheme: Theme = {
   success: green,
   failure: red,
+  skip: yellow,
   dim: gray,
   title: bold,
   info: cyan,
@@ -27,6 +28,7 @@ export const defaultTheme: Theme = {
 export const noColorTheme: Theme = {
   success: (text) => text,
   failure: (text) => text,
+  skip: (text) => text,
   dim: (text) => text,
   title: (text) => text,
   info: (text) => text,

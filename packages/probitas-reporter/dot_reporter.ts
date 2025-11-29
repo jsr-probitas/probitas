@@ -40,6 +40,8 @@ export class DotReporter extends BaseReporter {
   ): Promise<void> {
     if (result.status === "passed") {
       await this.write(this.theme.success("."));
+    } else if (result.status === "skipped") {
+      await this.write(this.theme.skip("S"));
     } else if (result.status === "failed") {
       await this.write(this.theme.failure("F"));
     }
@@ -52,9 +54,12 @@ export class DotReporter extends BaseReporter {
    */
   override async onRunEnd(summary: RunSummary): Promise<void> {
     await this.write("\n\n");
-    await this.write(
-      `${summary.passed} scenarios passed, ${summary.failed} scenarios failed (${summary.duration}ms)\n`,
-    );
+    const parts = [`${summary.passed} passed`];
+    if (summary.skipped > 0) {
+      parts.push(`${summary.skipped} skipped`);
+    }
+    parts.push(`${summary.failed} failed`);
+    await this.write(`${parts.join(", ")} (${summary.duration}ms)\n`);
 
     // Show failed tests
     const failed = summary.scenarios.filter((s) => s.status === "failed");

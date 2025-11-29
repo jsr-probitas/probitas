@@ -287,6 +287,7 @@ export const runSummaries = {
     total: 3,
     passed: 3,
     failed: 0,
+    skipped: 0,
     duration: 45,
     scenarios: [
       scenarioResults.passed,
@@ -299,6 +300,7 @@ export const runSummaries = {
     total: 3,
     passed: 2,
     failed: 1,
+    skipped: 0,
     duration: 35,
     scenarios: [
       scenarioResults.passed,
@@ -311,6 +313,7 @@ export const runSummaries = {
     total: 0,
     passed: 0,
     failed: 0,
+    skipped: 0,
     duration: 0,
     scenarios: [],
   },

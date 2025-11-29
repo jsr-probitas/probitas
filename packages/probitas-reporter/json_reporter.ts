@@ -256,6 +256,25 @@ export class JSONReporter extends BaseReporter {
   }
 
   /**
+   * Called when scenario is skipped
+   *
+   * @param scenario The scenario that was skipped
+   * @param reason Optional skip reason
+   */
+  async onScenarioSkip(
+    scenario: ScenarioDefinition,
+    reason?: string,
+  ): Promise<void> {
+    await this.write(
+      JSON.stringify({
+        type: "scenarioSkip",
+        scenario,
+        reason,
+      }) + "\n",
+    );
+  }
+
+  /**
    * Called when scenario completes
    *
    * @param scenario The scenario definition

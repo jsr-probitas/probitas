@@ -51,6 +51,7 @@ All event methods are optional. Implement only the ones you need:
 | `onStepStart?`     | Before a step executes           |
 | `onStepEnd?`       | After a step succeeds            |
 | `onStepError?`     | When a step fails                |
+| `onScenarioSkip?`  | When a scenario is skipped       |
 | `onScenarioEnd?`   | After a scenario completes       |
 | `onRunEnd?`        | After all scenarios complete     |
 
@@ -87,12 +88,13 @@ Summary
 Compact dots for large test suites.
 
 ```
-...F....
+...S.F..
 
-7 passed, 1 failed (245ms)
+6 passed, 1 skipped, 1 failed (245ms)
 ```
 
 - `.` = passed scenario
+- `S` = skipped scenario
 - `F` = failed scenario
 
 ### TAPReporter

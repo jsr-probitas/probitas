@@ -29,7 +29,7 @@ snapshot[`after onScenarioEnd - Simple passing scenario (3) 1`] = `"[32m.[39m
 snapshot[`after onRunEnd 1`] = `
 "[32m.[39m[32m.[39m[32m.[39m
 
-3 scenarios passed, 0 scenarios failed (45ms)
+3 passed, 0 failed (45ms)
 "
 `;
 
@@ -66,7 +66,7 @@ snapshot[`after onScenarioEnd - Simple passing scenario (3) 2`] = `"[32m.[39m
 snapshot[`after onRunEnd 2`] = `
 "[32m.[39m[31mF[39m[32m.[39m
 
-2 scenarios passed, 1 scenarios failed (35ms)
+2 passed, 1 failed (35ms)
 
 [1mFailed Tests[22m
   [31m✗[39m Scenario with failing step [90m>[39m Step that fails [90m(test.scenario.ts:20)[39m
@@ -78,7 +78,7 @@ snapshot[`after onRunStart 3`] = `""`;
 snapshot[`after onRunEnd 3`] = `
 "
 
-0 scenarios passed, 0 scenarios failed (0ms)
+0 passed, 0 failed (0ms)
 "
 `;
 
@@ -111,7 +111,7 @@ snapshot[`after onScenarioEnd - Simple passing scenario (3) 3`] = `"..."`;
 snapshot[`after onRunEnd 4`] = `
 "...
 
-3 scenarios passed, 0 scenarios failed (45ms)
+3 passed, 0 failed (45ms)
 "
 `;
 
@@ -148,7 +148,7 @@ snapshot[`after onScenarioEnd - Simple passing scenario (3) 4`] = `".F."`;
 snapshot[`after onRunEnd 5`] = `
 ".F.
 
-2 scenarios passed, 1 scenarios failed (35ms)
+2 passed, 1 failed (35ms)
 
 Failed Tests
   ✗ Scenario with failing step > Step that fails (test.scenario.ts:20)
@@ -160,6 +160,6 @@ snapshot[`after onRunStart 6`] = `""`;
 snapshot[`after onRunEnd 6`] = `
 "
 
-0 scenarios passed, 0 scenarios failed (0ms)
+0 passed, 0 failed (0ms)
 "
 `;

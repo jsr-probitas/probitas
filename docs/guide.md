@@ -79,6 +79,32 @@ scenario("File Test")
   .build();
 ```
 
+### Skipping Scenarios
+
+Use `Skip` to conditionally skip a scenario based on environment or
+preconditions:
+
+```typescript
+import { scenario, Skip } from "probitas";
+
+export default scenario("Browser Test", { tags: ["e2e"] })
+  .setup(() => {
+    if (!Deno.env.get("BROWSER_PATH")) {
+      throw new Skip("Browser not configured");
+    }
+  })
+  .step("Open browser", () => {
+    // ...
+  })
+  .build();
+```
+
+Skip can be thrown from resource, setup, or step functions. Skipped scenarios:
+
+- Don't count as failures
+- Still run registered cleanups
+- Show as skipped in reporter output (e.g., `⊘` in list, `S` in dot)
+
 ### Multiple Scenarios Per File
 
 Export an array for multiple scenarios:

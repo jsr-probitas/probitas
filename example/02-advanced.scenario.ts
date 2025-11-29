@@ -8,8 +8,9 @@
  * - Scenario options (tags)
  * - Step options (timeout, retry)
  * - Async operations
+ * - Skip for conditional execution
  */
-import { scenario } from "probitas";
+import { scenario, Skip } from "probitas";
 
 // Simulated database for demonstration
 class MockDatabase {
@@ -93,6 +94,23 @@ export default scenario("Advanced Example", {
         verificationPassed: verifyResult.verified,
         totalSteps: ctx.index + 1,
       },
+    };
+  })
+  .step("Optional analytics step", () => {
+    // Skip if analytics endpoint is not configured
+    // This demonstrates Skip usage for optional functionality
+    if (!Deno.env.get("ANALYTICS_ENDPOINT")) {
+      throw new Skip("Analytics endpoint not configured");
+    }
+    return { analyticsEnabled: true };
+  })
+  .step("Final cleanup check", (ctx) => {
+    // This step runs after analytics (or after skip)
+    // Note: If previous step was skipped, the entire scenario is skipped
+    // and this step will NOT execute
+    return {
+      completed: true,
+      previousStepCount: ctx.results.length,
     };
   })
   .build();

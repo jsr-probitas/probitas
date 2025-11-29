@@ -10,6 +10,7 @@
 import { BaseReporter } from "./base_reporter.ts";
 import type {
   ReporterOptions,
+  RunSummary,
   ScenarioDefinition,
   StepDefinition,
   StepResult,
@@ -21,6 +22,7 @@ import type {
 export class TAPReporter extends BaseReporter {
   #testNumber = 0;
   #totalSteps = 0;
+  #skippedScenarioSteps: Map<string, number> = new Map();
 
   /**
    * Initialize TAP reporter
@@ -40,6 +42,14 @@ export class TAPReporter extends BaseReporter {
     scenarios: readonly ScenarioDefinition[],
   ): Promise<void> {
     await super.onRunStart(scenarios);
+
+    // Store step counts per scenario for skip handling
+    for (const scenario of scenarios) {
+      const stepCount = scenario.entries.filter((e) =>
+        e.kind === "step"
+      ).length;
+      this.#skippedScenarioSteps.set(scenario.name, stepCount);
+    }
 
     // Calculate total number of steps
     this.#totalSteps = scenarios.reduce(
@@ -93,5 +103,37 @@ export class TAPReporter extends BaseReporter {
 
       await this.write("  ...\n");
     }
+  }
+
+  /**
+   * Called when scenario is skipped - output SKIP directive for all steps
+   *
+   * @param scenario The scenario that was skipped
+   * @param reason Optional skip reason
+   */
+  async onScenarioSkip(
+    scenario: ScenarioDefinition,
+    reason?: string,
+  ): Promise<void> {
+    const stepCount = this.#skippedScenarioSteps.get(scenario.name) ?? 0;
+    const directive = reason ? `# SKIP ${reason}` : "# SKIP";
+
+    // Output skip for each step in the scenario
+    for (let i = 0; i < stepCount; i++) {
+      this.#testNumber++;
+      await this.write(
+        `ok ${this.#testNumber} - ${scenario.name} ${directive}\n`,
+      );
+    }
+  }
+
+  /**
+   * Called when test run completes - reset state
+   *
+   * @param summary The execution summary
+   */
+  override async onRunEnd(summary: RunSummary): Promise<void> {
+    this.#skippedScenarioSteps.clear();
+    await super.onRunEnd(summary);
   }
 }

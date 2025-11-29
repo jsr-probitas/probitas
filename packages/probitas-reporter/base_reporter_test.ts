@@ -101,6 +101,7 @@ describe("BaseReporter", () => {
         total: 0,
         passed: 0,
         failed: 0,
+        skipped: 0,
         duration: 0,
         scenarios: [],
       });

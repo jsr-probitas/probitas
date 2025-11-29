@@ -91,6 +91,31 @@ export class ListReporter extends BaseReporter {
   }
 
   /**
+   * Called when scenario is skipped
+   *
+   * @param scenario The scenario that was skipped
+   * @param reason Optional skip reason
+   */
+  async onScenarioSkip(
+    scenario: ScenarioDefinition,
+    reason?: string,
+  ): Promise<void> {
+    const icon = this.theme.skip("⊘");
+    const location = scenario.location
+      ? ` ${
+        this.theme.dim(
+          `(${scenario.location.file}:${scenario.location.line})`,
+        )
+      }`
+      : "";
+    const reasonText = reason ? ` ${this.theme.dim(`(${reason})`)}` : "";
+
+    await this.write(
+      `${icon} ${scenario.name}${location}${reasonText}\n`,
+    );
+  }
+
+  /**
    * Called when run ends - output summary
    *
    * @param summary The execution summary
@@ -100,6 +125,12 @@ export class ListReporter extends BaseReporter {
     await this.write(
       `  ${this.theme.success("✓")} ${summary.passed} scenarios passed\n`,
     );
+
+    if (summary.skipped > 0) {
+      await this.write(
+        `  ${this.theme.skip("⊘")} ${summary.skipped} scenarios skipped\n`,
+      );
+    }
 
     if (summary.failed > 0) {
       await this.write(

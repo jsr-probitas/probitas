@@ -21,6 +21,9 @@ export interface Theme {
   /** Failure state (e.g., failed tests) */
   readonly failure: ThemeFunction;
 
+  /** Skipped state (e.g., skipped tests) */
+  readonly skip: ThemeFunction;
+
   /** Dimmed/secondary information (e.g., file paths, timestamps) */
   readonly dim: ThemeFunction;
 

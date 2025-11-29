@@ -70,7 +70,7 @@ export interface ScenarioResult {
   readonly metadata: ScenarioMetadata;
 
   /** Execution status */
-  readonly status: "passed" | "failed";
+  readonly status: "passed" | "failed" | "skipped";
 
   /** Execution duration in milliseconds */
   readonly duration: number;
@@ -80,6 +80,9 @@ export interface ScenarioResult {
 
   /** Error (if failed during setup/teardown) */
   readonly error?: Error;
+
+  /** Skip reason (if skipped) */
+  readonly skipReason?: string;
 }
 
 /**
@@ -94,6 +97,9 @@ export interface RunSummary {
 
   /** Number of failed scenarios */
   readonly failed: number;
+
+  /** Number of skipped scenarios */
+  readonly skipped: number;
 
   /** Total execution duration in milliseconds */
   readonly duration: number;
@@ -232,6 +238,17 @@ export interface Reporter {
     step: StepDefinition,
     error: Error,
     scenario: ScenarioDefinition,
+  ): void | Promise<void>;
+
+  /**
+   * Called when scenario is skipped
+   *
+   * @param scenario - The scenario that was skipped
+   * @param reason - Optional skip reason
+   */
+  onScenarioSkip?(
+    scenario: ScenarioDefinition,
+    reason?: string,
   ): void | Promise<void>;
 
   /**
