@@ -8,7 +8,7 @@ import { parseArgs } from "@std/cli";
 import { resolve } from "@std/path";
 import { EXIT_CODE } from "../constants.ts";
 import { loadConfig } from "../config.ts";
-import { discoverScenarioFiles } from "../discover.ts";
+import { discoverScenarioFiles } from "../../src/discover/mod.ts";
 import {
   createTempSubprocessConfig,
   findDenoConfigFile,

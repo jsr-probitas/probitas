@@ -10,7 +10,7 @@ import type { ScenarioDefinition } from "../../src/runner/types.ts";
 import { applySelectors, loadScenarios } from "../../src/scenario/mod.ts";
 import { EXIT_CODE } from "../constants.ts";
 import { loadConfig } from "../config.ts";
-import { discoverScenarioFiles } from "../discover.ts";
+import { discoverScenarioFiles } from "../../src/discover/mod.ts";
 import { findDenoConfigFile, readAsset } from "../utils.ts";
 
 /**

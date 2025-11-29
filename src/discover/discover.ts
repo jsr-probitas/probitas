@@ -7,7 +7,7 @@
 import { expandGlob } from "@std/fs/expand-glob";
 
 const DEFAULT_INCLUDE_PATTERNS = ["**/*.scenario.ts"];
-const DEFAULT_EXCLUDE_PATTERNS = ["**/.git/**", "**/node_modules/**"];
+const DEFAULT_EXCLUDE_PATTERNS: string[] = [];
 
 /**
  * Options for discovering scenario files
