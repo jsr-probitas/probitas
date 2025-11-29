@@ -1,5 +1,5 @@
 {
-  "name": "@lambdalisue/probitas-cli",
+  "name": "@probitas/cli",
   "version": "0.0.0",
   "exports": "./mod.ts",
   "publish": {
@@ -9,9 +9,9 @@
     ]
   },
   "imports": {
-    "@lambdalisue/probitas-scenario": "jsr:@lambdalisue/probitas-scenario@^0",
-    "@lambdalisue/probitas-runner": "jsr:@lambdalisue/probitas-runner@^0",
-    "@lambdalisue/probitas-reporter": "jsr:@lambdalisue/probitas-reporter@^0",
-    "@lambdalisue/probitas-discover": "jsr:@lambdalisue/probitas-discover@^0"
+    "@probitas/scenario": "jsr:@probitas/scenario@^0",
+    "@probitas/runner": "jsr:@probitas/runner@^0",
+    "@probitas/reporter": "jsr:@probitas/reporter@^0",
+    "@probitas/discover": "jsr:@probitas/discover@^0"
   }
 }

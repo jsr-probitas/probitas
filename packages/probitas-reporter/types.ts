@@ -75,4 +75,4 @@ export type {
   ScenarioResult,
   StepDefinition,
   StepResult,
-} from "@lambdalisue/probitas-runner";
+} from "@probitas/runner";

@@ -5,10 +5,10 @@ Command-line interface for Probitas.
 ## Installation
 
 ```bash
-deno install -gAf -n probitas jsr:@lambdalisue/probitas/cli
+deno install -gAf -n probitas jsr:@probitas/cli
 ```
 
-To update: `deno install -gAfr -n probitas jsr:@lambdalisue/probitas/cli`
+To update: `deno install -gAfr -n probitas jsr:@probitas/cli`
 
 ## Commands
 

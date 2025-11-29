@@ -1,5 +1,5 @@
 {
-  "name": "@lambdalisue/probitas",
+  "name": "@probitas/std",
   "version": "0.0.0",
   "exports": "./mod.ts",
   "publish": {
@@ -9,6 +9,6 @@
     ]
   },
   "imports": {
-    "@lambdalisue/probitas-builder": "jsr:@lambdalisue/probitas-builder@^0"
+    "@probitas/builder": "jsr:@probitas/builder@^0"
   }
 }

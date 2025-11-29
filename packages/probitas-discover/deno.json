@@ -1,5 +1,5 @@
 {
-  "name": "@lambdalisue/probitas-discover",
+  "name": "@probitas/discover",
   "version": "0.0.0",
   "exports": "./mod.ts",
   "publish": {

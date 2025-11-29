@@ -6,10 +6,7 @@
  * @module
  */
 
-import type {
-  ScenarioOptions,
-  StepOptions,
-} from "@lambdalisue/probitas-scenario";
+import type { ScenarioOptions, StepOptions } from "@probitas/scenario";
 
 /**
  * Default scenario options

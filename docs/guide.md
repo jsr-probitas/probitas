@@ -6,7 +6,7 @@ Practical guide for using Probitas.
 
 ```bash
 # Install CLI globally
-deno install -gAf -n probitas jsr:@lambdalisue/probitas/cli
+deno install -gAf -n probitas jsr:@probitas/cli
 
 # Initialize project
 probitas init
@@ -144,7 +144,7 @@ Add to `deno.json` or `deno.jsonc`:
 ```json
 {
   "imports": {
-    "probitas": "jsr:@lambdalisue/probitas"
+    "probitas": "jsr:@probitas/std"
   },
   "probitas": {
     "includes": ["scenarios/**/*.scenario.ts"],

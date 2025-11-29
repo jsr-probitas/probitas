@@ -6,9 +6,9 @@
 
 import { parseArgs } from "@std/cli";
 import { resolve } from "@std/path";
-import type { ScenarioDefinition } from "@lambdalisue/probitas-scenario";
-import { applySelectors, loadScenarios } from "@lambdalisue/probitas-scenario";
-import { discoverScenarioFiles } from "@lambdalisue/probitas-discover";
+import type { ScenarioDefinition } from "@probitas/scenario";
+import { applySelectors, loadScenarios } from "@probitas/scenario";
+import { discoverScenarioFiles } from "@probitas/discover";
 import { EXIT_CODE } from "../constants.ts";
 import { loadConfig } from "../config.ts";
 import { findDenoConfigFile, readAsset } from "../utils.ts";

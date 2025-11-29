@@ -8,9 +8,9 @@
  */
 
 import { as, ensure, is, type Predicate } from "@core/unknownutil";
-import { applySelectors, loadScenarios } from "@lambdalisue/probitas-scenario";
-import type { ReporterOptions } from "@lambdalisue/probitas-reporter";
-import { ScenarioRunner } from "@lambdalisue/probitas-runner";
+import { applySelectors, loadScenarios } from "@probitas/scenario";
+import type { ReporterOptions } from "@probitas/reporter";
+import { ScenarioRunner } from "@probitas/runner";
 import { resolveReporter } from "../../utils.ts";
 
 /**

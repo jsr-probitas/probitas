@@ -18,5 +18,5 @@
  * @module
  */
 
-export { scenario } from "@lambdalisue/probitas-builder";
-export type { StepContext } from "@lambdalisue/probitas-builder";
+export { scenario } from "@probitas/builder";
+export type { StepContext } from "@probitas/builder";

@@ -18,7 +18,7 @@ import type {
   StepDefinition,
   StepFunction,
   StepOptions,
-} from "@lambdalisue/probitas-scenario";
+} from "@probitas/scenario";
 import type { BuilderScenarioOptions, BuilderStepOptions } from "./types.ts";
 import { DEFAULT_SCENARIO_OPTIONS, DEFAULT_STEP_OPTIONS } from "./defaults.ts";
 import { captureSourceLocation } from "./capture_source_location.ts";

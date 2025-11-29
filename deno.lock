@@ -149,34 +149,34 @@
       "jsr:@std/testing@^1.0.16"
     ],
     "members": {
-      "packages/probitas": {
-        "dependencies": [
-          "jsr:@lambdalisue/probitas-builder@0"
-        ]
-      },
       "packages/probitas-builder": {
         "dependencies": [
-          "jsr:@lambdalisue/probitas-runner@0",
-          "jsr:@lambdalisue/probitas-scenario@0"
+          "jsr:@probitas/runner@0",
+          "jsr:@probitas/scenario@0"
         ]
       },
       "packages/probitas-cli": {
         "dependencies": [
-          "jsr:@lambdalisue/probitas-discover@0",
-          "jsr:@lambdalisue/probitas-reporter@0",
-          "jsr:@lambdalisue/probitas-runner@0",
-          "jsr:@lambdalisue/probitas-scenario@0"
+          "jsr:@probitas/discover@0",
+          "jsr:@probitas/reporter@0",
+          "jsr:@probitas/runner@0",
+          "jsr:@probitas/scenario@0"
         ]
       },
       "packages/probitas-reporter": {
         "dependencies": [
-          "jsr:@lambdalisue/probitas-runner@0",
-          "jsr:@lambdalisue/probitas-scenario@0"
+          "jsr:@probitas/runner@0",
+          "jsr:@probitas/scenario@0"
         ]
       },
       "packages/probitas-runner": {
         "dependencies": [
-          "jsr:@lambdalisue/probitas-scenario@0"
+          "jsr:@probitas/scenario@0"
+        ]
+      },
+      "packages/probitas-std": {
+        "dependencies": [
+          "jsr:@probitas/builder@0"
         ]
       }
     }

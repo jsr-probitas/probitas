@@ -4,7 +4,7 @@
  * @module
  */
 
-import type { SourceLocation } from "@lambdalisue/probitas-scenario";
+import type { SourceLocation } from "@probitas/scenario";
 
 /**
  * Parse a single stack trace line to extract file location

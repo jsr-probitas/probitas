@@ -1,5 +1,5 @@
 {
-  "name": "@lambdalisue/probitas-scenario",
+  "name": "@probitas/scenario",
   "version": "0.0.0",
   "exports": "./mod.ts",
   "publish": {

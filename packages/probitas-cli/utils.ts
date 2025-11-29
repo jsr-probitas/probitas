@@ -13,8 +13,8 @@ import {
   JSONReporter,
   ListReporter,
   TAPReporter,
-} from "@lambdalisue/probitas-reporter";
-import type { Reporter, ReporterOptions } from "@lambdalisue/probitas-reporter";
+} from "@probitas/reporter";
+import type { Reporter, ReporterOptions } from "@probitas/reporter";
 
 type DenoConfig = {
   imports?: Record<string, string>;
@@ -113,7 +113,7 @@ export async function readAsset(path: string): Promise<string> {
  * @returns Version string, or undefined if not running from JSR
  */
 export function getVersion(): string | undefined {
-  const prefix = "https://jsr.io/@lambdalisue/probitas/";
+  const prefix = "https://jsr.io/@probitas/std/";
   if (import.meta.url.startsWith(prefix)) {
     return import.meta.url.slice(prefix.length).split("/").at(0);
   }
@@ -188,10 +188,10 @@ async function getProbitasInternalDependencies(): Promise<
   const internalDeps: Record<string, string> = {};
 
   for (const [key, value] of Object.entries(imports)) {
-    if (key.startsWith("jsr:@lambdalisue/probitas")) {
+    if (key.startsWith("jsr:@probitas/")) {
       // Workspace packages override - resolve to absolute URLs
-      // key: "jsr:@lambdalisue/probitas-core@^0" -> "@lambdalisue/probitas-core"
-      const match = key.match(/^jsr:(@lambdalisue\/probitas(?:-\w+)?)@/);
+      // key: "jsr:@probitas/scenario@^0" -> "@probitas/scenario"
+      const match = key.match(/^jsr:(@probitas\/\w+)@/);
       if (match) {
         const packageName = match[1];
         const absoluteUrl = new URL(value, denoConfigUrl).href;
@@ -223,8 +223,9 @@ export async function createTempSubprocessConfig(
   }
 
   // Determine probitas scope key and import path
-  const probitasScope = import.meta.resolve("../probitas/");
-  const probitasImport = new URL("../probitas/mod.ts", import.meta.url).href;
+  const probitasScope = import.meta.resolve("../probitas-std/");
+  const probitasImport =
+    new URL("../probitas-std/mod.ts", import.meta.url).href;
 
   // Get probitas internal dependencies
   const internalDeps = await getProbitasInternalDependencies();

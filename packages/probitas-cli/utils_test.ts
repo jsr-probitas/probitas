@@ -26,7 +26,7 @@ import {
   JSONReporter,
   ListReporter,
   TAPReporter,
-} from "@lambdalisue/probitas-reporter";
+} from "@probitas/reporter";
 
 describe("utils", () => {
   describe("resolveReporter", () => {

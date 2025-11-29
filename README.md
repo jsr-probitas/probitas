@@ -1,8 +1,8 @@
 # ✅ Probitas
 
-[![JSR](https://jsr.io/badges/@lambdalisue/probitas)](https://jsr.io/@lambdalisue/probitas)
-[![Test](https://github.com/lambdalisue/deno-probitas/actions/workflows/test.yml/badge.svg)](https://github.com/lambdalisue/deno-probitas/actions/workflows/test.yml)
-[![codecov](https://codecov.io/github/lambdalisue/deno-probitas/graph/badge.svg?token=Yu0GPZAMv6)](https://codecov.io/github/lambdalisue/deno-probitas)
+[![JSR](https://jsr.io/badges/@probitas/std)](https://jsr.io/@probitas/std)
+[![Test](https://github.com/js-probitas/probitas/actions/workflows/test.yml/badge.svg)](https://github.com/js-probitas/probitas/actions/workflows/test.yml)
+[![codecov](https://codecov.io/github/js-probitas/probitas/graph/badge.svg?token=Yu0GPZAMv6)](https://codecov.io/github/js-probitas/probitas)
 
 Scenario-based testing & workflow execution framework for programmers.
 
@@ -24,7 +24,7 @@ Scenario-based testing & workflow execution framework for programmers.
 ### Installation
 
 ```bash
-deno install -gfA -r -n probitas jsr:@lambdalisue/probitas/cli
+deno install -gfA -r -n probitas jsr:@probitas/cli
 ```
 
 ### Initialize a Project

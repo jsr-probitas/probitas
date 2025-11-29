@@ -14,7 +14,7 @@ import type {
   ScenarioOptions,
   SourceLocation,
   StepOptions,
-} from "@lambdalisue/probitas-runner";
+} from "@probitas/runner";
 import type {
   Reporter,
   ReporterOptions,

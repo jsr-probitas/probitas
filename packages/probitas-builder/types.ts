@@ -7,10 +7,7 @@
  * @module
  */
 
-import type {
-  ScenarioOptions,
-  StepOptions,
-} from "@lambdalisue/probitas-scenario";
+import type { ScenarioOptions, StepOptions } from "@probitas/scenario";
 
 /**
  * Deep partial type - makes all properties and nested properties optional
@@ -43,4 +40,4 @@ export type {
   SetupFunction,
   StepContext,
   StepFunction,
-} from "@lambdalisue/probitas-scenario";
+} from "@probitas/scenario";

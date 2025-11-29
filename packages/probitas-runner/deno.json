@@ -1,5 +1,5 @@
 {
-  "name": "@lambdalisue/probitas-runner",
+  "name": "@probitas/runner",
   "version": "0.0.0",
   "exports": "./mod.ts",
   "publish": {
@@ -9,6 +9,6 @@
     ]
   },
   "imports": {
-    "@lambdalisue/probitas-scenario": "jsr:@lambdalisue/probitas-scenario@^0"
+    "@probitas/scenario": "jsr:@probitas/scenario@^0"
   }
 }

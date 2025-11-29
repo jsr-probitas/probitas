@@ -13,7 +13,7 @@ import type {
   ScenarioOptions,
   StepDefinition,
   StepMetadata,
-} from "@lambdalisue/probitas-scenario";
+} from "@probitas/scenario";
 
 /**
  * Context provided to scenario setup/teardown
@@ -201,4 +201,4 @@ export type {
   StepFunction,
   StepMetadata,
   StepOptions,
-} from "@lambdalisue/probitas-scenario";
+} from "@probitas/scenario";

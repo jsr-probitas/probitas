@@ -1,6 +1,6 @@
 {
   "imports": {
-    "probitas": "jsr:@lambdalisue/probitas{{VERSION}}"
+    "probitas": "jsr:@probitas/std{{VERSION}}"
   },
   "probitas": {
     "reporter": "list",
