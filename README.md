@@ -1,6 +1,6 @@
 # ✅ Probitas
 
-[![JSR](https://jsr.io/badges/@probitas/std)](https://jsr.io/@probitas/std)
+[![JSR](https://jsr.io/badges/@probitas/cli)](https://jsr.io/@probitas/cli)
 [![Test](https://github.com/jsr-probitas/probitas/actions/workflows/test.yml/badge.svg)](https://github.com/jsr-probitas/probitas/actions/workflows/test.yml)
 [![codecov](https://codecov.io/github/jsr-probitas/probitas/graph/badge.svg?token=Yu0GPZAMv6)](https://codecov.io/github/jsr-probitas/probitas)
 
@@ -162,6 +162,18 @@ Add to `deno.json` or `deno.jsonc`:
 - [Guide](docs/guide.md) - Comprehensive usage guide
 - [CLI Reference](docs/cli.md) - Command-line options
 - [Architecture](docs/architecture.md) - Design overview
+
+## Packages
+
+| Package                                                 | Description                              | Version                                                                               |
+| ------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------- |
+| [@probitas/std](https://jsr.io/@probitas/std)           | Standard library for writing scenarios   | [![JSR](https://jsr.io/badges/@probitas/std)](https://jsr.io/@probitas/std)           |
+| [@probitas/cli](https://jsr.io/@probitas/cli)           | Command-line interface                   | [![JSR](https://jsr.io/badges/@probitas/cli)](https://jsr.io/@probitas/cli)           |
+| [@probitas/builder](https://jsr.io/@probitas/builder)   | Type-safe scenario definition API        | [![JSR](https://jsr.io/badges/@probitas/builder)](https://jsr.io/@probitas/builder)   |
+| [@probitas/runner](https://jsr.io/@probitas/runner)     | Scenario execution engine                | [![JSR](https://jsr.io/badges/@probitas/runner)](https://jsr.io/@probitas/runner)     |
+| [@probitas/reporter](https://jsr.io/@probitas/reporter) | Output formatters (List, Dot, JSON, TAP) | [![JSR](https://jsr.io/badges/@probitas/reporter)](https://jsr.io/@probitas/reporter) |
+| [@probitas/scenario](https://jsr.io/@probitas/scenario) | Scenario loading and filtering           | [![JSR](https://jsr.io/badges/@probitas/scenario)](https://jsr.io/@probitas/scenario) |
+| [@probitas/discover](https://jsr.io/@probitas/discover) | File discovery with glob patterns        | [![JSR](https://jsr.io/badges/@probitas/discover)](https://jsr.io/@probitas/discover) |
 
 ## License
 
