@@ -38,15 +38,21 @@ prevents test `console.log` calls from interfering with formatted output.
 
 All event methods are optional. Implement only the ones you need:
 
-| Method             | When Called                  |
-| ------------------ | ---------------------------- |
-| `onRunStart?`      | Before any scenario executes |
-| `onScenarioStart?` | Before a scenario executes   |
-| `onStepStart?`     | Before a step executes       |
-| `onStepEnd?`       | After a step succeeds        |
-| `onStepError?`     | After a step fails           |
-| `onScenarioEnd?`   | After a scenario completes   |
-| `onRunEnd?`        | After all scenarios complete |
+| Method             | When Called                      |
+| ------------------ | -------------------------------- |
+| `onRunStart?`      | Before any scenario executes     |
+| `onScenarioStart?` | Before a scenario executes       |
+| `onResourceStart?` | Before a resource initializes    |
+| `onResourceEnd?`   | After a resource initializes     |
+| `onResourceError?` | When a resource fails            |
+| `onSetupStart?`    | Before a setup function executes |
+| `onSetupEnd?`      | After a setup function executes  |
+| `onSetupError?`    | When a setup function fails      |
+| `onStepStart?`     | Before a step executes           |
+| `onStepEnd?`       | After a step succeeds            |
+| `onStepError?`     | When a step fails                |
+| `onScenarioEnd?`   | After a scenario completes       |
+| `onRunEnd?`        | After all scenarios complete     |
 
 ### ReporterOptions
 

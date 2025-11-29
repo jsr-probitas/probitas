@@ -186,37 +186,74 @@ export class ScenarioRunner {
         try {
           switch (entry.kind) {
             case "resource": {
-              // Initialize resource
-              const resourceCtx = createEntryContext();
-              const resource = await entry.value.factory(resourceCtx);
-              resources[entry.value.name] = resource;
+              // Notify reporter of resource start
+              if (reporter?.onResourceStart) {
+                await reporter.onResourceStart(entry.value, scenario);
+              }
 
-              // Register resource for disposal if it's Disposable
-              if (
-                resource &&
-                typeof resource === "object" &&
-                (Symbol.asyncDispose in resource || Symbol.dispose in resource)
-              ) {
-                stack.use(resource as AsyncDisposable | Disposable);
+              try {
+                // Initialize resource
+                const resourceCtx = createEntryContext();
+                const resource = await entry.value.factory(resourceCtx);
+                resources[entry.value.name] = resource;
+
+                // Register resource for disposal if it's Disposable
+                if (
+                  resource &&
+                  typeof resource === "object" &&
+                  (Symbol.asyncDispose in resource ||
+                    Symbol.dispose in resource)
+                ) {
+                  stack.use(resource as AsyncDisposable | Disposable);
+                }
+
+                // Notify reporter of resource end
+                if (reporter?.onResourceEnd) {
+                  await reporter.onResourceEnd(entry.value, scenario);
+                }
+              } catch (e) {
+                const error = e instanceof Error ? e : new Error(String(e));
+                if (reporter?.onResourceError) {
+                  await reporter.onResourceError(entry.value, error, scenario);
+                }
+                throw error;
               }
               break;
             }
 
             case "setup": {
-              // Execute setup function
-              const setupCtx = createEntryContext();
-              const result = await entry.value.fn(setupCtx);
+              // Notify reporter of setup start
+              if (reporter?.onSetupStart) {
+                await reporter.onSetupStart(entry.value, scenario);
+              }
 
-              // Register cleanup if function/Disposable/AsyncDisposable returned
-              if (result) {
-                if (typeof result === "function") {
-                  stack.defer(result);
-                } else if (
-                  typeof result === "object" &&
-                  (Symbol.asyncDispose in result || Symbol.dispose in result)
-                ) {
-                  stack.use(result as AsyncDisposable | Disposable);
+              try {
+                // Execute setup function
+                const setupCtx = createEntryContext();
+                const result = await entry.value.fn(setupCtx);
+
+                // Register cleanup if function/Disposable/AsyncDisposable returned
+                if (result) {
+                  if (typeof result === "function") {
+                    stack.defer(result);
+                  } else if (
+                    typeof result === "object" &&
+                    (Symbol.asyncDispose in result || Symbol.dispose in result)
+                  ) {
+                    stack.use(result as AsyncDisposable | Disposable);
+                  }
                 }
+
+                // Notify reporter of setup end
+                if (reporter?.onSetupEnd) {
+                  await reporter.onSetupEnd(entry.value, scenario);
+                }
+              } catch (e) {
+                const error = e instanceof Error ? e : new Error(String(e));
+                if (reporter?.onSetupError) {
+                  await reporter.onSetupError(entry.value, error, scenario);
+                }
+                throw error;
               }
               break;
             }

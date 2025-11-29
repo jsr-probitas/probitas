@@ -10,9 +10,11 @@
 import { BaseReporter } from "./base_reporter.ts";
 import type {
   ReporterOptions,
+  ResourceDefinition,
   RunSummary,
   ScenarioDefinition,
   ScenarioResult,
+  SetupDefinition,
   StepDefinition,
   StepResult,
 } from "./types.ts";
@@ -57,6 +59,132 @@ export class JSONReporter extends BaseReporter {
       JSON.stringify({
         type: "scenarioStart",
         scenario,
+      }) + "\n",
+    );
+  }
+
+  /**
+   * Called when resource initialization starts
+   *
+   * @param resource The resource being initialized
+   * @param scenario The scenario being executed
+   */
+  async onResourceStart(
+    resource: ResourceDefinition,
+    scenario: ScenarioDefinition,
+  ): Promise<void> {
+    await this.write(
+      JSON.stringify({
+        type: "resourceStart",
+        resource,
+        scenario,
+      }) + "\n",
+    );
+  }
+
+  /**
+   * Called when resource initialization completes
+   *
+   * @param resource The resource that completed
+   * @param scenario The scenario being executed
+   */
+  async onResourceEnd(
+    resource: ResourceDefinition,
+    scenario: ScenarioDefinition,
+  ): Promise<void> {
+    await this.write(
+      JSON.stringify({
+        type: "resourceEnd",
+        resource,
+        scenario,
+      }) + "\n",
+    );
+  }
+
+  /**
+   * Called when resource initialization fails
+   *
+   * @param resource The resource that failed
+   * @param error The error that occurred
+   * @param scenario The scenario being executed
+   */
+  async onResourceError(
+    resource: ResourceDefinition,
+    error: Error,
+    scenario: ScenarioDefinition,
+  ): Promise<void> {
+    await this.write(
+      JSON.stringify({
+        type: "resourceError",
+        resource,
+        scenario,
+        error: {
+          message: error.message,
+          stack: error.stack ? this.sanitizeStack(error.stack) : undefined,
+        },
+      }) + "\n",
+    );
+  }
+
+  /**
+   * Called when setup starts
+   *
+   * @param setup The setup being executed
+   * @param scenario The scenario being executed
+   */
+  async onSetupStart(
+    setup: SetupDefinition,
+    scenario: ScenarioDefinition,
+  ): Promise<void> {
+    await this.write(
+      JSON.stringify({
+        type: "setupStart",
+        setup,
+        scenario,
+      }) + "\n",
+    );
+  }
+
+  /**
+   * Called when setup completes
+   *
+   * @param setup The setup that completed
+   * @param scenario The scenario being executed
+   */
+  async onSetupEnd(
+    setup: SetupDefinition,
+    scenario: ScenarioDefinition,
+  ): Promise<void> {
+    await this.write(
+      JSON.stringify({
+        type: "setupEnd",
+        setup,
+        scenario,
+      }) + "\n",
+    );
+  }
+
+  /**
+   * Called when setup fails
+   *
+   * @param setup The setup that failed
+   * @param error The error that occurred
+   * @param scenario The scenario being executed
+   */
+  async onSetupError(
+    setup: SetupDefinition,
+    error: Error,
+    scenario: ScenarioDefinition,
+  ): Promise<void> {
+    await this.write(
+      JSON.stringify({
+        type: "setupError",
+        setup,
+        scenario,
+        error: {
+          message: error.message,
+          stack: error.stack ? this.sanitizeStack(error.stack) : undefined,
+        },
       }) + "\n",
     );
   }

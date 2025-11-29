@@ -8,9 +8,11 @@
  */
 
 import type {
+  ResourceDefinition,
   ScenarioDefinition,
   ScenarioMetadata,
   ScenarioOptions,
+  SetupDefinition,
   StepDefinition,
   StepMetadata,
 } from "@probitas/scenario";
@@ -124,6 +126,76 @@ export interface Reporter {
    * Called when scenario starts
    */
   onScenarioStart?(scenario: ScenarioDefinition): void | Promise<void>;
+
+  /**
+   * Called when resource initialization starts
+   *
+   * @param resource - The resource definition being initialized
+   * @param scenario - The scenario containing the resource
+   */
+  onResourceStart?(
+    resource: ResourceDefinition,
+    scenario: ScenarioDefinition,
+  ): void | Promise<void>;
+
+  /**
+   * Called when resource initialization completes
+   *
+   * @param resource - The resource definition that completed
+   * @param scenario - The scenario containing the resource
+   */
+  onResourceEnd?(
+    resource: ResourceDefinition,
+    scenario: ScenarioDefinition,
+  ): void | Promise<void>;
+
+  /**
+   * Called when resource initialization fails
+   *
+   * @param resource - The resource definition that failed
+   * @param error - The error that occurred
+   * @param scenario - The scenario containing the resource
+   */
+  onResourceError?(
+    resource: ResourceDefinition,
+    error: Error,
+    scenario: ScenarioDefinition,
+  ): void | Promise<void>;
+
+  /**
+   * Called when setup starts
+   *
+   * @param setup - The setup definition being executed
+   * @param scenario - The scenario containing the setup
+   */
+  onSetupStart?(
+    setup: SetupDefinition,
+    scenario: ScenarioDefinition,
+  ): void | Promise<void>;
+
+  /**
+   * Called when setup completes
+   *
+   * @param setup - The setup definition that completed
+   * @param scenario - The scenario containing the setup
+   */
+  onSetupEnd?(
+    setup: SetupDefinition,
+    scenario: ScenarioDefinition,
+  ): void | Promise<void>;
+
+  /**
+   * Called when setup fails
+   *
+   * @param setup - The setup definition that failed
+   * @param error - The error that occurred
+   * @param scenario - The scenario containing the setup
+   */
+  onSetupError?(
+    setup: SetupDefinition,
+    error: Error,
+    scenario: ScenarioDefinition,
+  ): void | Promise<void>;
 
   /**
    * Called when step starts
