@@ -23,8 +23,14 @@ Scenario-based testing & workflow execution framework for Deno.
 ### Installation
 
 ```bash
-deno install -gAf -n probitas jsr:@probitas/cli
+deno install -grAf -n probitas jsr:@probitas/cli
 ```
+
+- `-g` Global install
+- `-r` Reload cache (fetch latest version)
+- `-A` All permissions
+- `-f` Force overwrite existing
+- `-n probitas` Command name
 
 ### Initialize a Project
 
