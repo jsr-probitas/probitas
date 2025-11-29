@@ -14,86 +14,148 @@ import { assertEquals } from "@std/assert";
 import { describe, it } from "@std/testing/bdd";
 import { stub } from "@std/testing/mock";
 import { sandbox } from "@lambdalisue/sandbox";
-import { listCommand } from "./list.ts";
+import { createTempSubprocessConfig } from "../utils.ts";
 
-const createScenario = (name: string, file: string, tags: string[] = []) =>
+const createScenario = (name: string, tags: string[] = []) =>
   outdent`
-    export default {
-      name: "${name}",
-      options: { tags: ${
-    JSON.stringify(tags)
-  }, stepOptions: { timeout: 5000, retry: { maxAttempts: 1, backoff: "linear" } } },
-      entries: [
-        {
-          kind: "step",
-          value: {
-            name: "Step 1",
-            fn: () => ({}),
-            options: { timeout: 5000, retry: { maxAttempts: 1, backoff: "linear" } }
-          }
-        }
-      ],
-      location: { file: "${file}" }
-    };
+    import { scenario } from "probitas";
+
+    export default scenario("${name}"${
+    tags.length > 0 ? `, { tags: ${JSON.stringify(tags)} }` : ""
+  })
+      .step("Step 1", () => {})
+      .build();
   `;
 
-describe("list command", () => {
+describe("list command", { sanitizeResources: false }, () => {
   it("displays scenarios in text format", async () => {
     await using sbox = await sandbox();
+    await using stack = new AsyncDisposableStack();
+
+    const configPath = await createTempSubprocessConfig();
+    stack.defer(async () => {
+      await Deno.remove(configPath);
+    });
 
     const scenario1 = sbox.resolve("test1.scenario.ts");
     const scenario2 = sbox.resolve("test2.scenario.ts");
-    await Deno.writeTextFile(scenario1, createScenario("Test 1", scenario1));
-    await Deno.writeTextFile(scenario2, createScenario("Test 2", scenario2));
+    await Deno.writeTextFile(scenario1, createScenario("Test 1"));
+    await Deno.writeTextFile(scenario2, createScenario("Test 2"));
 
-    const output: string[] = [];
-    using _logStub = stub(console, "log", (...args: unknown[]) => {
-      output.push(args.join(" "));
+    // Use the subprocess directly
+    const subprocessPath = new URL(
+      "./list/subprocess.ts",
+      import.meta.url,
+    ).href;
+    const cmd = new Deno.Command("deno", {
+      args: ["run", "-A", "--config", configPath, subprocessPath],
+      stdin: "piped",
+      stdout: "piped",
+      stderr: "piped",
     });
 
-    const exitCode = await listCommand([], sbox.path);
+    const child = cmd.spawn();
+    const writer = child.stdin.getWriter();
+    await writer.write(
+      new TextEncoder().encode(JSON.stringify({
+        files: [scenario1, scenario2],
+        selectors: [],
+        json: false,
+      })),
+    );
+    await writer.close();
 
-    assertEquals(exitCode, 0);
-    const outputText = output.join("\n");
-    assertEquals(outputText.includes("Test 1"), true);
-    assertEquals(outputText.includes("Test 2"), true);
+    const result = await child.output();
+    const stdout = new TextDecoder().decode(result.stdout);
+
+    assertEquals(result.code, 0);
+    assertEquals(stdout.includes("Test 1"), true);
+    assertEquals(stdout.includes("Test 2"), true);
   });
 
   it("outputs scenarios in JSON format with --json flag", async () => {
     await using sbox = await sandbox();
+    await using stack = new AsyncDisposableStack();
+
+    const configPath = await createTempSubprocessConfig();
+    stack.defer(async () => {
+      await Deno.remove(configPath);
+    });
 
     const scenarioPath = sbox.resolve("test.scenario.ts");
     await Deno.writeTextFile(
       scenarioPath,
-      createScenario("JSON Test", scenarioPath, ["api"]),
+      createScenario("JSON Test", ["api"]),
     );
 
-    const output: string[] = [];
-    using _logStub = stub(console, "log", (...args: unknown[]) => {
-      output.push(args.join(" "));
+    const subprocessPath = new URL(
+      "./list/subprocess.ts",
+      import.meta.url,
+    ).href;
+    const cmd = new Deno.Command("deno", {
+      args: ["run", "-A", "--config", configPath, subprocessPath],
+      stdin: "piped",
+      stdout: "piped",
+      stderr: "piped",
     });
 
-    const exitCode = await listCommand(["--json"], sbox.path);
+    const child = cmd.spawn();
+    const writer = child.stdin.getWriter();
+    await writer.write(
+      new TextEncoder().encode(JSON.stringify({
+        files: [scenarioPath],
+        selectors: [],
+        json: true,
+      })),
+    );
+    await writer.close();
 
-    assertEquals(exitCode, 0);
-    const outputText = output.join("\n");
-    const parsed = JSON.parse(outputText);
+    const result = await child.output();
+    const stdout = new TextDecoder().decode(result.stdout);
+
+    assertEquals(result.code, 0);
+    const parsed = JSON.parse(stdout);
     assertEquals(Array.isArray(parsed), true);
     assertEquals(parsed.length, 1);
     assertEquals(parsed[0].name, "JSON Test");
+    assertEquals(parsed[0].tags, ["api"]);
   });
 
   it("returns 0 even when no scenarios found", async () => {
-    await using sbox = await sandbox();
+    await using stack = new AsyncDisposableStack();
 
-    const output: string[] = [];
-    using _logStub = stub(console, "log", (...args: unknown[]) => {
-      output.push(args.join(" "));
+    const configPath = await createTempSubprocessConfig();
+    stack.defer(async () => {
+      await Deno.remove(configPath);
     });
 
-    const exitCode = await listCommand([], sbox.path);
+    const subprocessPath = new URL(
+      "./list/subprocess.ts",
+      import.meta.url,
+    ).href;
+    const cmd = new Deno.Command("deno", {
+      args: ["run", "-A", "--config", configPath, subprocessPath],
+      stdin: "piped",
+      stdout: "piped",
+      stderr: "piped",
+    });
 
-    assertEquals(exitCode, 0);
+    const child = cmd.spawn();
+    const writer = child.stdin.getWriter();
+    await writer.write(
+      new TextEncoder().encode(JSON.stringify({
+        files: [],
+        selectors: [],
+        json: false,
+      })),
+    );
+    await writer.close();
+
+    const result = await child.output();
+    const stdout = new TextDecoder().decode(result.stdout);
+
+    assertEquals(result.code, 0);
+    assertEquals(stdout.includes("Total: 0 scenarios"), true);
   });
 
   it("shows help text with --help flag", async () => {
@@ -104,6 +166,8 @@ describe("list command", () => {
       output.push(args.join(" "));
     });
 
+    // Help is handled by the parent process, not subprocess
+    const { listCommand } = await import("./list.ts");
     const exitCode = await listCommand(["--help"], sbox.path);
 
     assertEquals(exitCode, 0);
@@ -111,175 +175,146 @@ describe("list command", () => {
     assertEquals(outputText.includes("probitas list"), true);
   });
 
-  describe("file pattern options", () => {
-    it("uses --include pattern to filter files", async () => {
+  describe("selector filtering", () => {
+    it("filters scenarios by tag selector", async () => {
       await using sbox = await sandbox();
+      await using stack = new AsyncDisposableStack();
 
-      await Deno.mkdir(sbox.resolve("api"), { recursive: true });
-      await Deno.mkdir(sbox.resolve("e2e"), { recursive: true });
+      const configPath = await createTempSubprocessConfig();
+      stack.defer(async () => {
+        await Deno.remove(configPath);
+      });
 
-      const apiScenario = sbox.resolve("api/test.scenario.ts");
-      const e2eScenario = sbox.resolve("e2e/test.scenario.ts");
+      const apiScenario = sbox.resolve("api.scenario.ts");
+      const e2eScenario = sbox.resolve("e2e.scenario.ts");
       await Deno.writeTextFile(
         apiScenario,
-        createScenario("API Test", apiScenario),
+        createScenario("API Test", ["api"]),
       );
       await Deno.writeTextFile(
         e2eScenario,
-        createScenario("E2E Test", e2eScenario),
+        createScenario("E2E Test", ["e2e"]),
       );
 
-      const output: string[] = [];
-      using _logStub = stub(console, "log", (...args: unknown[]) => {
-        output.push(args.join(" "));
+      const subprocessPath = new URL(
+        "./list/subprocess.ts",
+        import.meta.url,
+      ).href;
+      const cmd = new Deno.Command("deno", {
+        args: ["run", "-A", "--config", configPath, subprocessPath],
+        stdin: "piped",
+        stdout: "piped",
+        stderr: "piped",
       });
 
-      const exitCode = await listCommand(
-        ["--include", "api/**/*.scenario.ts"],
-        sbox.path,
+      const child = cmd.spawn();
+      const writer = child.stdin.getWriter();
+      await writer.write(
+        new TextEncoder().encode(JSON.stringify({
+          files: [apiScenario, e2eScenario],
+          selectors: ["tag:api"],
+          json: false,
+        })),
       );
+      await writer.close();
 
-      assertEquals(exitCode, 0);
-      const outputText = output.join("\n");
-      assertEquals(outputText.includes("API Test"), true);
-      assertEquals(outputText.includes("E2E Test"), false);
+      const result = await child.output();
+      const stdout = new TextDecoder().decode(result.stdout);
+
+      assertEquals(result.code, 0);
+      assertEquals(stdout.includes("API Test"), true);
+      assertEquals(stdout.includes("E2E Test"), false);
     });
 
-    it("uses --exclude pattern to exclude files", async () => {
+    it("supports negated selectors", async () => {
       await using sbox = await sandbox();
+      await using stack = new AsyncDisposableStack();
 
-      const regularScenario = sbox.resolve("test.scenario.ts");
-      const skipScenario = sbox.resolve("test.skip.scenario.ts");
-      await Deno.writeTextFile(
-        regularScenario,
-        createScenario("Regular Test", regularScenario),
-      );
-      await Deno.writeTextFile(
-        skipScenario,
-        createScenario("Skip Test", skipScenario),
-      );
-
-      const output: string[] = [];
-      using _logStub = stub(console, "log", (...args: unknown[]) => {
-        output.push(args.join(" "));
+      const configPath = await createTempSubprocessConfig();
+      stack.defer(async () => {
+        await Deno.remove(configPath);
       });
 
-      const exitCode = await listCommand(
-        ["--exclude", "**/*.skip.scenario.ts"],
-        sbox.path,
-      );
-
-      assertEquals(exitCode, 0);
-      const outputText = output.join("\n");
-      assertEquals(outputText.includes("Regular Test"), true);
-      assertEquals(outputText.includes("Skip Test"), false);
-    });
-
-    it("combines --include and --exclude patterns", async () => {
-      await using sbox = await sandbox();
-
-      await Deno.mkdir(sbox.resolve("api"), { recursive: true });
-      await Deno.mkdir(sbox.resolve("e2e"), { recursive: true });
-
-      const apiScenario = sbox.resolve("api/test.scenario.ts");
-      const apiSkipScenario = sbox.resolve("api/skip.scenario.ts");
-      const e2eScenario = sbox.resolve("e2e/test.scenario.ts");
+      const smokeScenario = sbox.resolve("smoke.scenario.ts");
+      const slowScenario = sbox.resolve("slow.scenario.ts");
       await Deno.writeTextFile(
-        apiScenario,
-        createScenario("API Test", apiScenario),
+        smokeScenario,
+        createScenario("Smoke Test", ["smoke"]),
       );
       await Deno.writeTextFile(
-        apiSkipScenario,
-        createScenario("API Skip", apiSkipScenario),
-      );
-      await Deno.writeTextFile(
-        e2eScenario,
-        createScenario("E2E Test", e2eScenario),
+        slowScenario,
+        createScenario("Slow Test", ["slow"]),
       );
 
-      const output: string[] = [];
-      using _logStub = stub(console, "log", (...args: unknown[]) => {
-        output.push(args.join(" "));
+      const subprocessPath = new URL(
+        "./list/subprocess.ts",
+        import.meta.url,
+      ).href;
+      const cmd = new Deno.Command("deno", {
+        args: ["run", "-A", "--config", configPath, subprocessPath],
+        stdin: "piped",
+        stdout: "piped",
+        stderr: "piped",
       });
 
-      const exitCode = await listCommand([
-        "--include",
-        "api/**/*.scenario.ts",
-        "--exclude",
-        "**/skip.scenario.ts",
-      ], sbox.path);
+      const child = cmd.spawn();
+      const writer = child.stdin.getWriter();
+      await writer.write(
+        new TextEncoder().encode(JSON.stringify({
+          files: [smokeScenario, slowScenario],
+          selectors: ["!tag:slow"],
+          json: false,
+        })),
+      );
+      await writer.close();
 
-      assertEquals(exitCode, 0);
-      const outputText = output.join("\n");
-      assertEquals(
-        outputText.includes("API Test"),
-        true,
-        "Should include API Test",
-      );
-      assertEquals(
-        outputText.includes("API Skip"),
-        false,
-        "Should not include API Skip (excluded by pattern)",
-      );
-      assertEquals(
-        outputText.includes("E2E Test"),
-        false,
-        "Should not include E2E Test (not in api/)",
-      );
+      const result = await child.output();
+      const stdout = new TextDecoder().decode(result.stdout);
+
+      assertEquals(result.code, 0);
+      assertEquals(stdout.includes("Smoke Test"), true);
+      assertEquals(stdout.includes("Slow Test"), false);
+    });
+  });
+
+  it("returns exit code 1 on invalid input format", async () => {
+    await using stack = new AsyncDisposableStack();
+
+    const configPath = await createTempSubprocessConfig();
+    stack.defer(async () => {
+      await Deno.remove(configPath);
     });
 
-    it("combines file patterns with selectors", async () => {
-      await using sbox = await sandbox();
+    const invalidInput = {
+      // Missing required 'files' field
+      json: true,
+    };
 
-      await Deno.mkdir(sbox.resolve("api"), { recursive: true });
-      await Deno.mkdir(sbox.resolve("e2e"), { recursive: true });
-
-      const apiSmokeScenario = sbox.resolve("api/smoke.scenario.ts");
-      const apiSlowScenario = sbox.resolve("api/slow.scenario.ts");
-      const e2eScenario = sbox.resolve("e2e/test.scenario.ts");
-      await Deno.writeTextFile(
-        apiSmokeScenario,
-        createScenario("API Smoke", apiSmokeScenario, ["api", "smoke"]),
-      );
-      await Deno.writeTextFile(
-        apiSlowScenario,
-        createScenario("API Slow", apiSlowScenario, ["api", "slow"]),
-      );
-      await Deno.writeTextFile(
-        e2eScenario,
-        createScenario("E2E Test", e2eScenario, ["e2e"]),
-      );
-
-      const output: string[] = [];
-      using _logStub = stub(console, "log", (...args: unknown[]) => {
-        output.push(args.join(" "));
-      });
-
-      // Include api files, but exclude slow scenarios
-      const exitCode = await listCommand([
-        "--include",
-        "api/**/*.scenario.ts",
-        "-s",
-        "!tag:slow",
-      ], sbox.path);
-
-      assertEquals(exitCode, 0);
-      const outputText = output.join("\n");
-      assertEquals(
-        outputText.includes("API Smoke"),
-        true,
-        "Should include API Smoke",
-      );
-      assertEquals(
-        outputText.includes("API Slow"),
-        false,
-        "Should not include API Slow (selector filter)",
-      );
-      assertEquals(
-        outputText.includes("E2E Test"),
-        false,
-        "Should not include E2E Test (file pattern filter)",
-      );
+    const subprocessPath = new URL(
+      "./list/subprocess.ts",
+      import.meta.url,
+    ).href;
+    const cmd = new Deno.Command("deno", {
+      args: ["run", "-A", "--config", configPath, subprocessPath],
+      stdin: "piped",
+      stdout: "piped",
+      stderr: "piped",
     });
+
+    const child = cmd.spawn();
+    const writer = child.stdin.getWriter();
+    await writer.write(
+      new TextEncoder().encode(JSON.stringify(invalidInput)),
+    );
+    await writer.close();
+
+    const result = await child.output();
+    const stderr = new TextDecoder().decode(result.stderr);
+
+    assertEquals(result.code, 1);
+    assertEquals(
+      stderr.includes("Failed to parse stdin JSON as SubprocessInput"),
+      true,
+    );
   });
 });

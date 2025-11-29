@@ -1,5 +1,5 @@
 /**
- * Tests for subprocess runner
+ * Tests for run subprocess
  *
  * @module
  */
@@ -10,7 +10,7 @@ import { describe, it } from "@std/testing/bdd";
 import { sandbox } from "@lambdalisue/sandbox";
 import { createTempSubprocessConfig } from "../../utils.ts";
 
-describe("runner_subprocess", { sanitizeResources: false }, () => {
+describe("run subprocess", { sanitizeResources: false }, () => {
   it("runs scenario files and returns exit code 0 on success", async () => {
     await using sbox = await sandbox();
     await using stack = new AsyncDisposableStack();
@@ -45,9 +45,9 @@ describe("runner_subprocess", { sanitizeResources: false }, () => {
     };
 
     // Run the subprocess runner
-    const runnerPath = new URL("./runner.ts", import.meta.url).href;
+    const subprocessPath = new URL("./subprocess.ts", import.meta.url).href;
     const cmd = new Deno.Command("deno", {
-      args: ["run", "-A", "--config", configPath, runnerPath],
+      args: ["run", "-A", "--config", configPath, subprocessPath],
       stdin: "piped",
       stdout: "piped",
       stderr: "piped",
@@ -104,9 +104,9 @@ describe("runner_subprocess", { sanitizeResources: false }, () => {
       verbosity: "quiet" as const,
     };
 
-    const runnerPath = new URL("./runner.ts", import.meta.url).href;
+    const subprocessPath = new URL("./subprocess.ts", import.meta.url).href;
     const cmd = new Deno.Command("deno", {
-      args: ["run", "-A", "--config", configPath, runnerPath],
+      args: ["run", "-A", "--config", configPath, subprocessPath],
       stdin: "piped",
       stdout: "piped",
       stderr: "piped",
@@ -153,9 +153,9 @@ describe("runner_subprocess", { sanitizeResources: false }, () => {
       verbosity: "quiet" as const,
     };
 
-    const runnerPath = new URL("./runner.ts", import.meta.url).href;
+    const subprocessPath = new URL("./subprocess.ts", import.meta.url).href;
     const cmd = new Deno.Command("deno", {
-      args: ["run", "-A", "--config", configPath, runnerPath],
+      args: ["run", "-A", "--config", configPath, subprocessPath],
       stdin: "piped",
       stdout: "piped",
       stderr: "piped",
@@ -207,9 +207,9 @@ describe("runner_subprocess", { sanitizeResources: false }, () => {
       verbosity: "quiet" as const,
     };
 
-    const runnerPath = new URL("./runner.ts", import.meta.url).href;
+    const subprocessPath = new URL("./subprocess.ts", import.meta.url).href;
     const cmd = new Deno.Command("deno", {
-      args: ["run", "-A", "--config", configPath, runnerPath],
+      args: ["run", "-A", "--config", configPath, subprocessPath],
       stdin: "piped",
       stdout: "piped",
       stderr: "piped",
@@ -240,9 +240,9 @@ describe("runner_subprocess", { sanitizeResources: false }, () => {
       reporter: "dot",
     };
 
-    const runnerPath = new URL("./runner.ts", import.meta.url).href;
+    const subprocessPath = new URL("./subprocess.ts", import.meta.url).href;
     const cmd = new Deno.Command("deno", {
-      args: ["run", "-A", "--config", configPath, runnerPath],
+      args: ["run", "-A", "--config", configPath, subprocessPath],
       stdin: "piped",
       stdout: "piped",
       stderr: "piped",

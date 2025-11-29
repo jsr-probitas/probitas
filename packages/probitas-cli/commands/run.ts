@@ -156,7 +156,7 @@ export async function runCommand(
 
     // Subprocess path
     const subprocessPath = new URL(
-      "./run/runner.ts",
+      "./run/subprocess.ts",
       import.meta.url,
     ).href;
 

@@ -6,12 +6,14 @@
 
 import { parseArgs } from "@std/cli";
 import { resolve } from "@std/path";
-import type { ScenarioDefinition } from "@probitas/scenario";
-import { applySelectors, loadScenarios } from "@probitas/scenario";
 import { discoverScenarioFiles } from "@probitas/discover";
 import { EXIT_CODE } from "../constants.ts";
 import { loadConfig } from "../config.ts";
-import { findDenoConfigFile, readAsset } from "../utils.ts";
+import {
+  createTempSubprocessConfig,
+  findDenoConfigFile,
+  readAsset,
+} from "../utils.ts";
 
 /**
  * Execute the list command
@@ -78,84 +80,64 @@ export async function listCommand(
         excludes,
       },
     );
-    const scenarios = await loadScenarios(scenarioFiles, {
-      onImportError: (file, err) => {
-        const m = err instanceof Error ? err.message : String(err);
-        throw new Error(`Failed to load scenario from ${file}: ${m}`);
-      },
+
+    // Build subprocess input
+    const selectors = parsed.selector ?? config?.selectors ?? [];
+    const subprocessInput = {
+      files: scenarioFiles,
+      selectors,
+      json: parsed.json,
+    };
+
+    // Prepare config file for subprocess with scopes
+    await using stack = new AsyncDisposableStack();
+
+    // Create temporary deno.json with scopes
+    const subprocessConfigPath = await createTempSubprocessConfig(configPath);
+    stack.defer(async () => {
+      await Deno.remove(subprocessConfigPath);
     });
 
-    // Apply selectors to filter scenarios
-    const selectors = parsed.selector ?? config?.selectors ?? [];
-    const filteredScenarios = applySelectors(scenarios, selectors);
+    // Subprocess path
+    const subprocessPath = new URL(
+      "./list/subprocess.ts",
+      import.meta.url,
+    ).href;
 
-    // Output results (list always succeeds even with 0 scenarios)
-    if (parsed.json) {
-      outputJson(filteredScenarios);
-    } else {
-      outputText(scenarios, filteredScenarios);
-    }
+    // Build subprocess arguments
+    const subprocessArgs = [
+      "run",
+      "-A", // All permissions
+      "--config",
+      subprocessConfigPath,
+      subprocessPath,
+    ];
 
-    return EXIT_CODE.SUCCESS;
+    // Spawn subprocess
+    const cmd = new Deno.Command("deno", {
+      args: subprocessArgs,
+      cwd,
+      stdin: "piped",
+      stdout: "inherit", // Pass through to parent
+      stderr: "inherit", // Pass through to parent
+    });
+
+    const child = cmd.spawn();
+
+    // Send configuration via stdin
+    const writer = child.stdin.getWriter();
+    await writer.write(
+      new TextEncoder().encode(JSON.stringify(subprocessInput)),
+    );
+    await writer.close();
+
+    // Wait for subprocess to complete
+    const result = await child.status;
+
+    return result.code === 0 ? EXIT_CODE.SUCCESS : EXIT_CODE.FAILURE;
   } catch (err: unknown) {
     const m = err instanceof Error ? err.message : String(err);
     console.error(`Unexpected error: ${m}`);
     return EXIT_CODE.USAGE_ERROR;
   }
-}
-
-/**
- * Output scenarios in text format
- *
- * @param allScenarios - All scenarios (to group by file)
- * @param filteredScenarios - Filtered scenarios to display
- */
-function outputText(
-  allScenarios: ScenarioDefinition[],
-  filteredScenarios: ScenarioDefinition[],
-): void {
-  // Group scenarios by file
-  const byFile = new Map<string, ScenarioDefinition[]>();
-
-  for (const scenario of allScenarios) {
-    const file = scenario.location?.file || "unknown";
-    if (!byFile.has(file)) {
-      byFile.set(file, []);
-    }
-    byFile.get(file)!.push(scenario);
-  }
-
-  // Output grouped scenarios
-  let outputCount = 0;
-  for (const [file, scenariosInFile] of byFile) {
-    console.log(file);
-    for (const scenario of scenariosInFile) {
-      if (filteredScenarios.includes(scenario)) {
-        console.log(`  ${scenario.name}`);
-        outputCount++;
-      }
-    }
-  }
-
-  console.log(
-    `\nTotal: ${outputCount} scenario${
-      outputCount === 1 ? "" : "s"
-    } in ${byFile.size} file${byFile.size === 1 ? "" : "s"}`,
-  );
-}
-
-/**
- * Output scenarios in JSON format
- *
- * @param scenarios - Scenarios to output
- */
-function outputJson(scenarios: ScenarioDefinition[]): void {
-  const output = scenarios.map((scenario) => ({
-    name: scenario.name,
-    tags: scenario.options.tags,
-    steps: scenario.entries.filter((e) => e.kind === "step").length,
-    file: scenario.location?.file || "unknown",
-  }));
-
-  console.log(JSON.stringify(output, null, 2));
 }

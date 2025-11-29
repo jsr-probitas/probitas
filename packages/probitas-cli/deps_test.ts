@@ -56,6 +56,24 @@ function extractExternalImports(source: string): Set<string> {
 }
 
 describe("CLI package dependencies", () => {
+  it("deno.json contains 'probitas' alias for user scenarios", async () => {
+    // Read CLI package's deno.json
+    const denoJsonPath = new URL("./deno.json", import.meta.url);
+    const denoJson = await fetch(denoJsonPath).then((r) => r.json()) as {
+      imports?: Record<string, string>;
+    };
+
+    // The "probitas" alias is essential for user scenarios that use:
+    // import { scenario } from "probitas";
+    assertEquals(
+      denoJson.imports?.["probitas"] !== undefined,
+      true,
+      `Missing "probitas" alias in packages/probitas-cli/deno.json.\n` +
+        `User scenarios typically use 'import { scenario } from "probitas"'.\n` +
+        `Add '"probitas": "jsr:@probitas/std@^0"' to the "imports" section.`,
+    );
+  });
+
   it("deno.json contains all external dependencies used by probitas packages", async () => {
     // Read CLI package's deno.json
     const denoJsonPath = new URL("./deno.json", import.meta.url);

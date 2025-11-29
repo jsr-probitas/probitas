@@ -9,6 +9,7 @@
     ]
   },
   "imports": {
+    "probitas": "jsr:@probitas/std@^0",
     "@probitas/std": "jsr:@probitas/std@^0",
     "@probitas/scenario": "jsr:@probitas/scenario@^0",
     "@probitas/runner": "jsr:@probitas/runner@^0",
