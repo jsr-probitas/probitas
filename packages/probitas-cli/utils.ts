@@ -173,37 +173,48 @@ export async function findDenoConfigFile(
 }
 
 /**
- * Get probitas internal dependencies from bundled deno.jsonc
+ * Get probitas dependencies by reading the CLI package's deno.json
  *
- * @returns Record of internal dependencies for scopes
+ * This reads the deno.json bundled with the CLI package to get all dependencies.
+ * Works in both development (workspace) and production (JSR) environments.
+ *
+ * @returns Record of dependencies for import map
  */
-async function getProbitasInternalDependencies(): Promise<
-  Record<string, string>
-> {
-  const denoConfigUrl = new URL("../../deno.jsonc", import.meta.url);
-  const text = await fetch(denoConfigUrl).then((r) => r.text());
-  const config = ensure(parseJsonc(text), isDenoConfig);
+async function getProbitasDependencies(): Promise<Record<string, string>> {
+  // Read CLI package's deno.json (relative to this file)
+  const denoJsonUrl = new URL("./deno.json", import.meta.url);
+  const resp = await fetch(denoJsonUrl);
+  const denoJson = await resp.json() as { imports?: Record<string, string> };
 
-  const imports = config.imports || {};
-  const internalDeps: Record<string, string> = {};
+  const deps: Record<string, string> = {};
 
-  for (const [key, value] of Object.entries(imports)) {
-    if (key.startsWith("jsr:@probitas/")) {
-      // Workspace packages override - resolve to absolute URLs
-      // key: "jsr:@probitas/scenario@^0" -> "@probitas/scenario"
-      const match = key.match(/^jsr:(@probitas\/\w+)@/);
-      if (match) {
-        const packageName = match[1];
-        const absoluteUrl = new URL(value, denoConfigUrl).href;
-        internalDeps[packageName] = absoluteUrl;
+  // Include all imports from the CLI package's deno.json
+  if (denoJson.imports) {
+    for (const [key, value] of Object.entries(denoJson.imports)) {
+      // For @probitas/* packages, use import.meta.resolve to get the actual URL
+      // (handles both development workspace and JSR environments)
+      // For other packages, keep the original JSR specifier so Deno can resolve submodules
+      if (key.startsWith("@probitas/")) {
+        try {
+          deps[key] = import.meta.resolve(key);
+        } catch {
+          deps[key] = value;
+        }
+      } else {
+        // Keep JSR specifiers as-is for proper submodule resolution
+        deps[key] = value;
       }
-    } else if (value.startsWith("jsr:")) {
-      // External JSR dependencies
-      internalDeps[key] = value;
     }
   }
 
-  return internalDeps;
+  // Always include probitas alias
+  try {
+    deps["probitas"] = import.meta.resolve("@probitas/std");
+  } catch {
+    // Not available
+  }
+
+  return deps;
 }
 
 /**
@@ -222,26 +233,25 @@ export async function createTempSubprocessConfig(
     userDenoConfig = ensure(parseJsonc(text), isDenoConfig);
   }
 
-  // Determine probitas scope key and import path
-  const probitasScope = import.meta.resolve("../probitas-std/");
-  const probitasImport =
-    new URL("../probitas-std/mod.ts", import.meta.url).href;
+  // Get probitas dependencies from CLI package's deno.json
+  const deps = await getProbitasDependencies();
 
-  // Get probitas internal dependencies
-  const internalDeps = await getProbitasInternalDependencies();
+  // Determine probitas scope key
+  const probitasStdUrl = deps["probitas"] ?? deps["@probitas/std"];
+  // Scope key should be the directory containing probitas-std
+  const probitasScope = probitasStdUrl?.replace(/mod\.ts$/, "") ?? "";
 
   // Only include imports and scopes from user config
   // Exclude workspace, tasks, exclude, etc. as they use relative paths
   const mergedConfig = {
     imports: {
       ...(userDenoConfig?.imports ?? {}),
-      ...internalDeps, // All probitas internal dependencies
-      probitas: probitasImport, // Override user's probitas import
+      ...deps, // All probitas dependencies
     },
     scopes: {
       ...(userDenoConfig?.scopes ?? {}),
-      // Probitas internal dependencies (isolated from user's code)
-      [probitasScope]: internalDeps,
+      // Probitas dependencies scoped to probitas-std directory
+      ...(probitasScope ? { [probitasScope]: deps } : {}),
     },
   };
 

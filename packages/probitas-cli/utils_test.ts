@@ -251,10 +251,11 @@ describe("utils", () => {
       const scopeKeys = Object.keys(config.scopes);
       assertEquals(scopeKeys.length > 0, true);
 
-      // Scope should contain internal dependencies
+      // Scope should contain probitas packages and external dependencies
       const firstScope = config.scopes[scopeKeys[0]];
+      assertEquals(typeof firstScope["@probitas/scenario"], "string");
       assertEquals(typeof firstScope["@core/unknownutil"], "string");
-      assertEquals(typeof firstScope["@std/async"], "string");
+      assertEquals(typeof firstScope["@std/cli"], "string");
     });
 
     it("merges user's imports and scopes", async () => {
