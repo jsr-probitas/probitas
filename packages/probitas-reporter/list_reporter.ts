@@ -113,7 +113,7 @@ export class ListReporter extends BaseReporter {
         )
       }`
       : "";
-    const reasonText = reason ? ` ${this.theme.dim(`(${reason})`)}` : "";
+    const reasonText = reason ? ` ${reason}` : "";
     const time = ` ${this.theme.info(`[${duration.toFixed(3)}ms]`)}`;
 
     await this.write(
