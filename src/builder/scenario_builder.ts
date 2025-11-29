@@ -8,22 +8,18 @@
  */
 
 import type {
-  AnyStepFunction,
   Entry,
-  RunnerResourceFactory,
-  RunnerSetupFunction,
+  ResourceDefinition,
+  ResourceFactory,
   ScenarioDefinition,
   ScenarioOptions,
+  SetupDefinition,
+  SetupFunction,
   StepDefinition,
-  StepOptions,
-} from "../runner/types.ts";
-import type {
-  BuilderScenarioOptions,
-  BuilderStepOptions,
-  ResourceFactoryContext,
-  SetupHook,
   StepFunction,
-} from "./types.ts";
+  StepOptions,
+} from "../scenario/mod.ts";
+import type { BuilderScenarioOptions, BuilderStepOptions } from "./types.ts";
 import { DEFAULT_SCENARIO_OPTIONS, DEFAULT_STEP_OPTIONS } from "./defaults.ts";
 import { captureSourceLocation } from "./capture_source_location.ts";
 
@@ -111,38 +107,42 @@ class ScenarioBuilderState<
 
   addResource(
     name: string,
-    // deno-lint-ignore no-explicit-any
-    factory: (...args: any[]) => any,
+    factory: ResourceFactory,
   ): void {
-    const runtimeFactory = factory as RunnerResourceFactory;
+    const resourceDef: ResourceDefinition = {
+      name,
+      factory,
+    };
     this.#entries.push({
       kind: "resource",
-      value: { name, factory: runtimeFactory },
+      value: resourceDef,
     });
   }
 
-  // deno-lint-ignore no-explicit-any
-  addSetup(fn: (...args: any[]) => any): void {
+  addSetup(fn: SetupFunction): void {
     const location = captureSourceLocation(3);
-    const runtimeFn = fn as RunnerSetupFunction;
+    const setupDef: SetupDefinition = {
+      fn,
+      location,
+    };
     this.#entries.push({
       kind: "setup",
-      value: { fn: runtimeFn, location },
+      value: setupDef,
     });
   }
 
-  addStep<P, T, A extends readonly unknown[]>(
-    nameOrFn: string | StepFunction<P, T, A, Resources>,
-    fnOrOptions?: StepFunction<P, T, A, Resources> | BuilderStepOptions,
+  addStep(
+    nameOrFn: string | StepFunction,
+    fnOrOptions?: StepFunction | BuilderStepOptions,
     stepOptions?: BuilderStepOptions,
   ): void {
     let stepName: string;
-    let stepFn: StepFunction<P, T, A, Resources>;
+    let stepFn: StepFunction;
     let options: BuilderStepOptions | undefined;
 
     if (typeof nameOrFn === "string") {
       stepName = nameOrFn;
-      stepFn = fnOrOptions as StepFunction<P, T, A, Resources>;
+      stepFn = fnOrOptions as StepFunction;
       options = stepOptions;
     } else {
       // Count only steps for auto-naming
@@ -157,7 +157,7 @@ class ScenarioBuilderState<
 
     const stepDef: StepDefinition = {
       name: stepName,
-      fn: stepFn as AnyStepFunction,
+      fn: stepFn as StepFunction,
       options: mergedOptions,
       location: stepLocation,
     };
@@ -201,13 +201,13 @@ class ScenarioBuilderState<
 /**
  * Scenario builder - allows resource(), setup(), step(), build() at any time
  *
- * @template P - Type of the previous step result
- * @template A - Tuple type of accumulated results
+ * @template Previous - Type of the previous step result
+ * @template Results - Tuple type of accumulated results
  * @template Resources - Accumulated resource types
  */
 class ScenarioBuilderInit<
-  P = unknown,
-  A extends readonly unknown[] = readonly [],
+  Previous = unknown,
+  Results extends readonly unknown[] = readonly [],
   Resources extends Record<string, unknown> = Record<string, never>,
 > {
   #state: ScenarioBuilderState<Resources>;
@@ -224,17 +224,17 @@ class ScenarioBuilderInit<
    * disposed in reverse order.
    *
    * @template K - Resource name (string literal)
-   * @template R - Resource type
+   * @template T - Resource type
    * @param name - Unique resource name
    * @param factory - Function to create the resource (can access previously registered resources)
    * @returns New builder with updated Resources type
    */
-  resource<K extends string, R>(
+  resource<K extends string, T>(
     name: K,
-    factory: (ctx: ResourceFactoryContext<P, A, Resources>) => R | Promise<R>,
-  ): ScenarioBuilderInit<P, A, Resources & Record<K, R>> {
-    const clonedState = this.#state.clone<Resources & Record<K, R>>();
-    clonedState.addResource(name, factory);
+    factory: ResourceFactory<T, Previous, Results, Resources>,
+  ): ScenarioBuilderInit<Previous, Results, Resources & Record<K, T>> {
+    const clonedState = this.#state.clone<Resources & Record<K, T>>();
+    clonedState.addResource(name, factory as ResourceFactory);
     return new ScenarioBuilderInit(clonedState);
   }
 
@@ -248,10 +248,10 @@ class ScenarioBuilderInit<
    * @returns Same builder for chaining
    */
   setup(
-    fn: SetupHook<P, A, Resources>,
-  ): ScenarioBuilderInit<P, A, Resources> {
+    fn: SetupFunction<Previous, Results, Resources>,
+  ): ScenarioBuilderInit<Previous, Results, Resources> {
     const clonedState = this.#state.clone();
-    clonedState.addSetup(fn);
+    clonedState.addSetup(fn as SetupFunction);
     return new ScenarioBuilderInit(clonedState);
   }
 
@@ -266,9 +266,9 @@ class ScenarioBuilderInit<
    */
   step<T>(
     name: string,
-    fn: StepFunction<P, T, A, Resources>,
+    fn: StepFunction<T, Previous, Results, Resources>,
     options?: BuilderStepOptions,
-  ): ScenarioBuilderInit<T, readonly [...A, T], Resources>;
+  ): ScenarioBuilderInit<T, readonly [...Results, T], Resources>;
 
   /**
    * Add an unnamed step to the scenario (auto-named as "Step N")
@@ -279,17 +279,23 @@ class ScenarioBuilderInit<
    * @returns New builder with updated generic types
    */
   step<T>(
-    fn: StepFunction<P, T, A, Resources>,
+    fn: StepFunction<T, Previous, Results, Resources>,
     options?: BuilderStepOptions,
-  ): ScenarioBuilderInit<T, readonly [...A, T], Resources>;
+  ): ScenarioBuilderInit<T, readonly [...Results, T], Resources>;
 
   step<T>(
-    nameOrFn: string | StepFunction<P, T, A, Resources>,
-    fnOrOptions?: StepFunction<P, T, A, Resources> | BuilderStepOptions,
+    nameOrFn: string | StepFunction<T, Previous, Results, Resources>,
+    fnOrOptions?:
+      | StepFunction<T, Previous, Results, Resources>
+      | BuilderStepOptions,
     stepOptions?: BuilderStepOptions,
-  ): ScenarioBuilderInit<T, readonly [...A, T], Resources> {
+  ): ScenarioBuilderInit<T, readonly [...Results, T], Resources> {
     const clonedState = this.#state.clone();
-    clonedState.addStep(nameOrFn, fnOrOptions, stepOptions);
+    clonedState.addStep(
+      nameOrFn as (string | StepFunction),
+      fnOrOptions as (StepFunction | BuilderStepOptions),
+      stepOptions,
+    );
     return new ScenarioBuilderInit(clonedState);
   }
 

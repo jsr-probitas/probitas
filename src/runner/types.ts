@@ -2,160 +2,18 @@
  * Type definitions for the Runner layer
  *
  * Core types for executing scenario definitions and managing test lifecycle.
+ * Re-exports scenario definition types from the scenario module.
  *
  * @module
  */
 
-/**
- * Source location in a file (for better error messages)
- */
-export interface SourceLocation {
-  /** File path */
-  readonly file: string;
-
-  /** Line number */
-  readonly line: number;
-}
-
-/**
- * Options for scenario execution
- */
-export interface ScenarioOptions {
-  /** Tags for filtering scenarios */
-  readonly tags: readonly string[];
-
-  /** Default options applied to all steps in scenario */
-  readonly stepOptions: StepOptions;
-}
-
-/**
- * Options for individual step execution
- */
-export interface StepOptions {
-  /** Timeout in milliseconds */
-  readonly timeout: number;
-
-  /** Retry configuration */
-  readonly retry: {
-    readonly maxAttempts: number;
-    readonly backoff: "linear" | "exponential";
-  };
-}
-
-/**
- * Function signature for a step
- */
-export type AnyStepFunction = (
-  // deno-lint-ignore no-explicit-any
-  ctx: StepContext<any, readonly any[], any>,
-  // deno-lint-ignore no-explicit-any
-) => any;
-
-/**
- * Definition of a scenario (immutable)
- */
-export interface ScenarioDefinition {
-  /** Scenario name */
-  readonly name: string;
-
-  /** Scenario options (final, with defaults applied) */
-  readonly options: ScenarioOptions;
-
-  /** Entries to execute (steps, resources, setups) in order */
-  readonly entries: readonly Entry[];
-
-  /** Source location for debugging */
-  readonly location?: SourceLocation;
-}
-
-/**
- * Definition of a step (immutable)
- */
-export interface StepDefinition {
-  /** Step name */
-  readonly name: string;
-
-  /** Step function to execute */
-  readonly fn: AnyStepFunction;
-
-  /** Step options (final, with defaults applied) */
-  readonly options: StepOptions;
-
-  /** Source location for debugging */
-  readonly location?: SourceLocation;
-}
-
-/**
- * Cleanup returned by setup functions
- */
-export type SetupCleanup =
-  | void
-  | (() => void | Promise<void>)
-  | Disposable
-  | AsyncDisposable;
-
-/**
- * Runtime signature for setup hooks
- */
-export type RunnerSetupFunction = (
-  ctx: StepContext<unknown, readonly unknown[], Record<string, unknown>>,
-) => SetupCleanup | Promise<SetupCleanup>;
-
-/**
- * Definition of a setup hook (immutable)
- */
-export interface SetupDefinition {
-  /** Setup function to execute */
-  readonly fn: RunnerSetupFunction;
-
-  /** Source location for debugging */
-  readonly location?: SourceLocation;
-}
-
-/**
- * Entry in a scenario - can be a step, resource, or setup
- */
-export type Entry =
-  | { kind: "step"; value: StepDefinition }
-  | { kind: "resource"; value: ResourceDefinition }
-  | { kind: "setup"; value: SetupDefinition };
-
-/**
- * Resource definition (simplified version for runtime)
- * Note: The builder layer exports the full typed version.
- * This is an internal type for the runner layer.
- */
-interface ResourceDefinition {
-  /** Resource name */
-  readonly name: string;
-  /** Resource factory function */
-  readonly factory: RunnerResourceFactory;
-}
-
-/**
- * Runtime signature for resource factories
- */
-export type RunnerResourceFactory = (
-  ctx: StepContext<unknown, readonly unknown[], Record<string, unknown>>,
-) => unknown | Promise<unknown>;
-
-/**
- * Metadata for a step (serializable, without function)
- */
-export type StepMetadata = Omit<StepDefinition, "fn">;
-
-/**
- * Metadata for a scenario (serializable, without functions)
- */
-export type ScenarioMetadata =
-  & Omit<
-    ScenarioDefinition,
-    "entries" | "options"
-  >
-  & {
-    readonly options: ScenarioOptions;
-    readonly entries: readonly Entry[];
-  };
+import type {
+  ScenarioDefinition,
+  ScenarioMetadata,
+  ScenarioOptions,
+  StepDefinition,
+  StepMetadata,
+} from "../scenario/mod.ts";
 
 /**
  * Context provided to scenario setup/teardown
@@ -176,33 +34,6 @@ export interface ScenarioContext<
   readonly store: Map<string, unknown>;
 
   /** Abort signal for cancellation */
-  readonly signal: AbortSignal;
-
-  /** Available resources */
-  readonly resources: Resources;
-}
-
-/**
- * Context provided to each step
- */
-export interface StepContext<
-  P = unknown,
-  A extends readonly unknown[] = readonly [],
-  Resources extends Record<string, unknown> = Record<string, never>,
-> {
-  /** Step index (0-based) */
-  readonly index: number;
-
-  /** Result from previous step */
-  readonly previous: P;
-
-  /** All accumulated results as typed tuple */
-  readonly results: A;
-
-  /** Shared storage between steps */
-  readonly store: Map<string, unknown>;
-
-  /** Abort signal (combines timeout + manual abort) */
   readonly signal: AbortSignal;
 
   /** Available resources */
@@ -364,15 +195,24 @@ export interface RunOptions {
   readonly signal?: AbortSignal;
 }
 
-/**
- * Main runner interface for executing scenarios
- */
-export interface ScenarioRunner {
-  /**
-   * Run scenarios and return summary
-   */
-  run(
-    scenarios: readonly ScenarioDefinition[],
-    options?: RunOptions,
-  ): Promise<RunSummary>;
-}
+// Re-export all scenario definition types
+export type {
+  Entry,
+  EntryMetadata,
+  ResourceDefinition,
+  ResourceFactory,
+  ResourceMetadata,
+  ScenarioDefinition,
+  ScenarioMetadata,
+  ScenarioOptions,
+  SetupCleanup,
+  SetupDefinition,
+  SetupFunction,
+  SetupMetadata,
+  SourceLocation,
+  StepContext,
+  StepDefinition,
+  StepFunction,
+  StepMetadata,
+  StepOptions,
+} from "../scenario/mod.ts";

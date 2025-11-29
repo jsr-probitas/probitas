@@ -172,7 +172,6 @@ export const scenarioResults = {
           kind: "step" as const,
           value: {
             name: "Step that passes",
-            fn: () => {},
             options: defaultStepOptions,
             location: sourceLocations.step1,
           },
@@ -197,7 +196,6 @@ export const scenarioResults = {
           kind: "step" as const,
           value: {
             name: "Step that passes",
-            fn: () => {},
             options: defaultStepOptions,
             location: sourceLocations.step1,
           },
@@ -206,7 +204,6 @@ export const scenarioResults = {
           kind: "step" as const,
           value: {
             name: "Step that passes",
-            fn: () => {},
             options: defaultStepOptions,
             location: sourceLocations.step1,
           },
@@ -215,7 +212,6 @@ export const scenarioResults = {
           kind: "step" as const,
           value: {
             name: "Step that passes",
-            fn: () => {},
             options: defaultStepOptions,
             location: sourceLocations.step1,
           },
@@ -240,7 +236,6 @@ export const scenarioResults = {
           kind: "step" as const,
           value: {
             name: "Step that passes",
-            fn: () => {},
             options: defaultStepOptions,
             location: sourceLocations.step1,
           },
@@ -249,7 +244,6 @@ export const scenarioResults = {
           kind: "step" as const,
           value: {
             name: "Step that fails",
-            fn: () => {},
             options: defaultStepOptions,
             location: sourceLocations.step2,
           },
@@ -275,7 +269,6 @@ export const scenarioResults = {
           kind: "step" as const,
           value: {
             name: "Step that passes",
-            fn: () => {},
             options: defaultStepOptions,
             location: sourceLocations.step1,
           },

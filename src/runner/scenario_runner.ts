@@ -22,7 +22,7 @@ import { createScenarioContext, createStepContext } from "./context.ts";
 import { executeStepWithRetry } from "./executor.ts";
 
 /**
- * Implementation of ScenarioRunner interface
+ * Main scenario runner
  *
  * Executes scenarios with full lifecycle management, filtering, and reporting.
  */
