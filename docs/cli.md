@@ -1,1094 +1,153 @@
-# CLI Specification
+# CLI Reference
 
-Command-line interface specification for the Probitas test runner.
-
-## Overview
-
-Probitas CLI is a command-line tool for executing scenario-based tests. It
-discovers, filters, executes scenario files, and reports results.
-
-## Execution Model
-
-### Subprocess Execution
-
-Probitas executes all scenarios in a single subprocess per run. This ensures:
-
-- **Project Configuration**: Scenarios run with the project's `deno.json`
-  configuration, including import maps
-- **Process Isolation**: CLI process (file discovery, filtering) and scenario
-  execution are separated
-- **Dependency Isolation**: Probitas internal dependencies don't conflict with
-  user's dependencies
-
-**How it works**:
-
-1. Main process discovers scenario files using glob patterns
-2. Config preparation (always creates temporary config):
-   - Reads user's `deno.json`/`deno.jsonc` if exists
-   - Merges user's imports and scopes
-   - Adds probitas import and scoped dependencies
-   - Creates temporary config file
-3. Spawns subprocess: `deno run -A --config <temp-config> runner.ts`
-4. Configuration transfer via stdin (JSON)
-5. Subprocess loads and executes scenarios
-6. Reporter output streams directly to parent process
-7. Temporary config auto-cleanup
-
-**Dependency Isolation with Scopes**:
-
-Probitas uses Deno's `scopes` feature to isolate internal dependencies. This
-means users only need to add `"probitas": "jsr:@lambdalisue/probitas"` to their
-import map:
-
-```jsonc
-{
-  "imports": {
-    "probitas": "jsr:@lambdalisue/probitas",
-    "@std/async": "jsr:@std/async@^0.220" // Your version
-  }
-}
-```
-
-Internally, Probitas uses scopes:
-
-```jsonc
-{
-  "imports": {
-    "probitas": "jsr:@lambdalisue/probitas@^1.0.0",
-    "@std/async": "jsr:@std/async@^0.220" // User's version
-  },
-  "scopes": {
-    "jsr:@lambdalisue/probitas/": {
-      "@std/async": "jsr:@std/async@^1.0.15" // Probitas's version
-    }
-  }
-}
-```
-
-This prevents version conflicts - users and Probitas can use different versions
-of the same dependency.
-
-**Benefits**:
-
-- Scenarios can import using `"probitas"` (via import map)
-- No dependency conflicts with user's project
-- Clean user configuration (only probitas import needed)
-- Consistent execution environment
-
-### Concurrency and Failure Handling
-
-The execution model is defined by two simple parameters:
-
-- **`maxConcurrency`**: Controls parallelism
-  - `0` or undefined: Unlimited parallel (default)
-  - `1`: Sequential execution
-  - `N`: Run up to N scenarios in parallel
-
-- **`maxFailures`**: Controls failure handling
-  - `0` or undefined: Execute all scenarios (default)
-  - `1`: Stop at first failure (failFast)
-  - `N`: Stop after N failures
+Command-line interface for Probitas.
 
 ## Installation
 
 ```bash
-# Global installation with Deno install
 deno install -gAf -n probitas jsr:@lambdalisue/probitas/cli
-
-# Or run directly from JSR (no installation required)
-deno run -A jsr:@lambdalisue/probitas/cli run
 ```
 
-After installation, the `probitas` command becomes available.
+To update: `deno install -gAfr -n probitas jsr:@lambdalisue/probitas/cli`
 
-**Permissions**:
+## Commands
 
-- The `-A` flag grants all permissions during installation
-- Required permissions: `--allow-read`, `--allow-env`, `--allow-net` (when using
-  HTTPClient)
-- After installation, permissions don't need to be specified each time
+### run
 
-Basic usage:
+Execute scenarios.
+
+```
+probitas run [paths...] [options]
+```
+
+**Arguments:**
+
+- `paths` - Files or directories (default: current directory)
+
+**Options:**
+
+| Option              | Short | Description                                |
+| ------------------- | ----- | ------------------------------------------ |
+| `--selector`        | `-s`  | Filter scenarios (repeatable)              |
+| `--include`         |       | Include file pattern                       |
+| `--exclude`         |       | Exclude file pattern                       |
+| `--reporter`        |       | Output format: list/dot/json/tap           |
+| `--max-concurrency` |       | Parallel limit (default: unlimited)        |
+| `--max-failures`    |       | Stop after N failures                      |
+| `--sequential`      | `-S`  | Run sequentially (= --max-concurrency 1)   |
+| `--fail-fast`       | `-f`  | Stop on first failure (= --max-failures 1) |
+| `--quiet`           | `-q`  | Errors only                                |
+| `--verbose`         | `-v`  | Verbose output                             |
+| `--debug`           | `-d`  | Debug output                               |
+| `--no-color`        |       | Disable colors                             |
+| `--config`          |       | Config file path                           |
+| `--help`            | `-h`  | Show help                                  |
+
+### list
+
+List available scenarios.
+
+```
+probitas list [options]
+```
+
+**Options:** `-s`, `--include`, `--exclude`, `--json`, `--config`, `-h`
+
+### init
+
+Initialize project.
+
+```
+probitas init [--force]
+```
+
+Creates `deno.json` and `scenarios/example.scenario.ts`.
+
+## Selector Syntax
+
+```
+[!][type:]value
+```
+
+| Component | Description                       |
+| --------- | --------------------------------- |
+| `!`       | Negation (exclude matching)       |
+| `type:`   | `tag:` or `name:` (default: name) |
+| `value`   | Match value (case-insensitive)    |
+
+**Logic:**
+
+- Multiple `-s` flags: OR
+- Comma in selector: AND
+- `!` prefix: NOT
+
+**Examples:**
 
 ```bash
-probitas run
+-s tag:smoke                  # Has smoke tag
+-s login                      # Name contains "login"
+-s "!tag:slow"                # NOT slow tag
+-s "tag:api,!tag:flaky"       # api AND NOT flaky
+-s tag:api -s tag:db          # api OR db
 ```
 
-## Basic Commands
+## File Discovery
 
-### `probitas run`
+**Default pattern:** `**/*.scenario.ts`
 
-Executes scenario files.
+**Priority:**
 
-```bash
-# Basic execution (all scenarios under current directory)
-probitas run
+1. Explicit file paths (direct)
+2. `--include` / `--exclude` options
+3. Config file `includes` / `excludes`
+4. Default pattern
 
-# Specify a file
-probitas run test.scenario.ts
+## Configuration
 
-# Specify directories
-probitas run scenarios/ e2e/
-
-# Select scenarios by tag
-probitas run --selector tag:api
-
-# Select scenarios by multiple tags (OR)
-probitas run --selector tag:api --selector tag:integration
-
-# Select scenarios by name
-probitas run --selector "login"
-
-# Exclude scenarios using negation
-probitas run --selector "!tag:wip"
-
-# Specify maximum concurrency (parallel execution by default)
-probitas run --max-concurrency 5
-
-# Sequential execution (when there are dependencies between scenarios)
-probitas run --max-concurrency 1
-
-# Use custom Reporter
-probitas run --reporter list
-
-# Stop at first failure
-probitas run --max-failures 1
-
-# Stop after 3 failures
-probitas run --max-failures 3
-```
-
-#### Scenario File Format
-
-Scenario files must default export either a single scenario or multiple
-scenarios.
-
-##### Single Scenario
-
-```typescript
-import { scenario } from "probitas";
-
-export default scenario("Login Flow")
-  .step("Open login page", () => {/* ... */})
-  .step("Enter credentials", () => {/* ... */})
-  .build();
-```
-
-##### Multiple Scenarios (Array)
-
-```typescript
-import { scenario } from "probitas";
-
-const loginScenario = scenario("Login Flow")
-  .step("Open login page", () => {/* ... */})
-  .build();
-
-const logoutScenario = scenario("Logout Flow")
-  .step("Click logout", () => {/* ... */})
-  .build();
-
-// Export as array
-export default [loginScenario, logoutScenario];
-```
-
-**Type Definition**:
-
-```typescript
-// Scenario file default export type
-type ScenarioFileExport = ScenarioDefinition | ScenarioDefinition[];
-```
-
-#### File/Directory Specification
-
-The `probitas run` command accepts files and directories in the following
-formats.
-
-**Arguments**:
-
-- `[paths...]`: Scenario files or directories to execute (optional)
-  - File: Direct specification (e.g., `test.scenario.ts`)
-  - Directory: Execute all scenarios within (e.g., `tests/`)
-  - Multiple specifications allowed (space-separated)
-
-##### File Specification
-
-```bash
-# Specific file
-probitas run scenarios/login.scenario.ts
-
-# Multiple files
-probitas run test1.scenario.ts test2.scenario.ts
-```
-
-##### Directory Specification
-
-When the specified path is a directory, all scenario files within that directory
-are automatically executed:
-
-```bash
-# Specify directory (executes all *.scenario.ts within)
-probitas run scenarios/
-
-# Multiple directories
-probitas run scenarios/ e2e/
-
-# Mix of directories and files
-probitas run scenarios/ smoke/critical.scenario.ts
-```
-
-**Directory Behavior**:
-
-- Searches for all files matching `**/*.scenario.ts` pattern within the
-  directory
-- Recursively searches subdirectories
-- Does not follow symbolic links
-
-##### Default Behavior
-
-When no paths are specified, searches from the current directory:
-
-```bash
-# Default: searches current directory with **/*.scenario.ts pattern
-probitas run
-probitas run ./
-```
-
-#### Options
-
-##### `--selector <selector>` / `-s`
-
-Selects scenarios based on tag or name criteria. Can be specified multiple
-times. Supports `!` prefix for negation.
-
-**Selector Format**: `[!][type:]value`
-
-- `!`: Negation prefix (optional) - excludes matching scenarios
-- `type`: `tag` or `name` (defaults to `name` if omitted)
-- `value`: Value to match (supports regular expressions, case-insensitive)
-
-```bash
-# Select scenarios with "api" tag
-probitas run --selector tag:api
-probitas run -s tag:api
-
-# Select scenarios by name
-probitas run --selector "login"
-probitas run -s "Login"
-
-# Exclude scenarios using negation
-probitas run --selector "!tag:slow"
-probitas run -s "!wip"
-
-# Multiple selectors (OR logic - matches any selector)
-probitas run --selector tag:api --selector tag:integration
-# => Scenarios with "api" OR "integration" tag
-
-# Multiple conditions in one selector (AND logic - comma-separated)
-probitas run --selector "tag:api,tag:critical"
-# => Scenarios with "api" AND "critical" tags
-
-# Combine positive and negative conditions
-probitas run --selector "tag:api,!tag:slow"
-# => Scenarios with "api" tag AND NOT "slow" tag
-
-# Mix types in one selector
-probitas run --selector "tag:api,name:User,!tag:slow"
-# => Scenarios with "api" tag AND name containing "User" AND NOT "slow" tag
-```
-
-**Selection Logic**:
-
-- Multiple `--selector` flags: OR logic (matches any selector)
-- Comma-separated within one selector: AND logic (must match all conditions)
-- `!` prefix: NOT logic (negation - excludes matching scenarios)
-- When omitted: All scenarios are selected
-
-##### `--reporter <reporter>`
-
-Specifies the Reporter type.
-
-- Only built-in Reporters (dot, list, json, tap) are available
-- If not specified, uses the `reporter` field from configuration file, or `list`
-  as default
-
-```bash
-# List format (default)
-probitas run --reporter list
-
-# Dot format
-probitas run --reporter dot
-
-# JSON format (for CI/CD)
-probitas run --reporter json > results.json
-
-# TAP format
-probitas run --reporter tap
-```
-
-##### `--max-concurrency <num>`
-
-Specifies maximum concurrency for parallel execution (default: unlimited - all
-scenarios run in parallel).
-
-Note: The default behavior is to run all scenarios in parallel without limit.
-For systems with limited resources or to avoid overwhelming external services,
-use `--max-concurrency` to set a reasonable limit (e.g.,
-`--max-concurrency 10`).
-
-```bash
-# Specify concurrency
-probitas run --max-concurrency 5
-
-# Specifying 1 is equivalent to sequential execution
-probitas run --max-concurrency 1
-```
-
-**Execution Modes**:
-
-- Default is parallel execution (`parallel` mode, unlimited concurrency)
-- Use `--sequential` for sequential execution when there are dependencies
-  between scenarios
-- `--sequential` is equivalent to `--max-concurrency 1`
-- Maximum concurrency for parallel execution can be controlled with
-  `--max-concurrency`
-
-##### `--max-failures <num>`
-
-Stops execution after reaching the specified number of failures.
-
-```bash
-# Stop at first failure
-probitas run --max-failures 1
-
-# Stop after 3 failures
-probitas run --max-failures 3
-```
-
-**Default Failure Strategy**:
-
-- Default is to execute all scenarios (continue on failure)
-- Use `--max-failures 1` for early termination on first failure
-- Use `--max-failures N` to stop after N failures
-
-##### `--no-color`
-
-Disables color output.
-
-```bash
-probitas run --no-color
-```
-
-- Equivalent to `NO_COLOR=1` environment variable
-- Automatically disabled when `NO_COLOR` environment variable is set
-
-##### `-q, --quiet`
-
-Quiet output (errors only).
-
-```bash
-probitas run --quiet
-probitas run -q
-```
-
-##### `-v, --verbose`
-
-Verbose output.
-
-```bash
-probitas run --verbose
-probitas run -v
-```
-
-##### `-d, --debug`
-
-Debug output (maximum detail).
-
-```bash
-probitas run --debug
-probitas run -d
-```
-
-**Verbosity Levels**:
-
-- `-q, --quiet`: Quiet output (errors only)
-- `-v, --verbose`: Verbose output
-- `-d, --debug`: Debug output (maximum detail)
-- Default: Normal output
-
-##### `-S, --sequential`
-
-Run scenarios sequentially. Alias for `--max-concurrency=1`.
-
-```bash
-# Sequential execution
-probitas run --sequential
-# or
-probitas run -S
-
-# Equivalent to
-probitas run --max-concurrency 1
-```
-
-##### `-f, --fail-fast`
-
-Stop after first failure. Alias for `--max-failures=1`.
-
-```bash
-# Stop on first failure
-probitas run --fail-fast
-# or
-probitas run -f
-
-# Equivalent to
-probitas run --max-failures 1
-```
-
-##### `--config <path>`
-
-Specifies the configuration file path.
-
-```bash
-# Custom configuration file
-probitas run --config ./custom.deno.json
-
-# Another example
-probitas run --config ./config/test.deno.jsonc
-```
-
-#### Filtering
-
-Scenarios can be filtered using selector-based command-line options.
-
-**Unified Selector Syntax**:
-
-Filter scenarios using `--selector` with support for negation (`!` prefix).
-
-```bash
-# Select by tag
-probitas run --selector tag:api
-
-# Multiple selectors (OR logic - matches any)
-probitas run --selector tag:api --selector tag:integration
-# => Execute scenarios with "api" OR "integration" tag
-
-# Select by name
-probitas run --selector "login"
-
-# Multiple conditions (AND logic - comma-separated within selector)
-probitas run --selector "tag:api,tag:critical"
-# => Execute scenarios with "api" AND "critical" tags
-
-# Exclude using negation
-probitas run --selector "tag:api,!tag:slow"
-# => Execute scenarios with "api" tag, excluding "slow" tag
-
-# Negation only
-probitas run --selector "!tag:wip"
-# => Execute all scenarios except those with "wip" tag
-
-# Mix of types within one selector
-probitas run --selector "tag:api,name:User,!tag:slow"
-# => Execute scenarios with "api" tag AND name containing "User" AND NOT "slow" tag
-```
-
-**Filtering Logic**:
-
-- `--selector` flags (multiple): OR logic - execute if matches any selector
-- Comma-separated in selector: AND logic - must match all conditions
-- `!` prefix: NOT logic - excludes matching scenarios
-- When `--selector` omitted: All scenarios selected
-
-In the configuration file's `selectors` field:
-
-- `selectors`: Array of selector strings (OR logic between items, supports `!`
-  prefix)
-
-Example:
+In `deno.json` or `deno.jsonc`:
 
 ```json
 {
-  "probitas": {
-    "selectors": [
-      "tag:smoke",
-      "tag:api,!tag:slow",
-      "!tag:wip"
-    ]
-  }
-}
-```
-
-This evaluates as: (smoke) OR (api AND NOT slow) OR (NOT wip)
-
-### `probitas list`
-
-Displays a list of available scenarios.
-
-```bash
-# List all scenarios
-probitas list
-
-# Select by tag
-probitas list --selector tag:api
-
-# Multiple selectors (OR logic)
-probitas list --selector tag:api --selector tag:integration
-# => List scenarios with "api" OR "integration" tag
-
-# Select by name
-probitas list --selector "login"
-
-# Multiple conditions (AND logic)
-probitas list --selector "tag:api,tag:critical"
-# => List scenarios with "api" AND "critical" tags
-
-# Exclude using negation
-probitas list --selector "tag:api,!tag:slow"
-
-# Output in JSON format
-probitas list --json
-```
-
-Note: The `list` command does not accept file arguments. It uses patterns
-defined in the configuration file or defaults to `**/*.scenario.ts`.
-
-#### Options
-
-- `--selector <selector>` / `-s` - Select scenarios by tag or name (can be
-  specified multiple times, supports `!` prefix for negation)
-- `--json` - Output in JSON format
-- `--config <path>` - Specify configuration file
-
-**Filtering**:
-
-- Multiple `--selector` flags use OR logic (matches any selector)
-- Comma-separated in selector uses AND logic (must match all conditions)
-- `!` prefix for negation (excludes matching scenarios)
-
-**Example**:
-
-```bash
-$ probitas list
-
-scenarios/login.scenario.ts
-  Login Flow
-
-scenarios/auth.scenario.ts
-  Login
-  Logout
-  Password Reset
-
-scenarios/api.scenario.ts
-  GET /users
-  POST /users
-  DELETE /users/:id
-
-Total: 6 scenarios in 3 files
-```
-
-### `probitas init`
-
-Initializes the project and generates necessary files.
-
-```bash
-probitas init
-```
-
-**Generated Files**:
-
-- `deno.json` - Project configuration file with probitas settings
-- `scenarios/example.scenario.ts` - Sample scenario
-
-#### Options
-
-- `--force` - Overwrite existing files
-
-**deno.json**:
-
-```json
-{
-  "imports": {
-    "probitas": "jsr:@lambdalisue/probitas@^0.1.0"
-  },
-  "probitas": {
-    "reporter": "list"
-  }
-}
-```
-
-Contains minimal configuration only. Other settings use default values.
-
-Default values:
-
-- `includes`: `["**/*.scenario.ts"]`
-- `excludes`: `[]`
-- `maxConcurrency`: `undefined` (unlimited parallel execution by default)
-- `maxFailures`: `undefined` (execute all scenarios)
-- `selectors`: `[]`
-
-**scenarios/example.scenario.ts**:
-
-```typescript
-import { scenario } from "probitas";
-
-export default scenario("Example Scenario")
-  .step("Step 1: Setup", () => {
-    return { initialized: true };
-  })
-  .step("Step 2: Execute", (ctx) => {
-    return { value: ctx.previous.initialized ? "success" : "failed" };
-  })
-  .step("Step 3: Verify", (ctx) => {
-    if (ctx.previous.value !== "success") {
-      throw new Error("Verification failed");
-    }
-  })
-  .build();
-```
-
-**Directory Structure After Initialization**:
-
-```
-my-project/
-├── deno.json
-└── scenarios/
-    └── example.scenario.ts
-```
-
-### Generated File Details
-
-#### `deno.json`
-
-Project Deno configuration file with Probitas settings in the `probitas`
-section. Contains minimal settings (reporter) only. Other settings use default
-values.
-
-The `imports` section defines the `probitas` import map to enable simple import
-statements in scenario files.
-
-#### `scenarios/example.scenario.ts`
-
-Executable sample scenario file. Demonstrates basic step writing and context
-usage examples
-
-### Project Initialization Example
-
-```bash
-# Initialize project
-probitas init
-
-# Run generated sample scenario
-probitas run
-```
-
-The following files are created:
-
-```
-deno.json                  # Project configuration with probitas settings
-scenarios/
-  example.scenario.ts      # Sample scenario
-```
-
-`deno.json` enables concise imports in scenario files like:
-
-```typescript
-import { scenario } from "probitas";
-```
-
-## Configuration File
-
-Default settings can be defined in the `probitas` section of `deno.json` or
-`deno.jsonc` in the project root directory.
-
-### File Name Priority
-
-1. `deno.json`
-2. `deno.jsonc`
-3. File specified by command-line option (`--config`)
-
-### Configuration File Structure
-
-The configuration is defined in the `probitas` section of `deno.json` or
-`deno.jsonc`.
-
-### ProbitasConfig Type
-
-The `probitas` section supports the following configuration fields:
-
-- `includes`: Include patterns (glob patterns as strings)
-- `excludes`: Exclude patterns (glob patterns as strings)
-- `reporter`: Default Reporter (string name: "list", "dot", "json", or "tap")
-- `maxConcurrency`: Maximum concurrent scenarios (0 or undefined = unlimited)
-- `maxFailures`: Maximum failures before stopping (0 or undefined = continue
-  all)
-- `selectors`: Array of selector strings for scenario filtering (OR logic
-  between items, supports `!` prefix for negation)
-
-**Notes**:
-
-- Configuration is in JSON format within `deno.json`
-- Regular expressions are not supported (use glob patterns as strings)
-- Reporter instances cannot be used (only string names)
-- `maxConcurrency` and `maxFailures` control execution behavior
-- Selector configuration uses `selectors` field with support for `!` prefix
-
-Example (`deno.json`):
-
-```json
-{
-  "imports": {
-    "probitas": "jsr:@lambdalisue/probitas"
-  },
-  "probitas": {
-    "includes": ["scenarios/**/*.scenario.ts"],
-    "excludes": ["**/*.skip.scenario.ts"],
-    "reporter": "list",
-    "maxConcurrency": 4,
-    "selectors": [
-      "tag:smoke",
-      "tag:api,!tag:slow",
-      "!tag:wip"
-    ]
-  }
-}
-```
-
-Example with comments (`deno.jsonc`):
-
-```jsonc
-{
-  "imports": {
-    "probitas": "jsr:@lambdalisue/probitas"
-  },
-  "probitas": {
-    // File patterns
-    "includes": ["scenarios/**/*.scenario.ts"],
-    "excludes": ["**/*.skip.scenario.ts"],
-
-    // Default Reporter
-    "reporter": "list",
-
-    // Concurrency control
-    "maxConcurrency": 4, // Limit to 4 parallel scenarios
-    // "maxConcurrency": 1,  // Sequential execution
-    // "maxConcurrency": 0,  // Unlimited parallel (default)
-
-    // Failure handling (default is to execute all scenarios)
-    // "maxFailures": 1,  // Stop at first failure (failFast)
-    // "maxFailures": 3,  // Stop after 3 failures
-
-    // Scenario selector configuration (OR logic between items)
-    "selectors": [
-      "tag:smoke", // Smoke tests
-      "tag:api,!tag:slow", // API tests but not slow (AND with negation)
-      "!tag:wip" // Exclude WIP
-    ]
-  }
-}
-```
-
-### Using Reporters
-
-In the configuration file, Reporters can only be specified by their string
-names:
-
-```json
-{
-  "imports": {
-    "probitas": "jsr:@lambdalisue/probitas"
-  },
-  "probitas": {
-    "includes": ["scenarios/**/*.scenario.ts"],
-    "excludes": ["**/*.skip.scenario.ts"],
-    "reporter": "list",
-    "maxConcurrency": 8
-  }
-}
-```
-
-**Notes**:
-
-- Only built-in Reporter names are supported: "dot", "list", "json", "tap"
-- Reporter instances cannot be used in JSON configuration
-- Configuration can be overridden with `--reporter` command-line option
-- Use CLI flags (`-q`, `-v`, `-d`) to control output verbosity
-
-### Configuration Priority
-
-Priority (highest first):
-
-1. Command-line arguments
-2. Environment variables
-3. Configuration file
-4. Default values
-
-Example:
-
-```bash
-# Even if configuration file has "reporter": "list", command-line takes priority
-probitas run --reporter json  # => json is used
-```
-
-## Usage Examples
-
-### Basic Execution
-
-```bash
-# Default parallel execution (execute all scenarios in parallel)
-probitas run
-
-# Specify maximum concurrency
-probitas run --max-concurrency 4
-
-# Sequential execution (when there are dependencies between scenarios)
-probitas run --max-concurrency 1
-
-# Execute scenarios in specific directory
-probitas run "scenarios/**/*.scenario.ts"
-```
-
-**Scenario File Examples**:
-
-Single scenario:
-
-```typescript
-// scenarios/login.scenario.ts
-export default scenario("Login").step(...).build();
-```
-
-Multiple scenarios (multiple scenarios in one file):
-
-```typescript
-// scenarios/auth.scenario.ts
-export default [
-  scenario("Login").step(...).build(),
-  scenario("Logout").step(...).build(),
-  scenario("Password Reset").step(...).build(),
-];
-```
-
-#### Directory Specification
-
-```bash
-# Execute all scenarios under scenarios directory
-probitas run scenarios/
-
-# Execute multiple directories
-probitas run scenarios/ e2e/ integration/
-
-# Mix directories and files
-probitas run scenarios/ smoke/critical.scenario.ts
-```
-
-### Scenario Selection and Filtering
-
-```bash
-# Execute only scenarios with "smoke" tag
-probitas run --selector tag:smoke
-
-# Execute scenarios with "api" OR "integration" tags
-probitas run --selector tag:api --selector tag:integration
-
-# Select by name
-probitas run --selector "login"
-
-# Combination of tags and pattern (AND)
-probitas run --selector "tag:api,name:User"
-# => Execute only scenarios with "api" tag AND name containing "User"
-
-# Exclude using negation
-probitas run --selector "tag:api,!tag:slow"
-# => Execute API tests, but exclude slow ones
-
-# Negation only
-probitas run --selector "!tag:wip"
-# => Execute all except WIP scenarios
-```
-
-**Filtering Logic**:
-
-- Multiple `--selector` flags: OR logic (matches any selector)
-- Comma-separated in selector: AND logic (must match all conditions)
-- `!` prefix: NOT logic (excludes matching scenarios)
-
-### Execution Modes
-
-```bash
-# Default: Parallel execution (unlimited concurrency)
-probitas run
-
-# Limit concurrency
-probitas run --max-concurrency 2
-
-# Sequential execution (one by one)
-probitas run --sequential
-# or
-probitas run -S
-```
-
-### Color Output Control
-
-```bash
-# Disable with option
-probitas run --no-color
-
-# Disable with environment variable (these are equivalent)
-NO_COLOR=1 probitas run
-export NO_COLOR=1
-probitas run
-
-# Can be overridden by configuration file even if environment variable is set
-probitas run  # Automatically disabled if NO_COLOR is set
-```
-
-**Priority**:
-
-1. `--no-color` option (command-line)
-2. `NO_COLOR` environment variable
-3. Default (color enabled)
-
-### Custom Reporters
-
-```bash
-# Dot format (simple)
-probitas run --reporter dot
-
-# Save to file in JSON format
-probitas run --reporter json > results.json
-
-# TAP format
-probitas run --reporter tap
-```
-
-### Failure Strategies
-
-```bash
-# Default: Execute all scenarios even on failure
-probitas run
-
-# Stop on first failure
-probitas run --max-failures 1
-
-# Stop after 3 failures
-probitas run --max-failures 3
-```
-
-### CI/CD Usage
-
-GitHub Actions example:
-
-```yaml
-name: Test
-
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
-
-      - name: Install Probitas
-        run: deno install -gAf -n probitas jsr:@lambdalisue/probitas/cli
-
-      - name: Run tests
-        run: |
-          probitas run \
-            --max-concurrency 10 \
-            --max-failures 1
-        env:
-          NO_COLOR: 1 # Disable color output
-```
-
-GitLab CI example:
-
-```yaml
-test:
-  image: denoland/deno:alpine
-  script:
-    - export NO_COLOR=1
-    - deno install -gAf -n probitas jsr:@lambdalisue/probitas/cli
-    - probitas run --max-failures 5
-```
-
-### Using Configuration File
-
-`deno.json`:
-
-```json
-{
-  "imports": {
-    "probitas": "jsr:@lambdalisue/probitas"
-  },
   "probitas": {
     "includes": ["scenarios/**/*.scenario.ts"],
     "excludes": [],
     "reporter": "list",
-    "maxConcurrency": 5,
-    "maxFailures": 3,
-    "selectors": [
-      "tag:smoke",
-      "tag:api,!tag:slow",
-      "!tag:wip"
-    ]
+    "maxConcurrency": 4,
+    "maxFailures": 0,
+    "selectors": ["!tag:wip"]
   }
 }
 ```
 
-Execution:
-
-```bash
-# Use deno.json
-probitas run
-
-# Override part of configuration file
-probitas run --reporter json
-
-# Specify specific configuration file
-probitas run --config custom.deno.json
-```
+CLI options override configuration.
 
 ## Environment Variables
 
-### `NO_COLOR`
-
-Disables colored output.
-
-```bash
-# Disable colored output
-NO_COLOR=1 probitas run
-
-# Equivalent to --no-color flag
-```
-
-- Equivalent to `--no-color` option
-- Any value disables colors (just needs to be set)
-- Follows standard environment variable convention (https://no-color.org/)
-
-### `PROBITAS_CONFIG`
-
-Specifies the default config file path.
-
-```bash
-# Use custom config file
-PROBITAS_CONFIG=custom.deno.json probitas run
-```
+| Variable          | Description            |
+| ----------------- | ---------------------- |
+| `NO_COLOR`        | Disable colored output |
+| `PROBITAS_CONFIG` | Config file path       |
 
 ## Exit Codes
 
-Probitas CLI returns the following exit codes:
+| Code | Meaning              |
+| ---- | -------------------- |
+| 0    | All scenarios passed |
+| 1    | One or more failed   |
+| 2    | Usage/config error   |
+| 4    | No scenarios found   |
 
-- `0` - All scenarios succeeded
-- `1` - One or more scenarios failed
-- `2` - CLI usage error (invalid options, file conflicts, etc.)
-- `4` - Scenario files not found
+## Execution Model
 
-## Related Resources
+Probitas runs scenarios in a subprocess with:
 
-- [Runner Specification](./runner.md) - Scenario execution engine
-- [Reporter Specification](./reporter.md) - Test result output formats
-- [Builder Specification](./builder.md) - Scenario definition methods
-- [Architecture](./architecture.md) - Overall design
+- Project's `deno.json` configuration (import maps)
+- Dependency isolation via Deno scopes
+- Automatic temporary config cleanup
+
+This ensures user dependencies don't conflict with Probitas internals.
+
+## Related
+
+- [Guide](./guide.md) - Usage examples
+- [Architecture](./architecture.md) - Design overview

@@ -1,354 +1,118 @@
-# Builder Specification
+# Builder Layer
 
-The Builder layer provides a type-safe Fluent API for defining test scenarios.
-It focuses solely on **definition** and does not execute tests.
+The Builder layer provides a type-safe fluent API for defining test scenarios.
+It focuses solely on **definition** — it does not execute tests.
 
-## Overview
+## Design Philosophy
 
-The Builder layer transforms user intent into immutable scenario definitions
-that can be executed by the Runner layer. It achieves both compile-time type
-checking and runtime flexibility.
+### Separation of Definition and Execution
 
-## Core Responsibilities
+The Builder captures user intent as an immutable data structure. This separation
+enables:
 
-- Transform user intent into scenario definitions executable by the Runner layer
-- Build scenarios incrementally with type-safe Fluent API
-- Automatically infer result types throughout the chain
-- Generate immutable scenario definitions
+- Static analysis of scenario structure before execution
+- Reuse of definitions across different runners
+- Serialization of definitions for distributed execution
 
-## Interface
+### Type-Safe Chaining
+
+The fluent API uses TypeScript's type system to:
+
+- Infer result types throughout the chain automatically
+- Provide compile-time errors for type mismatches
+- Enable IDE autocompletion for `ctx.previous` and `ctx.results`
+
+### Immutable Builder Pattern
+
+Each method returns a new builder instance, enabling:
+
+- Branching from a common base to create variants
+- Safe sharing of partial definitions
+- Predictable behavior without side effects
+
+## Core Concepts
+
+### Scenario
+
+A named test case with optional tags for filtering. Created via
+`scenario(name, options?)`.
+
+### Entry
+
+An atomic unit within a scenario. Three types exist:
+
+| Entry      | Purpose                           | Returns                        |
+| ---------- | --------------------------------- | ------------------------------ |
+| `step`     | Test logic, receives context      | Value for next step            |
+| `resource` | Creates lifecycle-managed object  | Added to `ctx.resources`       |
+| `setup`    | Side effect with optional cleanup | Cleanup function or Disposable |
+
+Entries execute in definition order. Cleanup runs in reverse order.
+
+### Context
+
+Each entry function receives a `StepContext` with:
+
+| Property    | Description                             |
+| ----------- | --------------------------------------- |
+| `index`     | Entry index (0-based)                   |
+| `previous`  | Previous step's return value (typed)    |
+| `results`   | All step results as typed tuple         |
+| `store`     | Shared `Map<string, unknown>` for state |
+| `signal`    | AbortSignal for cancellation            |
+| `resources` | Record of initialized resources         |
+
+Note: `previous` and `results` only include `step` entries, not `resource` or
+`setup`.
+
+## API
 
 ### scenario(name, options?)
 
-Creates a new scenario builder instance.
-
-```typescript
-function scenario(
-  name: string,
-  options?: { tags?: string[] },
-): ScenarioBuilderInit<unknown, readonly [], Record<string, never>>;
-```
-
-**Parameters**:
+Creates a new scenario builder.
 
 - `name` - Human-readable scenario name
-- `options` - Optional configuration (tags only)
+- `options.tags` - String array for filtering
 
-**Returns**: `ScenarioBuilderInit` with empty result chain and no resources
+### .step(name, fn, options?) / .step(fn, options?)
 
-## Flexible Chaining API
+Adds a test step. Anonymous steps are auto-named "Step N".
 
-The builder provides a flexible, fluent API where scenario entries can be
-chained in any order. The methods `.step()`, `.resource()`, and `.setup()` can
-be interleaved to construct the exact execution flow needed for a test.
+- `fn` receives `StepContext`, returns value passed to next step
+- `options.timeout` - Step timeout in milliseconds
+- `options.retry` - Retry configuration
 
-This replaces the previous state-based model, giving you more freedom to
-structure your scenarios.
+### .resource(name, factory)
 
-**Generic type parameters**:
+Adds a named resource with automatic lifecycle management.
 
-- `P` - Result type of the previous step
-- `A` - Tuple of all accumulated results
-- `Resources` - Accumulated resource types
+- `name` - Unique identifier, becomes key in `ctx.resources`
+- `factory` receives `StepContext`, returns resource object
+- If resource implements `Disposable` or `AsyncDisposable`, automatically
+  disposed
 
-### Methods
+### .setup(fn)
 
-#### .resource(name, factory)
+Adds a setup entry for side effects.
 
-Adds a resource entry to the scenario. The resource is initialized at its
-position in the chain. If it implements `AsyncDisposable` or `Disposable`, it
-will be automatically disposed at the end of the scenario.
+- `fn` receives `StepContext`
+- May return cleanup function, `Disposable`, or `AsyncDisposable`
+- Cleanup guaranteed to run even on failure
 
-```typescript
-resource<K extends string, R>(
-  name: K,
-  factory: (ctx: StepContext<P, A, Resources>) => R | Promise<R>
-): ScenarioBuilder<P, A, Resources & Record<K, R>>
-```
+### .build()
 
-**Parameters**:
-
-- `name` - Unique resource name (string literal for type inference)
-- `factory` - Function to create the resource. It receives the full
-  `StepContext` at its point in the execution chain, so it can use results from
-  previous steps.
-
-**Returns**: The same builder instance with an updated `Resources` type.
-
-**Example**:
-
-```typescript
-scenario("DB Test")
-  .step("Get config", () => ({ connectionString: "postgres://..." }))
-  .resource("db", (ctx) => {
-    // Can access the result of the previous step
-    return connectDB(ctx.previous.connectionString);
-  })
-  .step("Query", (ctx) => {
-    // ctx.resources.db is typed and available
-    return ctx.resources.db.query("SELECT 1");
-  });
-```
-
-#### .setup(name, fn)
-
-Adds a setup entry to the scenario. This is for procedural logic that may have
-side effects and require corresponding cleanup. The function can optionally
-return a cleanup function or a `Disposable`/`AsyncDisposable` object, which will
-be run at the end of the scenario.
-
-```typescript
-setup(
-  name: string,
-  fn: (ctx: StepContext<P, A, Resources>) => SetupCleanup | Promise<SetupCleanup>
-): ScenarioBuilder<P, A, Resources>
-```
-
-**Parameters**:
-
-- `name` - A descriptive name for the setup block.
-- `fn` - The setup function. It receives the full `StepContext` and can return a
-  cleanup action.
-
-**Returns**: The same builder instance.
-
-**Example**:
-
-```typescript
-scenario("User Test")
-  .resource("db", () => connectToDb())
-  .setup("Create test user", async (ctx) => {
-    const { db } = ctx.resources;
-    const userId = await db.createUser({ name: "test" });
-    ctx.store.set("userId", userId);
-
-    // Return a cleanup function
-    return async () => {
-      await db.deleteUser(userId);
-    };
-  })
-  .step("Read user", async (ctx) => {
-    // ...
-  });
-```
-
-#### .step(name, fn, options?)
-
-Adds a named step to the scenario.
-
-```typescript
-step<T>(
-  name: string,
-  fn: StepFunction<P, T, A>,
-  options?: StepOptions
-): ScenarioBuilderInSteps<T, readonly [...A, T]>
-```
-
-**Type Inference**:
-
-- Input: `P` (previous result type)
-- Output: New builder with `P = T` and `T` added to `A`
-
-#### .step(fn, options?)
-
-Adds an anonymous step (uses auto-generated name in "Step N" format, e.g., "Step
-1", "Step 2").
-
-```typescript
-step<T>(
-  fn: StepFunction<P, T, A>,
-  options?: StepOptions
-): ScenarioBuilderInSteps<T, readonly [...A, T]>
-```
-
-#### .build()
-
-Finalizes and returns an immutable scenario definition. Can be called from any
-builder state.
-
-```typescript
-build(): ScenarioDefinition
-```
-
-**Returns**: Immutable object used by the Runner layer.
-
-### Type Definitions
-
-#### StepFunction<P, T, A>
-
-Step function signature.
-
-```typescript
-type StepFunction<
-  P = unknown, // Previous step result type
-  T = unknown, // This step's return type
-  A extends readonly unknown[] = readonly [], // Accumulated result tuple
-> = (ctx: StepContext<P, A>) => T | Promise<T>;
-```
-
-#### StepContext<P, A, R>
-
-Context available to each entry's function.
-
-```typescript
-interface StepContext<
-  P, // Previous step result type
-  A extends readonly unknown[], // Accumulated result tuple
-  R extends Record<string, unknown>, // Accumulated resources
-> {
-  index: number; // Entry index (0-based)
-  previous: P; // Previous step result (typed)
-  results: A; // All accumulated results (typed tuple)
-  store: Map<string, unknown>; // Shared storage
-  signal: AbortSignal; // Abort signal
-  resources: R; // Record of initialized resources
-}
-```
-
-### ScenarioOptions & StepOptions
-
-During scenario building, all options are optional (using `Partial<>`). The
-Builder applies defaults before passing to the Runner.
-
-```typescript
-type BuilderScenarioOptions = Partial<ScenarioOptions>;
-type BuilderStepOptions = Partial<StepOptions>;
-```
-
-For complete option definitions with all fields, see
-[Runner Specification - ScenarioOptions](./runner.md#scenariooptions) and
-[Runner Specification - StepOptions](./runner.md#stepoptions).
-
-## Usage Examples
-
-### Basic Chaining
-
-```typescript
-const definition = scenario("Example")
-  .step("Get ID", () => 123)
-  .step("Fetch", (ctx) => {
-    ctx.previous; // number type
-    return { name: "John" };
-  })
-  .step("Validate", (ctx) => {
-    ctx.previous.name; // string type
-    ctx.results[0]; // number type
-    ctx.results[1]; // { name: string } type
-  })
-  .build();
-
-// Pass to Runner for execution
-const runner = new ScenarioRunner();
-await runner.run([definition]);
-```
-
-### Interleaving Entries
-
-This example shows how `.step()`, `.resource()`, and `.setup()` can be
-interleaved to create a clear and logical test flow.
-
-```typescript
-const definition = scenario("Database Test")
-  // 1. Define a resource for the database connection
-  .resource("db", async () => {
-    const db = await connectDB();
-    await db.connect();
-    return db; // Automatically disposed if it implements AsyncDisposable
-  })
-  // 2. Add a setup entry to seed the database
-  .setup("Seed data", async (ctx) => {
-    // Access resources defined so far
-    const userId = await ctx.resources.db.seed({ users: 1 });
-    ctx.store.set("seededUserId", userId);
-    // Return a cleanup function to run at the end
-    return async () => {
-      await ctx.resources.db.deleteUser(userId);
-    };
-  })
-  // 3. Run a step to test the seeded data
-  .step("Read record", async (ctx) => {
-    const userId = ctx.store.get("seededUserId");
-    const user = await ctx.resources.db.getUser(userId);
-    expect(user).toBeDefined();
-    return user;
-  })
-  .build();
-```
+Finalizes and returns an immutable `ScenarioDefinition`.
 
 ## Best Practices
 
-### 1. Type Annotations (Optional)
+1. **Use `.resource()` for Disposables** - Database connections, file handles
+2. **Use `.setup()` for procedural cleanup** - Temp files, test data seeding
+3. **Keep steps focused** - One logical assertion per step
+4. **Use descriptive names** - Aids debugging and reporting
+5. **Leverage type inference** - Avoid explicit type annotations when possible
 
-The builder automatically infers types, but explicit annotations can be added:
+## Related
 
-```typescript
-scenario("Example")
-  .step("Get Number", (): number => 123)
-  .step("Use Number", (ctx): string => {
-    const n: number = ctx.previous;
-    return n.toString();
-  });
-```
-
-### 2. Extract Entry Functions
-
-For complex logic, extract functions for your entries:
-
-```typescript
-const getUserId = (): number => 123;
-const fetchUser = (ctx: StepContext<number, [number]>) => {
-  return { id: ctx.previous, name: "John" };
-};
-
-scenario("User Flow")
-  .step("Get ID", getUserId)
-  .step("Fetch", fetchUser);
-```
-
-### 3. Use `.resource()` for Disposables
-
-For any object with a cleanup action that fits the `Disposable` or
-`AsyncDisposable` pattern (like DB connections), prefer using `.resource()`.
-
-```typescript
-// Good: Manages lifecycle automatically
-scenario("Test")
-  .resource("db", () => new DatabaseConnection());
-```
-
-### 4. Use `.setup()` for Procedural Cleanup
-
-For setup actions that don't involve a single "resource" object, like creating a
-temporary file or seeding a database, use `.setup()` and return a cleanup
-function.
-
-```typescript
-// Good: Clear and co-located logic
-scenario("Test")
-  .setup("Create temp file", () => {
-    Deno.writeTextFileSync("temp.txt", "hello");
-    return () => {
-      Deno.removeSync("temp.txt");
-    };
-  });
-```
-
-### 5. Error Handling
-
-The builder validates types at compile time:
-
-```typescript
-const definition = scenario("Example")
-  .step("Get Number", () => 123)
-  .step("Use String", (ctx) => {
-    ctx.previous.toUpperCase(); // ❌ Compile error: number doesn't have toUpperCase
-  })
-  .build();
-```
-
-Runtime errors occur in the Runner layer, not the Builder layer.
-
-## Related Resources
-
-- [Runner Specification](./runner.md) - Scenario execution
 - [Architecture](./architecture.md) - Overall design
+- [Runner](./runner.md) - Execution of built definitions
+- [Guide](./guide.md) - Practical examples

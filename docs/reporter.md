@@ -1,342 +1,130 @@
-# Reporter Specification
+# Reporter Layer
 
 The Reporter layer formats and displays test execution results. It receives
 lifecycle events from the Runner and presents them to users.
 
-## Overview
+## Design Philosophy
 
-The Reporter layer receives events from the Runner layer and outputs execution
-results in human-readable or machine-parseable formats. It supports multiple
-output formats and allows custom reporter implementations.
+### Event-Driven Architecture
 
-The Reporter interface is defined in the Runner layer's type system. See
-[Architecture - Execution Flow](./architecture.md#execution-flow) for how the
-Reporter integrates with other layers.
+Reporters implement a simple event interface. The Runner calls event methods at
+appropriate times, and reporters decide how to present the information.
 
-## Core Responsibilities
+This decoupling enables:
 
-- Transform execution events into human-readable or machine-parseable output
-  formats
-- Support multiple output formats (list, TAP, JSON, etc.)
-- Use Theme layer to format output semantically
-- Enable custom reporters
+- Multiple output formats without changing Runner
+- Real-time output as tests execute
+- Custom reporters for specific needs (CI/CD, IDEs, dashboards)
 
-## Interface
+### Semantic Coloring via Theme
 
-### Reporter
+Reporters use the Theme layer for coloring. Instead of hardcoding colors,
+reporters call semantic methods like `theme.success()` or `theme.failure()`.
 
-All reporters implement this interface. This is the core contract between the
-Runner and Reporter layers:
+Benefits:
 
-```typescript
-interface Reporter {
-  /**
-   * Called when test execution starts
-   */
-  onRunStart(scenarios: readonly ScenarioDefinition[]): void | Promise<void>;
+- Reporters remain color-agnostic
+- Users can customize themes without modifying reporters
+- Automatic NO_COLOR environment variable support
 
-  /**
-   * Called when scenario execution starts
-   */
-  onScenarioStart(scenario: ScenarioDefinition): void | Promise<void>;
+### Console Control
 
-  /**
-   * Called when step execution starts
-   */
-  onStepStart(step: StepDefinition): void | Promise<void>;
+Reporters can suppress console output from test code during execution. This
+prevents test `console.log` calls from interfering with formatted output.
 
-  /**
-   * Called when a step completes successfully
-   */
-  onStepEnd(step: StepDefinition, result: StepResult): void | Promise<void>;
+## Core Concepts
 
-  /**
-   * Called when a step fails
-   */
-  onStepError(step: StepDefinition, error: Error): void | Promise<void>;
+### Reporter Interface
 
-  /**
-   * Called when a scenario completes
-   */
-  onScenarioEnd(
-    scenario: ScenarioDefinition,
-    result: ScenarioResult,
-  ): void | Promise<void>;
+All reporters implement these event methods:
 
-  /**
-   * Called when test execution ends
-   */
-  onRunEnd(summary: RunSummary): void | Promise<void>;
-}
-```
+| Method            | When Called                  |
+| ----------------- | ---------------------------- |
+| `onRunStart`      | Before any scenario executes |
+| `onScenarioStart` | Before a scenario executes   |
+| `onStepStart`     | Before a step executes       |
+| `onStepEnd`       | After a step succeeds        |
+| `onStepError`     | After a step fails           |
+| `onScenarioEnd`   | After a scenario completes   |
+| `onRunEnd`        | After all scenarios complete |
 
 ### ReporterOptions
 
-Options for reporter initialization.
+Common configuration for all reporters:
 
-```typescript
-interface ReporterOptions {
-  /**
-   * Output destination (default: Deno.stderr.writable)
-   */
-  output?: WritableStream;
-
-  /**
-   * Output verbosity (mutually exclusive)
-   * - "quiet": Suppress all output
-   * - "normal": Show only console.error/warn (default)
-   * - "verbose": Show console.log/info as well
-   * - "debug": Show all including console.debug
-   */
-  verbosity?: "quiet" | "normal" | "verbose" | "debug";
-
-  /**
-   * Disable colored output
-   *
-   * Defaults to false. Set to true to disable ANSI colors.
-   * Note: Users should manually check NO_COLOR environment variable if needed:
-   * `noColor: Deno.env.get("NO_COLOR") !== undefined`
-   */
-  noColor?: boolean;
-
-  /**
-   * Output theme
-   */
-  theme?: Theme;
-}
-```
-
-**Console Control**:
-
-The BaseReporter class (which all built-in reporters extend) includes console
-control functionality. During test execution, reporters can suppress console
-output from test code and restore it after execution completes. This prevents
-test console output from interfering with reporter output formatting.
-
-- `suppressConsole()`: Temporarily captures console.log/error/warn/debug calls
-- `restoreConsole()`: Restores original console behavior
-
-The verbosity option controls which console methods are captured or displayed
-during test execution.
+| Option      | Description                                  |
+| ----------- | -------------------------------------------- |
+| `output`    | WritableStream destination (default: stderr) |
+| `verbosity` | quiet / normal / verbose / debug             |
+| `noColor`   | Disable ANSI colors                          |
+| `theme`     | Custom Theme implementation                  |
 
 ## Built-in Reporters
 
 ### ListReporter
 
-Reporter that outputs in flat list format.
-
-**Features**:
-
-- Displays detailed individual step results
-- Displays separate summary of failed tests
-- Most recommended format by default
-- Supports colored output
-
-**Output Example**:
+Detailed list format showing each step result. Best for development.
 
 ```
-✓ User Login > Navigate to Login Page (src/user.scenario.ts:12) [12ms]
-✓ User Login > Submit Credentials (src/user.scenario.ts:15) [145ms]
-✓ User Logout > Click Logout Button (src/user.scenario.ts:22) [8ms]
-✓ API Test > Get User (src/api.scenario.ts:32) [56ms]
-✗ API Test > Create User (src/api.scenario.ts:35)
+✓ User Login > Navigate (12ms)
+✓ User Login > Submit (145ms)
+✗ API Test > Create User
   Connection timeout
-  at fetch (http.ts:45:11)
-  at step (api.scenario.ts:35:20)
-
-Failed Tests
-  ✗ API Test > Create User (src/api.scenario.ts:35)
 
 Summary
-  ✓ 3 scenarios passed
-  ✗ 1 scenarios failed
-
-  4 scenarios total [1399ms]
+  ✓ 1 passed
+  ✗ 1 failed
 ```
-
-### TAPReporter
-
-Outputs in Test Anything Protocol format.
-
-**Features**:
-
-- Standard format compliant with TAP (Test Anything Protocol)
-- Optimal for CI/CD pipeline integration
-- Includes detailed information per step
-
-### JSONReporter
-
-Reporter that outputs each event in real-time using JSONLine format.
-
-**Features**:
-
-- JSON format with one event per line
-- Real-time output for each event
-- Easy for machine parsing
-- Optimal for integration with log collection and analysis tools
 
 ### DotReporter
 
-Reporter that displays progress in simple dot (`.`) format.
-
-**Features**:
-
-- Very compact output
-- Effective when running many tests
-- Does not display step details
-- Optimal for progress checking with large test counts
-
-**Output Format:**
-
-- `.` (green): Passed scenario
-- `F` (red): Failed scenario
-
-Example output:
+Compact dots for large test suites.
 
 ```
-...F...
+...F....
 
-6 scenarios passed, 1 scenarios failed (245ms)
-
-Failed Tests
-  ✗ Login Flow > Submit credentials (auth.scenario.ts:42)
+7 passed, 1 failed (245ms)
 ```
 
-## Usage Examples
+- `.` = passed scenario
+- `F` = failed scenario
 
-### Basic Usage
+### TAPReporter
 
-```typescript
-const reporter = new ListReporter();
-await runner.run(scenarios, { reporter });
+Test Anything Protocol format for CI/CD integration.
+
+```
+TAP version 14
+1..2
+ok 1 - User Login
+not ok 2 - API Test
 ```
 
-### Custom Output Destination
+### JSONReporter
 
-```typescript
-const file = await Deno.open("test-results.txt", { write: true, create: true });
-const reporter = new ListReporter({
-  output: file.writable,
-  noColor: true,
-});
-```
+JSON Lines format for machine parsing. One event per line in real-time.
 
-### With Custom Theme
+## Custom Reporters
 
-```typescript
-const reporter = new ListReporter({
-  theme: customTheme,
-});
-```
+Implement the Reporter interface to create custom reporters. Extend
+`BaseReporter` for common functionality like output stream management and
+console control.
 
-### CI/CD Integration
+Key considerations:
 
-```typescript
-const reporter = new TAPReporter();
-await runner.run(scenarios, { reporter });
-```
-
-## Customization/Extension
-
-### Custom Reporter
-
-You can create custom reporters by implementing the Reporter interface. The
-following patterns are commonly used:
-
-- **Basic Reporter**: Receives event notifications and outputs to console
-- **Progress Bar Display**: Visualizes execution progress
-- **JSON Output**: Outputs test results in machine-readable format
-
-**Basic Implementation Example**:
-
-```typescript
-class CustomReporter implements Reporter {
-  async onRunStart(scenarios: readonly ScenarioDefinition[]) {
-    console.log(`Starting ${scenarios.length} scenarios`);
-  }
-
-  async onScenarioStart(scenario: ScenarioDefinition) {
-    console.log(`Running: ${scenario.name}`);
-  }
-
-  async onStepStart(step: StepDefinition) {
-    // Implementation
-  }
-
-  async onStepEnd(step: StepDefinition, result: StepResult) {
-    console.log(`  Step: ${step.name} - ${result.status}`);
-  }
-
-  async onStepError(step: StepDefinition, error: Error) {
-    console.error(`  Step: ${step.name} - ${error.message}`);
-  }
-
-  async onScenarioEnd(scenario: ScenarioDefinition, result: ScenarioResult) {
-    console.log(`Finished: ${scenario.name} - ${result.status}`);
-  }
-
-  async onRunEnd(summary: RunSummary) {
-    console.log(`Results: ${summary.passed}/${summary.total} passed`);
-  }
-}
-```
-
-### Custom Reporter Patterns
-
-#### Reporter Chaining (Example Implementation)
-
-While Probitas doesn't provide a built-in chained reporter, you can implement
-one yourself:
-
-```typescript
-class ChainedReporter implements Reporter {
-  constructor(private reporters: Reporter[]) {}
-
-  async onRunStart(scenarios: readonly ScenarioDefinition[]) {
-    await Promise.all(this.reporters.map((r) => r.onRunStart(scenarios)));
-  }
-
-  async onScenarioStart(scenario: ScenarioDefinition) {
-    await Promise.all(this.reporters.map((r) => r.onScenarioStart(scenario)));
-  }
-
-  // ... other methods
-}
-```
+1. **Real-time output** - Write immediately, don't buffer
+2. **Use Theme** - Call `this.theme.success()` not color codes
+3. **Handle all events** - Even if some are no-ops
 
 ## Best Practices
 
-### 1. Real-time Output
+1. **Choose appropriate reporter** - List for dev, Dot for CI, JSON for tooling
+2. **Use verbosity levels** - Control output detail without changing reporter
+3. **Respect NO_COLOR** - Pass `noColor: Deno.env.has("NO_COLOR")` when needed
 
-Output immediately when events occur without buffering.
+## Related
 
-### 2. Error Formatting
-
-Format errors appropriately in onStepError to provide helpful error messages:
-
-```typescript
-async onStepError(step: StepDefinition, error: Error) {
-  const formatted = `${step.name}: ${error.message}`;
-  await this.write(formatted);
-}
-```
-
-### 3. Summary Statistics
-
-Track aggregated data and display statistics in onRunEnd.
-
-### 4. Leverage Theme
-
-Use Theme layer to implement coloring, separating Reporter implementation from
-color details:
-
-```typescript
-const icon = this.theme.success("✓");
-const text = this.theme.dim("auxiliary info");
-```
-
-## Related Resources
-
-- [Theme Specification](./theme.md) - Coloring implementation
-- [Runner Specification](./runner.md) - Test execution
 - [Architecture](./architecture.md) - Overall design
+- [Theme](./theme.md) - Semantic coloring
+- [Runner](./runner.md) - Event source
+- [Guide](./guide.md) - Practical examples

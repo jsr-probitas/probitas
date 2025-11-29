@@ -1,11 +1,9 @@
-# Probitas Architecture
+# Architecture
 
-Probitas is a scenario-based testing framework designed with a 4-layer
-architecture that achieves separation of concerns.
+Probitas is a scenario-based testing framework with a 4-layer architecture that
+achieves separation of concerns.
 
-## Overview
-
-Probitas 4-layer architecture:
+## Layer Overview
 
 ```mermaid
 graph TD
@@ -16,76 +14,22 @@ graph TD
     Theme --> Output[Test Output]
 ```
 
-Each layer has a single responsibility, achieving separation of concerns.
+| Layer                     | Responsibility                  |
+| ------------------------- | ------------------------------- |
+| [Builder](./builder.md)   | Type-safe scenario definition   |
+| [Runner](./runner.md)     | Execution and lifecycle control |
+| [Reporter](./reporter.md) | Result formatting and display   |
+| [Theme](./theme.md)       | Semantic coloring abstraction   |
 
-## 4 Core Layers
+## Design Principles
 
-### 1. Builder Layer
+1. **Single Responsibility** - Each layer has one clear purpose
+2. **Immutability** - Scenario definitions are immutable after building
+3. **Type Safety** - Compile-time guarantees via TypeScript's type system
+4. **Semantic Abstraction** - Theme layer decouples reporters from color details
+5. **Extensibility** - Custom reporters and themes via well-defined interfaces
 
-**Responsibility**: Type-safe test scenario definition API
-
-The Builder layer transforms user intent into immutable scenario definitions
-using a fluent API with compile-time type checking.
-
-**Key Capabilities**:
-
-- Fluent API that enables compile-time type checking
-- Automatic type inference for result types throughout the chain
-- Captures scenario structure without executing tests
-- Generates immutable scenario definitions
-
-See [Builder Specification](./builder.md) for detailed API and usage examples.
-
-### 2. Runner Layer
-
-**Responsibility**: Scenario execution and test lifecycle orchestration
-
-The Runner layer executes scenario definitions and manages the complete test
-lifecycle.
-
-**Key Capabilities**:
-
-- Receives scenario definitions from Builder
-- Executes scenario entries (steps, resources, setups) in order
-- Controls parallel/sequential execution
-- Provides abort/timeout control
-- Coordinates with Reporter for output
-
-See [Runner Specification](./runner.md) for detailed API and usage examples.
-
-### 3. Reporter Layer
-
-**Responsibility**: Format and display test results
-
-The Reporter layer receives lifecycle events from Runner and presents them to
-users in various formats.
-
-**Key Capabilities**:
-
-- Receives lifecycle events from Runner
-- Uses Theme layer to format output semantically
-- Supports multiple output formats (List, TAP, JSON, Dot)
-- Enables custom reporters
-
-See [Reporter Specification](./reporter.md) for detailed API and usage examples.
-
-### 4. Theme Layer
-
-**Responsibility**: Provides semantic coloring for the Reporter layer
-
-The Theme layer separates visual representation from business logic, enabling
-customizable output.
-
-**Key Capabilities**:
-
-- Abstracts coloring logic used by Reporters
-- Defines colors based on semantics (success, failure, etc.)
-- Supports NO_COLOR environment variable
-- Supports custom themes
-
-See [Theme Specification](./theme.md) for detailed API and usage examples.
-
-## Execution Flow
+## Data Flow
 
 ```mermaid
 sequenceDiagram
@@ -96,126 +40,29 @@ sequenceDiagram
 
     User->>Builder: Define scenario
     Builder->>Builder: Build immutable definition
-    User->>Runner: run(definition)
-    Runner->>Reporter: onRunStart()
-    loop Each Scenario
-        Runner->>Reporter: onScenarioStart()
-        loop Each Step
-            Runner->>Reporter: onStepStart()
-            Runner->>Reporter: onStepEnd()
-        end
-        Runner->>Reporter: onScenarioEnd()
-    end
-    Runner->>Reporter: onRunEnd()
+    User->>Runner: run(definitions)
+    Runner->>Reporter: Lifecycle events
     Reporter->>User: Formatted output
 ```
 
-1. **Definition**: User creates scenario definitions with Builder layer
-2. **Execution**: Runner receives definitions and executes steps
-3. **Reporting**: Runner sends lifecycle events to Reporter layer
-4. **Display**: Reporter uses Theme layer to format and display results
+1. **Definition Phase** - Builder transforms user code into `ScenarioDefinition`
+2. **Execution Phase** - Runner executes definitions, emitting lifecycle events
+3. **Presentation Phase** - Reporter formats events using Theme for output
 
-## Layer Interaction
+## Entry Types
 
-```mermaid
-graph TB
-    subgraph "Definition Phase"
-        Builder[Builder Layer]
-    end
+Scenarios consist of three entry types, executed in definition order:
 
-    subgraph "Execution Phase"
-        Runner[Runner Layer]
-    end
+| Entry      | Purpose                    | Cleanup Mechanism         |
+| ---------- | -------------------------- | ------------------------- |
+| `step`     | Test logic with assertions | None                      |
+| `resource` | Lifecycle-managed objects  | Automatic via Disposable  |
+| `setup`    | Side effects with cleanup  | Returned cleanup function |
 
-    subgraph "Presentation Phase"
-        Reporter[Reporter Layer]
-        Theme[Theme Layer]
-    end
+Cleanup always runs in reverse definition order, even on failure.
 
-    Builder -->|ScenarioDefinition| Runner
-    Runner -->|Events| Reporter
-    Reporter -->|Semantic colors| Theme
-```
+## Usage
 
-## Design Principles
+See [Guide](./guide.md) for practical usage examples.
 
-### Separation of Concerns
-
-| Layer    | What            | How                     | Why                       |
-| -------- | --------------- | ----------------------- | ------------------------- |
-| Builder  | Test Structure  | Type-safe Fluent API    | Compile-time safety       |
-| Runner   | Test Execution  | Lifecycle orchestration | Execution flexibility     |
-| Reporter | Test Output     | Event-based formatting  | Multiple output formats   |
-| Theme    | Output Coloring | Semantic abstraction    | Flexible UI customization |
-
-### Key Principles
-
-1. **Single Responsibility**: Each layer has one clear responsibility
-2. **Type Safety**: Compile-time guarantees with TypeScript's type system
-3. **Immutability**: Scenario definitions are immutable after building
-4. **Semantic Design**: Theme layer prevents Reporters from depending on color
-   implementation details
-5. **Extensibility**: Supports custom reporters and themes
-6. **Resource Management**: Automatic cleanup through explicit resource
-   management
-7. **Composability**: Small, focused components that work together
-
-## Extensibility
-
-Each layer supports customization through well-defined interfaces:
-
-- **Custom Reporter**: Implement the `Reporter` interface - see
-  [Reporter Specification](./reporter.md#customizationextension)
-- **Custom Theme**: Implement the `Theme` interface - see
-  [Theme Specification](./theme.md#customizationextension)
-
-## Quick Start
-
-### Basic Usage
-
-```typescript
-import { scenario, ScenarioRunner } from "probitas";
-
-// 1. Define scenario (Builder layer)
-const definition = scenario("User Flow")
-  .step("Get User ID", () => 123)
-  .step("Process User", (ctx) => ({ id: ctx.previous, name: "John" }))
-  .build();
-
-// 2. Execute (Runner layer)
-const runner = new ScenarioRunner();
-const summary = await runner.run([definition]);
-
-console.log(`${summary.passed}/${summary.total} passed`);
-```
-
-### Advanced Usage
-
-```typescript
-import { ListReporter, scenario, ScenarioRunner } from "probitas";
-
-// With custom reporter and parallel execution
-const definition = scenario("Data Test")
-  .resource("db", async () => await connectDB())
-  .step("Query", async (ctx) => {
-    const result = await ctx.resources.db.query("SELECT 1");
-    return result;
-  })
-  .build();
-
-const runner = new ScenarioRunner();
-const summary = await runner.run([definition], {
-  reporter: new ListReporter(),
-  maxConcurrency: 5, // Limit parallel execution to 5 scenarios
-  maxFailures: 0, // Continue all (0 means no limit, 1 = fail fast)
-});
-```
-
-## Layer Specifications
-
-For detailed information about each layer:
-
-- [Builder Specification](./builder.md) - Test scenario definition
-- [Runner Specification](./runner.md) - Test execution engine
-- [Reporter Specification](./reporter.md) - Test result output
-- [Theme Specification](./theme.md) - Coloring and UI customization
+See [CLI Reference](./cli.md) for command-line interface.

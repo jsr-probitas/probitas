@@ -1,235 +1,93 @@
-# Theme Specification
+# Theme Layer
 
-The Theme layer provides semantic coloring used in the Reporter layer. Reporters
-can format output based on semantics (success, failure, etc.) rather than color
-implementation details.
+The Theme layer provides semantic coloring for the Reporter layer. Reporters
+format output based on meaning (success, failure) rather than colors (green,
+red).
 
-## Overview
+## Design Philosophy
 
-The Theme layer separates the Reporter layer from visual representation,
-enabling customizable coloring. Reporters use semantic coloring methods (like
-`success`, `failure`) without depending on specific color implementations.
+### Semantic Abstraction
 
-This abstraction allows:
+Theme methods are named for meaning, not appearance:
 
-- Reporters to remain agnostic about colors (they only know "this is a success"
-  not "this should be green")
-- Users to customize themes without modifying reporters
-- Automatic NO_COLOR environment variable support
+| Method    | Meaning             | Default Color |
+| --------- | ------------------- | ------------- |
+| `success` | Test passed         | Green         |
+| `failure` | Test failed         | Red           |
+| `warning` | Needs attention     | Yellow        |
+| `info`    | Informational       | Cyan          |
+| `dim`     | Secondary/auxiliary | Gray          |
+| `title`   | Heading/emphasis    | Bold          |
 
-## Core Responsibilities
+This abstraction provides:
 
-- Facilitate Reporters in visually distinguishing output
-- Provide semantic coloring interface
-- Support custom theme implementation
-- Support NO_COLOR environment variable
+- **Consistency** - Same meaning always styled the same way
+- **Customization** - Change colors without modifying reporters
+- **Accessibility** - Easy to create high-contrast or colorblind-friendly themes
 
-## Interface
+### NO_COLOR Support
 
-### Theme
+Themes can implement the [NO_COLOR](https://no-color.org/) standard by returning
+text unmodified. The built-in `noColorTheme` does this.
 
-Theme interface.
+## Theme Interface
 
-```typescript
-interface Theme {
-  /** Success state (e.g., test passed) */
-  readonly success: ThemeFunction;
+Each theme provides six methods, all with signature `(text: string) => string`:
 
-  /** Failure state (e.g., test failed) */
-  readonly failure: ThemeFunction;
+- `success` - Passed tests, positive outcomes
+- `failure` - Failed tests, errors
+- `warning` - Warnings, deprecations
+- `info` - Informational messages
+- `dim` - File paths, timestamps, secondary info
+- `title` - Section headers, scenario names
 
-  /** Auxiliary/secondary information (e.g., file path, timestamp) */
-  readonly dim: ThemeFunction;
+## Built-in Themes
 
-  /** Title/header text */
-  readonly title: ThemeFunction;
+### defaultTheme
 
-  /** Informational/neutral text */
-  readonly info: ThemeFunction;
+Standard theme using ANSI colors:
 
-  /** Warning state */
-  readonly warning: ThemeFunction;
-}
+- success: green
+- failure: red
+- warning: yellow
+- info: cyan
+- dim: gray
+- title: bold
 
-type ThemeFunction = (text: string) => string;
-```
+### noColorTheme
 
-## Built-in Theme
+Returns text unmodified. Used when `NO_COLOR` environment variable is set or
+`noColor: true` is passed to reporter.
 
-Visual effects of the default theme:
+## Custom Themes
 
-| Method    | Visual Effect |
-| --------- | ------------- |
-| `success` | Green         |
-| `failure` | Red           |
-| `dim`     | Gray          |
-| `title`   | Bold          |
-| `info`    | Cyan          |
-| `warning` | Yellow        |
-
-## Usage Examples
-
-### Usage in Reporter
+Create a theme by implementing all six methods:
 
 ```typescript
-class ListReporter extends BaseReporter {
-  override async onStepEnd(step: StepDefinition, result: StepResult) {
-    const icon = this.theme.success("✓");
-    const location = this.theme.dim(
-      `(${result.metadata.location.file}:${result.metadata.location.line})`,
-    );
-    const time = this.theme.dim(`[${result.duration}ms]`);
-
-    await this.write(
-      `${icon} ${step.name} ${location} ${time}\n`,
-    );
-  }
-
-  override async onStepError(step: StepDefinition, error: Error) {
-    const icon = this.theme.failure("✗");
-    await this.write(`${icon} ${this.theme.failure(step.name)}\n`);
-    await this.write(`  ${this.theme.failure(error.message)}\n`);
-  }
-}
-```
-
-## Customization/Extension
-
-### Custom Theme Implementation
-
-#### High Contrast
-
-```typescript
-import { bold, cyan, green, red, yellow } from "@std/fmt/colors";
-import type { Theme } from "probitas";
-
-const highContrastTheme: Theme = {
-  success: (text) => bold(green(text)),
-  failure: (text) => bold(red(text)),
-  dim: (text) => text,
-  title: (text) => bold(cyan(text)),
-  info: (text) => bold(cyan(text)),
-  warning: (text) => bold(yellow(text)),
+const customTheme: Theme = {
+  success: (text) => `✓ ${text}`,
+  failure: (text) => `✗ ${text}`,
+  warning: (text) => `⚠ ${text}`,
+  info: (text) => `ℹ ${text}`,
+  dim: (text) => `(${text})`,
+  title: (text) => `## ${text}`,
 };
-
-const reporter = new ListReporter({ theme: highContrastTheme });
 ```
 
-#### Bright Colors
+Pass to reporter via options:
 
 ```typescript
-import { blue, bold, brightGreen, brightRed, magenta } from "@std/fmt/colors";
-import type { Theme } from "probitas";
-
-const brightTheme: Theme = {
-  success: brightGreen,
-  failure: brightRed,
-  dim: blue,
-  title: (text) => bold(brightGreen(text)),
-  info: blue,
-  warning: magenta,
-};
-
-const reporter = new ListReporter({ theme: brightTheme });
-```
-
-#### NO_COLOR Support
-
-```typescript
-const noColorTheme: Theme = {
-  success: (text) => text,
-  failure: (text) => text,
-  dim: (text) => text,
-  title: (text) => text,
-  info: (text) => text,
-  warning: (text) => text,
-};
-
-const noColor = Deno.env.get("NO_COLOR");
-const theme = noColor ? noColorTheme : defaultTheme;
-const reporter = new ListReporter({ theme });
-```
-
-### Theme Composition
-
-```typescript
-function combineThemes(...themes: Theme[]): Theme {
-  return {
-    success: (text) => themes.reduce((t, theme) => theme.success(t), text),
-    failure: (text) => themes.reduce((t, theme) => theme.failure(t), text),
-    dim: (text) => themes.reduce((t, theme) => theme.dim(t), text),
-    title: (text) => themes.reduce((t, theme) => theme.title(t), text),
-    info: (text) => themes.reduce((t, theme) => theme.info(t), text),
-    warning: (text) => themes.reduce((t, theme) => theme.warning(t), text),
-  };
-}
-
-const combined = combineThemes(boldTheme, colorTheme);
+new ListReporter({ theme: customTheme });
 ```
 
 ## Best Practices
 
-### 1. Semantic-based Usage
+1. **Use semantically** - Call `theme.success()` for passing, not for "green"
+2. **Implement all methods** - Themes must provide all six
+3. **Support NO_COLOR** - Check environment variable when creating themes
+4. **Keep it readable** - Ensure sufficient contrast in custom themes
 
-Use appropriate methods based on semantics:
+## Related
 
-```typescript
-// For success results
-this.theme.success("✓ Passed");
-
-// For failure results
-this.theme.failure("✗ Failed");
-
-// For auxiliary info (file paths, etc.)
-this.theme.dim("(src/test.ts:12)");
-
-// For section titles
-this.theme.title("Test Results");
-
-// For informational messages
-this.theme.info("Info: Running 10 tests");
-
-// For information requiring attention
-this.theme.warning("Warning: Timeout approaching");
-```
-
-### 2. Theme Validation
-
-Theme implementations must provide all methods:
-
-```typescript
-function validateTheme(theme: unknown): theme is Theme {
-  if (!theme || typeof theme !== "object") return false;
-  const t = theme as Record<string, unknown>;
-  const methods = [
-    "success",
-    "failure",
-    "dim",
-    "title",
-    "info",
-    "warning",
-  ];
-  return methods.every((m) => typeof t[m] === "function");
-}
-```
-
-### 3. Compatibility When Customizing
-
-When customizing themes, implement all methods:
-
-```typescript
-// Correct implementation
-const customTheme: Theme = {
-  success: (text) => `✓ ${text}`,
-  failure: (text) => `✗ ${text}`,
-  dim: (text) => `(${text})`,
-  title: (text) => `## ${text}`,
-  info: (text) => `ℹ ${text}`,
-  warning: (text) => `⚠ ${text}`,
-};
-```
-
-## Related Resources
-
-- [Reporter Specification](./reporter.md) - Test result output
 - [Architecture](./architecture.md) - Overall design
+- [Reporter](./reporter.md) - Theme consumer
