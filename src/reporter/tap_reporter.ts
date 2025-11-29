@@ -64,27 +64,6 @@ export class TAPReporter extends BaseReporter {
   }
 
   /**
-   * Called when scenario is skipped - output skip markers for all steps
-   *
-   * @param scenario The scenario being skipped
-   * @param reason Reason for skipping
-   */
-  override async onScenarioSkip(
-    scenario: ScenarioDefinition,
-    reason: string,
-  ): Promise<void> {
-    // Mark all steps in scenario as skipped
-    for (const entry of scenario.entries) {
-      if (entry.kind === "step") {
-        this.#testNumber++;
-        await this.write(
-          `ok ${this.#testNumber} - ${scenario.name} > ${entry.value.name} # SKIP ${reason}\n`,
-        );
-      }
-    }
-  }
-
-  /**
    * Called when step completes - output TAP result
    *
    * @param step The step definition
@@ -120,10 +99,6 @@ export class TAPReporter extends BaseReporter {
             await this.write(`    ${line}\n`);
           }
         }
-      }
-
-      if (result.retries > 0) {
-        await this.write(`  retries: ${result.retries}\n`);
       }
 
       await this.write("  ...\n");

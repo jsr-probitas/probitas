@@ -25,14 +25,14 @@ Creates a new scenario builder instance.
 ```typescript
 function scenario(
   name: string,
-  options?: { tags?: string[]; skip?: boolean | string | (() => boolean) },
+  options?: { tags?: string[] },
 ): ScenarioBuilderInit<unknown, readonly [], Record<string, never>>;
 ```
 
 **Parameters**:
 
 - `name` - Human-readable scenario name
-- `options` - Optional configuration (tags and skip only)
+- `options` - Optional configuration (tags only)
 
 **Returns**: `ScenarioBuilderInit` with empty result chain and no resources
 
@@ -271,18 +271,6 @@ const definition = scenario("Database Test")
     const user = await ctx.resources.db.getUser(userId);
     expect(user).toBeDefined();
     return user;
-  })
-  .build();
-```
-
-### Conditional Skip
-
-```typescript
-const definition = scenario("Integration Test", {
-  skip: () => !Deno.env.get("RUN_INTEGRATION"),
-})
-  .step("API Test", async () => {
-    // Only runs when RUN_INTEGRATION is set
   })
   .build();
 ```

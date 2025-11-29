@@ -171,7 +171,6 @@ class ScenarioBuilderState<
   build(): ScenarioDefinition {
     const mergedScenarioOptions: ScenarioOptions = {
       tags: this.#scenarioOptions.tags ?? DEFAULT_SCENARIO_OPTIONS.tags,
-      skip: this.#scenarioOptions.skip ?? DEFAULT_SCENARIO_OPTIONS.skip,
       stepOptions: {
         timeout: this.#scenarioOptions.stepOptions?.timeout ??
           DEFAULT_SCENARIO_OPTIONS.stepOptions.timeout,

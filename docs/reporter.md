@@ -41,14 +41,6 @@ interface Reporter {
   onScenarioStart(scenario: ScenarioDefinition): void | Promise<void>;
 
   /**
-   * Called when a scenario is skipped
-   */
-  onScenarioSkip(
-    scenario: ScenarioDefinition,
-    reason: string,
-  ): void | Promise<void>;
-
-  /**
    * Called when step execution starts
    */
   onStepStart(step: StepDefinition): void | Promise<void>;
@@ -146,7 +138,6 @@ Reporter that outputs in flat list format.
 ✓ User Login > Navigate to Login Page (src/user.scenario.ts:12) [12ms]
 ✓ User Login > Submit Credentials (src/user.scenario.ts:15) [145ms]
 ✓ User Logout > Click Logout Button (src/user.scenario.ts:22) [8ms]
-⊝ Payment Flow (src/payment.scenario.ts:5) # PAYMENT_ENABLED env var not set
 ✓ API Test > Get User (src/api.scenario.ts:32) [56ms]
 ✗ API Test > Create User (src/api.scenario.ts:35)
   Connection timeout
@@ -157,9 +148,8 @@ Failed Tests
   ✗ API Test > Create User (src/api.scenario.ts:35)
 
 Summary
-  ✓ 2 scenarios passed
+  ✓ 3 scenarios passed
   ✗ 1 scenarios failed
-  ⊝ 1 scenarios skipped
 
   4 scenarios total [1399ms]
 ```
@@ -200,20 +190,16 @@ Reporter that displays progress in simple dot (`.`) format.
 
 - `.` (green): Passed scenario
 - `F` (red): Failed scenario
-- `S` (yellow): Skipped scenario
 
 Example output:
 
 ```
-...F..S.
+...F...
 
-5 scenarios passed, 1 scenarios failed, 1 scenarios skipped (245ms)
+6 scenarios passed, 1 scenarios failed (245ms)
 
 Failed Tests
   ✗ Login Flow > Submit credentials (auth.scenario.ts:42)
-
-Skipped Tests
-  ⊝ Admin Dashboard (admin.scenario.ts:10) # Not implemented yet
 ```
 
 ## Usage Examples
@@ -271,10 +257,6 @@ class CustomReporter implements Reporter {
 
   async onScenarioStart(scenario: ScenarioDefinition) {
     console.log(`Running: ${scenario.name}`);
-  }
-
-  async onScenarioSkip(scenario: ScenarioDefinition, reason: string) {
-    console.log(`Skipped: ${scenario.name} - ${reason}`);
   }
 
   async onStepStart(step: StepDefinition) {

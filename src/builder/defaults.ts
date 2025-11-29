@@ -15,7 +15,6 @@ import type { ScenarioOptions, StepOptions } from "../runner/types.ts";
  */
 export const DEFAULT_SCENARIO_OPTIONS: ScenarioOptions = {
   tags: [],
-  skip: null,
   stepOptions: {
     timeout: 30000,
     retry: {

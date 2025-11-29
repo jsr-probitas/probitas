@@ -24,13 +24,6 @@ export interface ScenarioOptions {
   /** Tags for filtering scenarios */
   readonly tags: readonly string[];
 
-  /** Skip condition (can be boolean, string reason, or function) */
-  readonly skip:
-    | boolean
-    | string
-    | (() => boolean | string | Promise<boolean | string>)
-    | null;
-
   /** Default options applied to all steps in scenario */
   readonly stepOptions: StepOptions;
 }
@@ -160,14 +153,7 @@ export type ScenarioMetadata =
     "entries" | "options"
   >
   & {
-    readonly options:
-      & Omit<
-        ScenarioOptions,
-        "skip"
-      >
-      & {
-        readonly skip: boolean | null;
-      };
+    readonly options: ScenarioOptions;
     readonly entries: readonly Entry[];
   };
 
@@ -231,13 +217,10 @@ export interface StepResult {
   readonly metadata: StepMetadata;
 
   /** Execution status */
-  readonly status: "passed" | "failed" | "skipped";
+  readonly status: "passed" | "failed";
 
   /** Execution duration in milliseconds */
   readonly duration: number;
-
-  /** Number of retries performed */
-  readonly retries: number;
 
   /** Return value from step (if successful) */
   readonly value?: unknown;
@@ -254,7 +237,7 @@ export interface ScenarioResult {
   readonly metadata: ScenarioMetadata;
 
   /** Execution status */
-  readonly status: "passed" | "failed" | "skipped";
+  readonly status: "passed" | "failed";
 
   /** Execution duration in milliseconds */
   readonly duration: number;
@@ -278,9 +261,6 @@ export interface RunSummary {
 
   /** Number of failed scenarios */
   readonly failed: number;
-
-  /** Number of skipped scenarios */
-  readonly skipped: number;
 
   /** Total execution duration in milliseconds */
   readonly duration: number;
@@ -313,14 +293,6 @@ export interface Reporter {
    * Called when scenario starts
    */
   onScenarioStart(scenario: ScenarioDefinition): void | Promise<void>;
-
-  /**
-   * Called when scenario is skipped
-   */
-  onScenarioSkip(
-    scenario: ScenarioDefinition,
-    reason: string,
-  ): void | Promise<void>;
 
   /**
    * Called when step starts

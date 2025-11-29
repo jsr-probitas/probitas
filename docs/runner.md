@@ -50,13 +50,6 @@ interface ScenarioOptions {
   /** Tags (for filtering) */
   tags: string[];
 
-  /** Skip condition (string is used as skip reason) */
-  skip:
-    | boolean
-    | string
-    | (() => boolean | string | Promise<boolean | string>)
-    | null;
-
   /** Default options for all steps */
   stepOptions: StepOptions;
 }
@@ -259,13 +252,10 @@ interface StepResult {
   metadata: StepMetadata;
 
   /** Execution status */
-  status: "passed" | "failed" | "skipped";
+  status: "passed" | "failed";
 
   /** Execution time (milliseconds) */
   duration: number;
-
-  /** Retry count */
-  retries: number;
 
   /** Step return value */
   value?: unknown;
@@ -285,15 +275,11 @@ interface ScenarioMetadata {
   location?: SourceLocation;
   options: {
     tags: readonly string[];
-    skip: boolean | null;
     stepOptions: StepOptions;
   };
   entries: readonly Entry[];
 }
 ```
-
-Note: This is a simplified version of ScenarioDefinition where `skip` is
-normalized to a boolean or null.
 
 ### ScenarioResult
 
@@ -305,7 +291,7 @@ interface ScenarioResult {
   metadata: ScenarioMetadata;
 
   /** Execution status */
-  status: "passed" | "failed" | "skipped";
+  status: "passed" | "failed";
 
   /** Execution time (milliseconds) */
   duration: number;
@@ -332,9 +318,6 @@ interface RunSummary {
 
   /** Number of failed scenarios */
   failed: number;
-
-  /** Number of skipped scenarios */
-  skipped: number;
 
   /** Total execution time (milliseconds) */
   duration: number;

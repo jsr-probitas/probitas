@@ -37,7 +37,6 @@ class TestReporter extends BaseReporter {
   }
 
   onScenarioStart(_scenario: ScenarioDefinition): void {}
-  onScenarioSkip(_scenario: ScenarioDefinition, _reason: string): void {}
   onStepStart(_step: StepDefinition): void {}
   onStepEnd(_step: StepDefinition, _result: StepResult): void {}
   onStepError(_step: StepDefinition, _error: Error): void {}
@@ -94,7 +93,6 @@ describe("BaseReporter", () => {
         total: 0,
         passed: 0,
         failed: 0,
-        skipped: 0,
         duration: 0,
         scenarios: [],
       });

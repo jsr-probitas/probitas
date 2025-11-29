@@ -244,26 +244,6 @@ export default concurrentTest;
 
 ## Environment-Based Testing
 
-### Skip Based on Environment
-
-```typescript
-import { client, env, expect, scenario } from "probitas";
-
-await using api = client.http(env.get("API_URL", "https://api.example.com"));
-
-const prodOnlyTest = scenario("Production Only", {
-  tags: ["production"],
-  skip: () => env.get("ENVIRONMENT") !== "production",
-})
-  .step("Test Production Feature", async () => {
-    const result = await api.get("/production-only-endpoint");
-    expect(result.status).toBe(200);
-  })
-  .build();
-
-export default prodOnlyTest;
-```
-
 ### Multi-Environment Configuration
 
 ```typescript

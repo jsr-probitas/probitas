@@ -158,14 +158,6 @@ export abstract class BaseReporter implements Reporter {
   abstract onScenarioStart(scenario: ScenarioDefinition): void | Promise<void>;
 
   /**
-   * Called when scenario is skipped (to be implemented by subclass)
-   */
-  abstract onScenarioSkip(
-    scenario: ScenarioDefinition,
-    reason: string,
-  ): void | Promise<void>;
-
-  /**
    * Called when step starts (to be implemented by subclass)
    */
   abstract onStepStart(step: StepDefinition): void | Promise<void>;

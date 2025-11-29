@@ -1,15 +1,14 @@
 # Theme Specification
 
 The Theme layer provides semantic coloring used in the Reporter layer. Reporters
-can format output based on semantics (success, failure, skip, etc.) rather than
-color implementation details.
+can format output based on semantics (success, failure, etc.) rather than color
+implementation details.
 
 ## Overview
 
 The Theme layer separates the Reporter layer from visual representation,
 enabling customizable coloring. Reporters use semantic coloring methods (like
-`success`, `failure`, `skip`) without depending on specific color
-implementations.
+`success`, `failure`) without depending on specific color implementations.
 
 This abstraction allows:
 
@@ -39,9 +38,6 @@ interface Theme {
   /** Failure state (e.g., test failed) */
   readonly failure: ThemeFunction;
 
-  /** Skip/pending state */
-  readonly skip: ThemeFunction;
-
   /** Auxiliary/secondary information (e.g., file path, timestamp) */
   readonly dim: ThemeFunction;
 
@@ -66,7 +62,6 @@ Visual effects of the default theme:
 | --------- | ------------- |
 | `success` | Green         |
 | `failure` | Red           |
-| `skip`    | Yellow        |
 | `dim`     | Gray          |
 | `title`   | Bold          |
 | `info`    | Cyan          |
@@ -111,7 +106,6 @@ import type { Theme } from "probitas";
 const highContrastTheme: Theme = {
   success: (text) => bold(green(text)),
   failure: (text) => bold(red(text)),
-  skip: (text) => bold(yellow(text)),
   dim: (text) => text,
   title: (text) => bold(cyan(text)),
   info: (text) => bold(cyan(text)),
@@ -130,7 +124,6 @@ import type { Theme } from "probitas";
 const brightTheme: Theme = {
   success: brightGreen,
   failure: brightRed,
-  skip: magenta,
   dim: blue,
   title: (text) => bold(brightGreen(text)),
   info: blue,
@@ -146,7 +139,6 @@ const reporter = new ListReporter({ theme: brightTheme });
 const noColorTheme: Theme = {
   success: (text) => text,
   failure: (text) => text,
-  skip: (text) => text,
   dim: (text) => text,
   title: (text) => text,
   info: (text) => text,
@@ -165,7 +157,6 @@ function combineThemes(...themes: Theme[]): Theme {
   return {
     success: (text) => themes.reduce((t, theme) => theme.success(t), text),
     failure: (text) => themes.reduce((t, theme) => theme.failure(t), text),
-    skip: (text) => themes.reduce((t, theme) => theme.skip(t), text),
     dim: (text) => themes.reduce((t, theme) => theme.dim(t), text),
     title: (text) => themes.reduce((t, theme) => theme.title(t), text),
     info: (text) => themes.reduce((t, theme) => theme.info(t), text),
@@ -188,9 +179,6 @@ this.theme.success("✓ Passed");
 
 // For failure results
 this.theme.failure("✗ Failed");
-
-// For skipped tests
-this.theme.skip("⊝ Skipped");
 
 // For auxiliary info (file paths, etc.)
 this.theme.dim("(src/test.ts:12)");
@@ -216,7 +204,6 @@ function validateTheme(theme: unknown): theme is Theme {
   const methods = [
     "success",
     "failure",
-    "skip",
     "dim",
     "title",
     "info",
@@ -235,7 +222,6 @@ When customizing themes, implement all methods:
 const customTheme: Theme = {
   success: (text) => `✓ ${text}`,
   failure: (text) => `✗ ${text}`,
-  skip: (text) => `⊝ ${text}`,
   dim: (text) => `(${text})`,
   title: (text) => `## ${text}`,
   info: (text) => `ℹ ${text}`,

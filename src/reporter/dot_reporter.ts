@@ -2,7 +2,7 @@
  * Dot Reporter
  *
  * Outputs simple dot progress representation.
- * One character per scenario: . for pass, F for fail, S for skip.
+ * One character per scenario: . for pass, F for fail.
  *
  * @module
  */
@@ -44,8 +44,6 @@ export class DotReporter extends BaseReporter {
       await this.write(this.theme.success("."));
     } else if (result.status === "failed") {
       await this.write(this.theme.failure("F"));
-    } else if (result.status === "skipped") {
-      await this.write(this.theme.skip("S"));
     }
   }
 
@@ -57,7 +55,7 @@ export class DotReporter extends BaseReporter {
   override async onRunEnd(summary: RunSummary): Promise<void> {
     await this.write("\n\n");
     await this.write(
-      `${summary.passed} scenarios passed, ${summary.failed} scenarios failed, ${summary.skipped} scenarios skipped (${summary.duration}ms)\n`,
+      `${summary.passed} scenarios passed, ${summary.failed} scenarios failed (${summary.duration}ms)\n`,
     );
 
     // Show failed tests
@@ -86,32 +84,6 @@ export class DotReporter extends BaseReporter {
       }
     }
 
-    // Show skipped tests
-    const skipped = summary.scenarios.filter((s) => s.status === "skipped");
-    if (skipped.length > 0) {
-      await this.write("\n");
-      await this.write(`${this.theme.title("Skipped Tests")}\n`);
-      for (const scenario of skipped) {
-        const location = scenario.metadata.location
-          ? ` ${
-            this.theme.dim(
-              `(${scenario.metadata.location.file}:${scenario.metadata.location.line})`,
-            )
-          }`
-          : "";
-        const reason = scenario.metadata.options.skip === true
-          ? "Scenario marked as skipped"
-          : typeof scenario.metadata.options.skip === "string"
-          ? scenario.metadata.options.skip
-          : "Scenario marked as skipped";
-        await this.write(
-          `  ${this.theme.skip("⊝")} ${scenario.metadata.name}${location} ${
-            this.theme.dim(`# ${reason}`)
-          }\n`,
-        );
-      }
-    }
-
     await super.onRunEnd(summary);
   }
 
@@ -123,13 +95,6 @@ export class DotReporter extends BaseReporter {
   }
 
   override async onScenarioStart(_scenario: ScenarioDefinition): Promise<void> {
-    // no-op
-  }
-
-  override async onScenarioSkip(
-    _scenario: ScenarioDefinition,
-    _reason: string,
-  ): Promise<void> {
     // no-op
   }
 

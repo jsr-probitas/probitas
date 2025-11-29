@@ -4,7 +4,6 @@
  * This example demonstrates advanced features:
  * - Step-level retry with exponential backoff
  * - Step timeout configuration
- * - Conditional skipping
  * - Environment variable usage
  * - Error handling with proper cleanup
  * - Running with different reporters
@@ -48,12 +47,9 @@ const retryScenario = scenario("Advanced Retry Example", {
   })
   .build();
 
-// Example: Environment variables and conditional skip
+// Example: Environment variables usage
 const envScenario = scenario("Environment Variables Example", {
   tags: ["example", "advanced", "env"],
-
-  // Skip this scenario if TEST_ENV is not set to "production"
-  skip: () => env.get("TEST_ENV", "development") !== "production",
 })
   .step("Read environment variables", () => {
     // Get optional environment variable with default
@@ -65,7 +61,8 @@ const envScenario = scenario("Environment Variables Example", {
     return { environment, hasDebug };
   })
   .step("Use environment config", (ctx) => {
-    expect(ctx.previous.environment).toBe("production");
+    expect(typeof ctx.previous.environment).toBe("string");
+    expect(typeof ctx.previous.hasDebug).toBe("boolean");
   })
   .build();
 

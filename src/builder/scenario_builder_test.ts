@@ -63,7 +63,6 @@ describe("ScenarioBuilder", () => {
     it("applies default options to scenario", () => {
       const definition = scenario("Test").build();
       assertEquals(definition.options.tags.length, 0);
-      assertEquals(definition.options.skip, null);
       assertEquals(definition.options.stepOptions.timeout, 30000);
       assertEquals(definition.options.stepOptions.retry.maxAttempts, 1);
       assertEquals(definition.options.stepOptions.retry.backoff, "linear");
@@ -121,15 +120,6 @@ describe("ScenarioBuilder", () => {
       assertEquals(steps.length, 2);
       assertEquals(steps[0].name, "Step 1");
       assertEquals(steps[1].name, "Step 2");
-    });
-  });
-
-  describe("skip conditions", () => {
-    it("supports skip option as boolean", () => {
-      const definition = scenario("Test", {
-        skip: true,
-      }).build();
-      assertEquals(definition.options.skip, true);
     });
   });
 

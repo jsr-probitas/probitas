@@ -3,7 +3,6 @@
  *
  * Demonstrates:
  * - Using environment variables
- * - Conditional scenario skipping
  * - Environment-specific configuration
  * - Dynamic base URLs
  *
@@ -18,40 +17,6 @@ const API_BASE = env.get("API_URL", "http://localhost:8080");
 const TEST_ENV = env.get("TEST_ENV", "development");
 
 await using api = client.http(API_BASE);
-
-// Scenario that runs only in production
-const prodOnlyScenario = scenario("Production Only Features", {
-  tags: ["environment", "production", "example"],
-  skip: () => {
-    if (TEST_ENV !== "production") {
-      return `Skipped: Only runs in production (current: ${TEST_ENV})`;
-    }
-    return false;
-  },
-})
-  .step("Test Production Feature", async () => {
-    const result = await api.get("/get");
-    expect(result.status).toBe(200);
-    console.log(`Running in ${TEST_ENV} environment`);
-  })
-  .build();
-
-// Scenario that skips in production
-const devOnlyScenario = scenario("Development Only Features", {
-  tags: ["environment", "development", "example"],
-  skip: () => {
-    if (TEST_ENV === "production") {
-      return "Skipped: Not safe for production";
-    }
-    return false;
-  },
-})
-  .step("Test Debug Features", async () => {
-    const result = await api.get("/delay/1");
-    expect(result.status).toBe(200);
-    console.log("Debug mode enabled");
-  })
-  .build();
 
 // Scenario that always runs
 const envConfigScenario = scenario("Environment Configuration", {
@@ -112,8 +77,6 @@ const timeoutScenario = scenario("Environment-Based Timeout", {
   .build();
 
 export default [
-  prodOnlyScenario,
-  devOnlyScenario,
   envConfigScenario,
   timeoutScenario,
 ];

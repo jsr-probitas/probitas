@@ -44,25 +44,11 @@ const defaultStepOptions: StepOptions = {
 export const scenarioOptions = {
   default: {
     tags: [],
-    skip: null,
     stepOptions: defaultStepOptions,
   },
 
   withTags: {
     tags: ["@smoke", "@api"],
-    skip: null,
-    stepOptions: defaultStepOptions,
-  },
-
-  skipped: {
-    tags: [],
-    skip: true,
-    stepOptions: defaultStepOptions,
-  },
-
-  skippedWithReason: {
-    tags: ["@wip"],
-    skip: "Not yet implemented",
     stepOptions: defaultStepOptions,
   },
 } as const satisfies Record<string, ScenarioOptions>;
@@ -107,7 +93,6 @@ export const stepResults = {
     },
     status: "passed" as const,
     duration: 10,
-    retries: 0,
     value: undefined,
   },
 
@@ -119,7 +104,6 @@ export const stepResults = {
     },
     status: "passed" as const,
     duration: 15,
-    retries: 0,
     value: { key: "value" },
   },
 
@@ -131,18 +115,7 @@ export const stepResults = {
     },
     status: "failed" as const,
     duration: 5,
-    retries: 0,
     error: new Error("Assertion failed"),
-  },
-
-  skipped: {
-    metadata: {
-      name: "Skipped step",
-      options: defaultStepOptions,
-    },
-    status: "skipped" as const,
-    duration: 0,
-    retries: 0,
   },
 } as const satisfies Record<string, StepResult>;
 
@@ -182,20 +155,6 @@ export const scenarioDefinitions = {
     location: sourceLocations.scenario2,
     entries: [{ kind: "step" as const, value: stepDefinitions.passing }],
   },
-
-  skipped: {
-    name: "Skipped scenario",
-    options: scenarioOptions.skipped,
-    location: sourceLocations.scenario2,
-    entries: [{ kind: "step" as const, value: stepDefinitions.passing }],
-  },
-
-  skippedWithReason: {
-    name: "Skipped scenario with reason",
-    options: scenarioOptions.skippedWithReason,
-    location: sourceLocations.scenario2,
-    entries: [{ kind: "step" as const, value: stepDefinitions.passing }],
-  },
 } as const satisfies Record<string, ScenarioDefinition>;
 
 // Scenario results
@@ -206,7 +165,6 @@ export const scenarioResults = {
       location: sourceLocations.scenario1,
       options: {
         tags: [],
-        skip: null,
         stepOptions: defaultStepOptions,
       },
       entries: [
@@ -232,7 +190,6 @@ export const scenarioResults = {
       location: sourceLocations.scenario1,
       options: {
         tags: [],
-        skip: null,
         stepOptions: defaultStepOptions,
       },
       entries: [
@@ -276,7 +233,6 @@ export const scenarioResults = {
       location: sourceLocations.scenario1,
       options: {
         tags: [],
-        skip: null,
         stepOptions: defaultStepOptions,
       },
       entries: [
@@ -306,29 +262,12 @@ export const scenarioResults = {
     error: new Error("Scenario failed"),
   },
 
-  skipped: {
-    metadata: {
-      name: "Skipped scenario",
-      location: sourceLocations.scenario2,
-      options: {
-        tags: [],
-        skip: true,
-        stepOptions: defaultStepOptions,
-      },
-      entries: [],
-    },
-    status: "skipped" as const,
-    duration: 0,
-    steps: [],
-  },
-
   withTags: {
     metadata: {
       name: "Tagged scenario",
       location: sourceLocations.scenario2,
       options: {
         tags: ["@smoke", "@api"],
-        skip: null,
         stepOptions: defaultStepOptions,
       },
       entries: [
@@ -355,7 +294,6 @@ export const runSummaries = {
     total: 3,
     passed: 3,
     failed: 0,
-    skipped: 0,
     duration: 45,
     scenarios: [
       scenarioResults.passed,
@@ -368,7 +306,6 @@ export const runSummaries = {
     total: 3,
     passed: 2,
     failed: 1,
-    skipped: 0,
     duration: 35,
     scenarios: [
       scenarioResults.passed,
@@ -377,40 +314,10 @@ export const runSummaries = {
     ],
   },
 
-  withSkipped: {
-    total: 4,
-    passed: 2,
-    failed: 0,
-    skipped: 2,
-    duration: 20,
-    scenarios: [
-      scenarioResults.passed,
-      scenarioResults.skipped,
-      scenarioResults.passed,
-      scenarioResults.skipped,
-    ],
-  },
-
-  mixed: {
-    total: 5,
-    passed: 2,
-    failed: 1,
-    skipped: 2,
-    duration: 55,
-    scenarios: [
-      scenarioResults.passed,
-      scenarioResults.failed,
-      scenarioResults.skipped,
-      scenarioResults.passed,
-      scenarioResults.skipped,
-    ],
-  },
-
   empty: {
     total: 0,
     passed: 0,
     failed: 0,
-    skipped: 0,
     duration: 0,
     scenarios: [],
   },
@@ -439,8 +346,6 @@ function getRawBufferOutput(buffer: Buffer): string {
  * Reporter lifecycle sequences:
  * - Complete run with all scenarios passed
  * - Complete run with failures
- * - Complete run with skipped scenarios
- * - Complete run with mixed results
  * - Empty run (no scenarios)
  * - Both with and without color output (noColor: true and false)
  *
@@ -643,233 +548,6 @@ export function testReporter(
         await reporter.onScenarioEnd(scenarios[2], summary.scenarios[2]);
         await assertSnapshot(t, getRawBufferOutput(buffer), {
           name: "after onScenarioEnd - Simple passing scenario (3)",
-        });
-
-        await reporter.onRunEnd(summary);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onRunEnd",
-        });
-      });
-
-      it("complete run with skipped scenarios", async (t) => {
-        const buffer = new Buffer();
-        const reporter = new ReporterClass({
-          output: buffer.writable,
-          noColor: false,
-        });
-
-        const summary = runSummaries.withSkipped;
-        const scenarios = [
-          scenarioDefinitions.simple,
-          scenarioDefinitions.skipped,
-          scenarioDefinitions.simple,
-          scenarioDefinitions.skipped,
-        ];
-
-        await reporter.onRunStart(scenarios);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onRunStart",
-        });
-
-        // First scenario - passed
-        await reporter.onScenarioStart(scenarios[0]);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onScenarioStart - Simple passing scenario (1)",
-        });
-
-        await reporter.onStepStart(stepDefinitions.passing);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onStepStart - Step that passes (1)",
-        });
-
-        await reporter.onStepEnd(stepDefinitions.passing, stepResults.passed);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onStepEnd - Step that passes (1)",
-        });
-
-        await reporter.onScenarioEnd(scenarios[0], summary.scenarios[0]);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onScenarioEnd - Simple passing scenario (1)",
-        });
-
-        // Second scenario - skipped
-        await reporter.onScenarioSkip(
-          scenarios[1],
-          "Scenario is marked to skip",
-        );
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onScenarioSkip - Skipped scenario (2)",
-        });
-
-        await reporter.onScenarioEnd(scenarios[1], summary.scenarios[1]);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onScenarioEnd - Skipped scenario (2)",
-        });
-
-        // Third scenario - passed
-        await reporter.onScenarioStart(scenarios[2]);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onScenarioStart - Simple passing scenario (3)",
-        });
-
-        await reporter.onStepStart(stepDefinitions.passing);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onStepStart - Step that passes (3)",
-        });
-
-        await reporter.onStepEnd(stepDefinitions.passing, stepResults.passed);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onStepEnd - Step that passes (3)",
-        });
-
-        await reporter.onScenarioEnd(scenarios[2], summary.scenarios[2]);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onScenarioEnd - Simple passing scenario (3)",
-        });
-
-        // Fourth scenario - skipped
-        await reporter.onScenarioSkip(
-          scenarios[3],
-          "Scenario is marked to skip",
-        );
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onScenarioSkip - Skipped scenario (4)",
-        });
-
-        await reporter.onScenarioEnd(scenarios[3], summary.scenarios[3]);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onScenarioEnd - Skipped scenario (4)",
-        });
-
-        await reporter.onRunEnd(summary);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onRunEnd",
-        });
-      });
-
-      it("complete run with mixed results", async (t) => {
-        const buffer = new Buffer();
-        const reporter = new ReporterClass({
-          output: buffer.writable,
-          noColor: false,
-        });
-
-        const summary = runSummaries.mixed;
-        const scenarios = [
-          scenarioDefinitions.simple,
-          scenarioDefinitions.withFailingStep,
-          scenarioDefinitions.skipped,
-          scenarioDefinitions.simple,
-          scenarioDefinitions.skipped,
-        ];
-
-        await reporter.onRunStart(scenarios);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onRunStart",
-        });
-
-        // First scenario - passed
-        await reporter.onScenarioStart(scenarios[0]);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onScenarioStart - Simple passing scenario (1)",
-        });
-
-        await reporter.onStepStart(stepDefinitions.passing);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onStepStart - Step that passes (1)",
-        });
-
-        await reporter.onStepEnd(stepDefinitions.passing, stepResults.passed);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onStepEnd - Step that passes (1)",
-        });
-
-        await reporter.onScenarioEnd(scenarios[0], summary.scenarios[0]);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onScenarioEnd - Simple passing scenario (1)",
-        });
-
-        // Second scenario - failed
-        await reporter.onScenarioStart(scenarios[1]);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onScenarioStart - Scenario with failing step (2)",
-        });
-
-        await reporter.onStepStart(stepDefinitions.passing);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onStepStart - Step that passes (2-1)",
-        });
-
-        await reporter.onStepEnd(stepDefinitions.passing, stepResults.passed);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onStepEnd - Step that passes (2-1)",
-        });
-
-        await reporter.onStepStart(stepDefinitions.failing);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onStepStart - Step that fails (2-2)",
-        });
-
-        await reporter.onStepError(
-          stepDefinitions.failing,
-          new Error("Assertion failed"),
-        );
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onStepError - Step that fails (2-2)",
-        });
-
-        await reporter.onScenarioEnd(scenarios[1], summary.scenarios[1]);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onScenarioEnd - Scenario with failing step (2)",
-        });
-
-        // Third scenario - skipped
-        await reporter.onScenarioSkip(
-          scenarios[2],
-          "Scenario is marked to skip",
-        );
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onScenarioSkip - Skipped scenario (3)",
-        });
-
-        await reporter.onScenarioEnd(scenarios[2], summary.scenarios[2]);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onScenarioEnd - Skipped scenario (3)",
-        });
-
-        // Fourth scenario - passed
-        await reporter.onScenarioStart(scenarios[3]);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onScenarioStart - Simple passing scenario (4)",
-        });
-
-        await reporter.onStepStart(stepDefinitions.passing);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onStepStart - Step that passes (4)",
-        });
-
-        await reporter.onStepEnd(stepDefinitions.passing, stepResults.passed);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onStepEnd - Step that passes (4)",
-        });
-
-        await reporter.onScenarioEnd(scenarios[3], summary.scenarios[3]);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onScenarioEnd - Simple passing scenario (4)",
-        });
-
-        // Fifth scenario - skipped
-        await reporter.onScenarioSkip(
-          scenarios[4],
-          "Scenario is marked to skip",
-        );
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onScenarioSkip - Skipped scenario (5)",
-        });
-
-        await reporter.onScenarioEnd(scenarios[4], summary.scenarios[4]);
-        await assertSnapshot(t, getRawBufferOutput(buffer), {
-          name: "after onScenarioEnd - Skipped scenario (5)",
         });
 
         await reporter.onRunEnd(summary);
@@ -1082,233 +760,6 @@ export function testReporter(
         await reporter.onScenarioEnd(scenarios[2], summary.scenarios[2]);
         await assertSnapshot(t, getBufferOutputNoColor(buffer), {
           name: "after onScenarioEnd - Simple passing scenario (3)",
-        });
-
-        await reporter.onRunEnd(summary);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onRunEnd",
-        });
-      });
-
-      it("complete run with skipped scenarios", async (t) => {
-        const buffer = new Buffer();
-        const reporter = new ReporterClass({
-          output: buffer.writable,
-          noColor: true,
-        });
-
-        const summary = runSummaries.withSkipped;
-        const scenarios = [
-          scenarioDefinitions.simple,
-          scenarioDefinitions.skipped,
-          scenarioDefinitions.simple,
-          scenarioDefinitions.skipped,
-        ];
-
-        await reporter.onRunStart(scenarios);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onRunStart",
-        });
-
-        // First scenario - passed
-        await reporter.onScenarioStart(scenarios[0]);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onScenarioStart - Simple passing scenario (1)",
-        });
-
-        await reporter.onStepStart(stepDefinitions.passing);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onStepStart - Step that passes (1)",
-        });
-
-        await reporter.onStepEnd(stepDefinitions.passing, stepResults.passed);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onStepEnd - Step that passes (1)",
-        });
-
-        await reporter.onScenarioEnd(scenarios[0], summary.scenarios[0]);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onScenarioEnd - Simple passing scenario (1)",
-        });
-
-        // Second scenario - skipped
-        await reporter.onScenarioSkip(
-          scenarios[1],
-          "Scenario is marked to skip",
-        );
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onScenarioSkip - Skipped scenario (2)",
-        });
-
-        await reporter.onScenarioEnd(scenarios[1], summary.scenarios[1]);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onScenarioEnd - Skipped scenario (2)",
-        });
-
-        // Third scenario - passed
-        await reporter.onScenarioStart(scenarios[2]);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onScenarioStart - Simple passing scenario (3)",
-        });
-
-        await reporter.onStepStart(stepDefinitions.passing);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onStepStart - Step that passes (3)",
-        });
-
-        await reporter.onStepEnd(stepDefinitions.passing, stepResults.passed);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onStepEnd - Step that passes (3)",
-        });
-
-        await reporter.onScenarioEnd(scenarios[2], summary.scenarios[2]);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onScenarioEnd - Simple passing scenario (3)",
-        });
-
-        // Fourth scenario - skipped
-        await reporter.onScenarioSkip(
-          scenarios[3],
-          "Scenario is marked to skip",
-        );
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onScenarioSkip - Skipped scenario (4)",
-        });
-
-        await reporter.onScenarioEnd(scenarios[3], summary.scenarios[3]);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onScenarioEnd - Skipped scenario (4)",
-        });
-
-        await reporter.onRunEnd(summary);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onRunEnd",
-        });
-      });
-
-      it("complete run with mixed results", async (t) => {
-        const buffer = new Buffer();
-        const reporter = new ReporterClass({
-          output: buffer.writable,
-          noColor: true,
-        });
-
-        const summary = runSummaries.mixed;
-        const scenarios = [
-          scenarioDefinitions.simple,
-          scenarioDefinitions.withFailingStep,
-          scenarioDefinitions.skipped,
-          scenarioDefinitions.simple,
-          scenarioDefinitions.skipped,
-        ];
-
-        await reporter.onRunStart(scenarios);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onRunStart",
-        });
-
-        // First scenario - passed
-        await reporter.onScenarioStart(scenarios[0]);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onScenarioStart - Simple passing scenario (1)",
-        });
-
-        await reporter.onStepStart(stepDefinitions.passing);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onStepStart - Step that passes (1)",
-        });
-
-        await reporter.onStepEnd(stepDefinitions.passing, stepResults.passed);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onStepEnd - Step that passes (1)",
-        });
-
-        await reporter.onScenarioEnd(scenarios[0], summary.scenarios[0]);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onScenarioEnd - Simple passing scenario (1)",
-        });
-
-        // Second scenario - failed
-        await reporter.onScenarioStart(scenarios[1]);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onScenarioStart - Scenario with failing step (2)",
-        });
-
-        await reporter.onStepStart(stepDefinitions.passing);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onStepStart - Step that passes (2-1)",
-        });
-
-        await reporter.onStepEnd(stepDefinitions.passing, stepResults.passed);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onStepEnd - Step that passes (2-1)",
-        });
-
-        await reporter.onStepStart(stepDefinitions.failing);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onStepStart - Step that fails (2-2)",
-        });
-
-        await reporter.onStepError(
-          stepDefinitions.failing,
-          new Error("Assertion failed"),
-        );
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onStepError - Step that fails (2-2)",
-        });
-
-        await reporter.onScenarioEnd(scenarios[1], summary.scenarios[1]);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onScenarioEnd - Scenario with failing step (2)",
-        });
-
-        // Third scenario - skipped
-        await reporter.onScenarioSkip(
-          scenarios[2],
-          "Scenario is marked to skip",
-        );
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onScenarioSkip - Skipped scenario (3)",
-        });
-
-        await reporter.onScenarioEnd(scenarios[2], summary.scenarios[2]);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onScenarioEnd - Skipped scenario (3)",
-        });
-
-        // Fourth scenario - passed
-        await reporter.onScenarioStart(scenarios[3]);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onScenarioStart - Simple passing scenario (4)",
-        });
-
-        await reporter.onStepStart(stepDefinitions.passing);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onStepStart - Step that passes (4)",
-        });
-
-        await reporter.onStepEnd(stepDefinitions.passing, stepResults.passed);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onStepEnd - Step that passes (4)",
-        });
-
-        await reporter.onScenarioEnd(scenarios[3], summary.scenarios[3]);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onScenarioEnd - Simple passing scenario (4)",
-        });
-
-        // Fifth scenario - skipped
-        await reporter.onScenarioSkip(
-          scenarios[4],
-          "Scenario is marked to skip",
-        );
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onScenarioSkip - Skipped scenario (5)",
-        });
-
-        await reporter.onScenarioEnd(scenarios[4], summary.scenarios[4]);
-        await assertSnapshot(t, getBufferOutputNoColor(buffer), {
-          name: "after onScenarioEnd - Skipped scenario (5)",
         });
 
         await reporter.onRunEnd(summary);

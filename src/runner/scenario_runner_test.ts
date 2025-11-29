@@ -31,7 +31,6 @@ const defaultStepOptions: StepOptions = {
 
 const defaultScenarioOptions: ScenarioOptions = {
   tags: [],
-  skip: null,
   stepOptions: defaultStepOptions,
 };
 
@@ -105,7 +104,6 @@ describe("ScenarioRunner", () => {
       assertEquals(summary.total, 3);
       assertEquals(summary.passed, 3);
       assertEquals(summary.failed, 0);
-      assertEquals(summary.skipped, 0);
     });
   });
 
@@ -249,7 +247,7 @@ describe("ScenarioRunner", () => {
       assertEquals(summary.scenarios[0].steps[0].error?.message, "Test failed");
     });
 
-    it("marks remaining steps as skipped when a step fails", async () => {
+    it("stops executing remaining steps when a step fails", async () => {
       const runner = new ScenarioRunner();
       const scenarios = [
         createTestScenario({
@@ -271,12 +269,11 @@ describe("ScenarioRunner", () => {
       const summary = await runner.run(scenarios);
 
       assertEquals(summary.scenarios[0].status, "failed");
-      assertEquals(summary.scenarios[0].steps.length, 5);
+      // Only 3 steps are executed (remaining steps are not included in results)
+      assertEquals(summary.scenarios[0].steps.length, 3);
       assertEquals(summary.scenarios[0].steps[0].status, "passed");
       assertEquals(summary.scenarios[0].steps[1].status, "passed");
       assertEquals(summary.scenarios[0].steps[2].status, "failed");
-      assertEquals(summary.scenarios[0].steps[3].status, "skipped");
-      assertEquals(summary.scenarios[0].steps[4].status, "skipped");
     });
   });
 

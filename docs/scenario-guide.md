@@ -24,13 +24,10 @@ export default myScenario;
 
 ## Scenario Options
 
-````typescript
+```typescript
 scenario("Scenario Name", {
   // Tags for filtering
   tags: ["api", "smoke"],
-
-  // Skip this scenario
-  skip: false, // or true, or "reason", or () => boolean
 })
   // ... steps
   .build();
@@ -43,8 +40,8 @@ using the `.setup()` method.
 
 A setup function can optionally return a **cleanup function** or a
 **Disposable/AsyncDisposable** object. All returned cleanup functions and
-disposers are guaranteed to run at the end of the scenario, in the reverse
-order they were defined.
+disposers are guaranteed to run at the end of the scenario, in the reverse order
+they were defined.
 
 ```typescript
 import { scenario } from "probitas";
@@ -77,7 +74,7 @@ the legacy `.setup()` and `.teardown()` methods.
   // Your code here
   return { result: 42 };
 })
-````
+```
 
 ### Accessing Previous Result
 
@@ -438,23 +435,6 @@ import { env } from "probitas";
 
   return { apiKey };
 })
-```
-
-## Conditional Skip
-
-Skip scenarios based on conditions:
-
-```typescript
-// Skip with boolean
-scenario("Scenario", { skip: true });
-
-// Skip with reason
-scenario("Scenario", { skip: "Not implemented yet" });
-
-// Skip with function
-scenario("Scenario", {
-  skip: () => Deno.build.os === "windows",
-});
 ```
 
 ## Tags for Organization

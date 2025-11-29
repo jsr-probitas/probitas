@@ -61,13 +61,10 @@ export class ListReporter extends BaseReporter {
       }`
       : "";
     const time = ` ${this.theme.dim(`[${result.duration.toFixed(3)}ms]`)}`;
-    const retries = result.retries > 0
-      ? this.theme.warning(` (${result.retries} retries)`)
-      : "";
 
     await this.write(
       `${icon} ${this.#currentScenario} ${this.theme.dim(">")} ` +
-        `${result.metadata.name}${location}${time}${retries}\n`,
+        `${result.metadata.name}${location}${time}\n`,
     );
   }
 
@@ -100,29 +97,6 @@ export class ListReporter extends BaseReporter {
         await this.write(`  ${this.theme.dim(line.trim())}\n`);
       }
     }
-  }
-
-  /**
-   * Called when scenario is skipped
-   *
-   * @param scenario The scenario being skipped
-   * @param reason Reason for skipping
-   */
-  override async onScenarioSkip(
-    scenario: ScenarioDefinition,
-    reason: string,
-  ): Promise<void> {
-    const location = scenario.location
-      ? ` ${
-        this.theme.dim(
-          `(${scenario.location.file}:${scenario.location.line})`,
-        )
-      }`
-      : "";
-    await this.write(
-      `${this.theme.skip("⊝")} ${scenario.name}${location} ` +
-        `${this.theme.dim(`# ${reason}`)}\n`,
-    );
   }
 
   /**
@@ -163,12 +137,6 @@ export class ListReporter extends BaseReporter {
           );
         }
       }
-    }
-
-    if (summary.skipped > 0) {
-      await this.write(
-        `  ${this.theme.skip("⊝")} ${summary.skipped} scenarios skipped\n`,
-      );
     }
 
     await this.write(

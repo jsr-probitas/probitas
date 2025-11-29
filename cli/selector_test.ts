@@ -18,7 +18,6 @@ describe("selector", () => {
     name,
     options: {
       tags,
-      skip: null,
       stepOptions: {
         timeout: 5000,
         retry: { maxAttempts: 1, backoff: "linear" },

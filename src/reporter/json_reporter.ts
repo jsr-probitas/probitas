@@ -64,25 +64,6 @@ export class JSONReporter extends BaseReporter {
   }
 
   /**
-   * Called when scenario is skipped
-   *
-   * @param scenario The scenario being skipped
-   * @param reason Reason for skipping
-   */
-  override async onScenarioSkip(
-    scenario: ScenarioDefinition,
-    reason: string,
-  ): Promise<void> {
-    await this.write(
-      JSON.stringify({
-        type: "scenarioSkip",
-        name: scenario.name,
-        reason: reason,
-      }) + "\n",
-    );
-  }
-
-  /**
    * Called when step starts
    *
    * @param step The step being executed
@@ -113,7 +94,6 @@ export class JSONReporter extends BaseReporter {
         name: result.metadata.name,
         status: result.status,
         duration: result.duration,
-        retries: result.retries,
       }) + "\n",
     );
   }
@@ -173,7 +153,6 @@ export class JSONReporter extends BaseReporter {
           total: summary.total,
           passed: summary.passed,
           failed: summary.failed,
-          skipped: summary.skipped,
           duration: summary.duration,
         },
       }) + "\n",

@@ -81,7 +81,7 @@ customizable output.
 **Key Capabilities**:
 
 - Abstracts coloring logic used by Reporters
-- Defines colors based on semantics (success, failure, skip, etc.)
+- Defines colors based on semantics (success, failure, etc.)
 - Supports NO_COLOR environment variable
 - Supports custom themes
 

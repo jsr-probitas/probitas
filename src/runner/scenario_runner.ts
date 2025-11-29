@@ -80,7 +80,6 @@ export class ScenarioRunner {
       total: scenarioResults.length,
       passed: scenarioResults.filter((r) => r.status === "passed").length,
       failed: scenarioResults.filter((r) => r.status === "failed").length,
-      skipped: scenarioResults.filter((r) => r.status === "skipped").length,
       duration,
       scenarios: scenarioResults,
     };
@@ -145,21 +144,6 @@ export class ScenarioRunner {
     reporter?: Reporter,
   ): Promise<ScenarioResult> {
     const startTime = performance.now();
-
-    // Check skip condition
-    const skipResult = await this.#evaluateSkip(scenario.options.skip);
-    if (skipResult.shouldSkip) {
-      if (reporter?.onScenarioSkip) {
-        await reporter.onScenarioSkip(scenario, skipResult.reason);
-      }
-
-      return {
-        metadata: this.#scenarioToMetadata(scenario, skipResult.shouldSkip),
-        status: "skipped",
-        duration: performance.now() - startTime,
-        steps: [],
-      };
-    }
 
     // Notify reporter of scenario start
     if (reporter?.onScenarioStart) {
@@ -268,7 +252,6 @@ export class ScenarioRunner {
                 metadata: this.#stepToMetadata(stepDef),
                 status: error ? "failed" : "passed",
                 duration: stepDuration,
-                retries: 0,
                 value: error ? undefined : value,
                 error,
               };
@@ -299,29 +282,6 @@ export class ScenarioRunner {
       }
     } catch (error) {
       scenarioError = error instanceof Error ? error : new Error(String(error));
-
-      // Mark remaining steps as skipped when a step fails
-      if (!scenarioError.message?.includes("aborted")) {
-        // Find remaining step entries that haven't been executed
-        let stepCount = 0;
-        for (const entry of scenario.entries) {
-          if (entry.kind === "step") {
-            if (stepCount >= resultsContainer.data.length) {
-              // This step wasn't executed, mark it as skipped
-              const skippedResult: StepResult = {
-                metadata: this.#stepToMetadata(entry.value),
-                status: "skipped",
-                duration: 0,
-                retries: 0,
-                value: undefined,
-                error: undefined,
-              };
-              resultsContainer.data.push(skippedResult);
-            }
-            stepCount++;
-          }
-        }
-      }
     }
 
     const stepResults = resultsContainer.data;
@@ -332,7 +292,7 @@ export class ScenarioRunner {
     const status = hasFailedSteps || scenarioError ? "failed" : "passed";
 
     const result: ScenarioResult = {
-      metadata: this.#scenarioToMetadata(scenario, false),
+      metadata: this.#scenarioToMetadata(scenario),
       status,
       duration,
       steps: stepResults,
@@ -348,53 +308,15 @@ export class ScenarioRunner {
   }
 
   /**
-   * Evaluate skip condition
-   */
-  async #evaluateSkip(
-    skipCondition: ScenarioDefinition["options"]["skip"],
-  ): Promise<{ shouldSkip: boolean; reason: string }> {
-    if (skipCondition === null) {
-      return { shouldSkip: false, reason: "" };
-    }
-
-    if (typeof skipCondition === "boolean") {
-      return {
-        shouldSkip: skipCondition,
-        reason: skipCondition ? "Scenario marked as skipped" : "",
-      };
-    }
-
-    if (typeof skipCondition === "string") {
-      return { shouldSkip: true, reason: skipCondition };
-    }
-
-    if (typeof skipCondition === "function") {
-      const result = await skipCondition();
-      if (typeof result === "boolean") {
-        return {
-          shouldSkip: result,
-          reason: result ? "Scenario marked as skipped" : "",
-        };
-      } else {
-        return { shouldSkip: true, reason: result };
-      }
-    }
-
-    return { shouldSkip: false, reason: "" };
-  }
-
-  /**
    * Convert scenario to metadata (serializable form)
    */
   #scenarioToMetadata(
     scenario: ScenarioDefinition,
-    isSkipped: boolean,
   ): ScenarioMetadata {
     return {
       name: scenario.name,
       options: {
         tags: scenario.options.tags,
-        skip: isSkipped ? true : null,
         stepOptions: scenario.options.stepOptions,
       },
       entries: scenario.entries,

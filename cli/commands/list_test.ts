@@ -22,7 +22,7 @@ const createScenario = (name: string, file: string, tags: string[] = []) =>
       name: "${name}",
       options: { tags: ${
     JSON.stringify(tags)
-  }, skip: null, stepOptions: { timeout: 5000, retry: { maxAttempts: 1, backoff: "linear" } } },
+  }, stepOptions: { timeout: 5000, retry: { maxAttempts: 1, backoff: "linear" } } },
       entries: [
         {
           kind: "step",
