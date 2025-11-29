@@ -169,22 +169,28 @@ export async function findDenoConfigFile(
 }
 
 /**
- * Remove JSR alias imports from an import map
+ * Resolve relative paths in import map to absolute paths
  *
- * Workspace root deno.jsonc may contain aliases like:
- *   "jsr:@probitas/std@^0": "./packages/probitas-std/mod.ts"
- * These override JSR resolution with local paths for development.
- * When creating subprocess config, we filter these out so that
- * JSR packages resolve correctly from the registry.
+ * Converts relative paths (starting with ./ or ../) to absolute paths
+ * based on the config file's directory. This allows the temporary
+ * subprocess config to be placed anywhere while preserving correct
+ * path resolution.
  *
  * @param imports - Import map entries
- * @returns Filtered import map without jsr: alias keys
+ * @param baseDir - Directory to resolve relative paths from
+ * @returns Import map with relative paths resolved to absolute paths
  */
-function removeJsrAliasImports(
+function resolveRelativeImports(
   imports: Record<string, string>,
+  baseDir: string,
 ): Record<string, string> {
   return Object.fromEntries(
-    Object.entries(imports).filter(([k]) => !k.startsWith("jsr:")),
+    Object.entries(imports).map(([key, value]) => {
+      if (value.startsWith("./") || value.startsWith("../")) {
+        return [key, resolve(baseDir, value)];
+      }
+      return [key, value];
+    }),
   );
 }
 
@@ -214,22 +220,26 @@ export async function createTempSubprocessConfig(
   userConfigPath?: string | undefined,
 ): Promise<string> {
   // Read user's deno.json to preserve their imports
-  let userDenoConfig: DenoConfig | undefined;
+  let userImports: Record<string, string> = {};
   if (userConfigPath) {
     const text = await Deno.readTextFile(userConfigPath);
-    userDenoConfig = ensure(parseJsonc(text), isDenoConfig);
+    const userDenoConfig = ensure(parseJsonc(text), isDenoConfig);
+    // Resolve relative paths to absolute paths based on config location
+    userImports = resolveRelativeImports(
+      userDenoConfig.imports ?? {},
+      dirname(userConfigPath),
+    );
   }
 
   // Get probitas dependencies from CLI package's deno.json
   const deps = await getProbitasDependencies();
 
   // Merge user imports with probitas deps (probitas deps override user's)
-  // Filter out jsr: alias keys that may exist in workspace root config
   const mergedConfig = {
-    imports: removeJsrAliasImports({
-      ...(userDenoConfig?.imports ?? {}),
+    imports: {
+      ...userImports,
       ...deps,
-    }),
+    },
   };
 
   // Create temporary config file

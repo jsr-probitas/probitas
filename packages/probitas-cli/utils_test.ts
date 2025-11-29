@@ -283,18 +283,19 @@ describe("utils", () => {
       assertEquals(typeof config.imports.probitas, "string");
     });
 
-    it("filters out jsr: alias imports from user config", async () => {
+    it("resolves relative paths to absolute paths", async () => {
       await using sbox = await sandbox();
       await using stack = new AsyncDisposableStack();
 
-      // Create user's deno.json with jsr: alias (from workspace root)
+      // Create user's deno.json with relative path imports
       const userConfigPath = sbox.resolve("deno.json");
       await Deno.writeTextFile(
         userConfigPath,
         JSON.stringify({
           imports: {
-            "my-lib": "jsr:@my/lib@^1",
-            "jsr:@probitas/std@^0": "./packages/probitas-std/mod.ts",
+            "my-lib": "./lib/mod.ts",
+            "my-utils": "../utils/mod.ts",
+            "external": "jsr:@external/lib@^1",
           },
         }),
       );
@@ -307,11 +308,15 @@ describe("utils", () => {
       const text = await Deno.readTextFile(configPath);
       const config = JSON.parse(text);
 
-      // jsr: alias should be filtered out
-      assertEquals(config.imports["jsr:@probitas/std@^0"], undefined);
+      // Relative paths should be resolved to absolute paths
+      assertEquals(config.imports["my-lib"], sbox.resolve("lib/mod.ts"));
+      assertEquals(
+        config.imports["my-utils"],
+        sbox.resolve("../utils/mod.ts"),
+      );
 
-      // Regular imports should be preserved
-      assertEquals(config.imports["my-lib"], "jsr:@my/lib@^1");
+      // Non-relative paths should be preserved as-is
+      assertEquals(config.imports["external"], "jsr:@external/lib@^1");
     });
 
     it("overrides user's probitas import with correct version", async () => {
