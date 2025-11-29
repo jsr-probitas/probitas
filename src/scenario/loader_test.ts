@@ -7,7 +7,7 @@
  */
 
 import outdent from "@cspotcode/outdent";
-import { assertEquals, assertRejects } from "@std/assert";
+import { assertEquals } from "@std/assert";
 import { describe, it } from "@std/testing/bdd";
 import { sandbox } from "@lambdalisue/sandbox";
 import { loadScenarios } from "./loader.ts";
@@ -95,7 +95,7 @@ describe("scenario loader", () => {
       assertEquals(scenarios, []);
     });
 
-    it("throws error for invalid syntax in scenario file", async () => {
+    it("calls onImportError for invalid syntax in scenario file", async () => {
       await using sbox = await sandbox();
 
       const scenarioPath = sbox.resolve("invalid.scenario.ts");
@@ -104,23 +104,34 @@ describe("scenario loader", () => {
         "export default { invalid: syntax here",
       );
 
-      await assertRejects(
-        async () => {
-          await loadScenarios([scenarioPath]);
+      const errors: { file: string | URL; err: unknown }[] = [];
+      const scenarios = await loadScenarios([scenarioPath], {
+        onImportError: (file, err) => {
+          errors.push({ file, err });
         },
-        Error,
-        "Failed to load scenario from",
-      );
+      });
+
+      assertEquals(scenarios, []);
+      assertEquals(errors.length, 1);
+      assertEquals(errors[0].file, scenarioPath);
     });
 
-    it("throws error for non-existent file", async () => {
-      await assertRejects(
-        async () => {
-          await loadScenarios(["/nonexistent/file.ts"]);
+    it("calls onImportError for non-existent file", async () => {
+      const errors: { file: string | URL; err: unknown }[] = [];
+      const scenarios = await loadScenarios(["/nonexistent/file.ts"], {
+        onImportError: (file, err) => {
+          errors.push({ file, err });
         },
-        Error,
-        "Failed to load scenario from",
-      );
+      });
+
+      assertEquals(scenarios, []);
+      assertEquals(errors.length, 1);
+      assertEquals(errors[0].file, "/nonexistent/file.ts");
+    });
+
+    it("silently ignores errors when onImportError is not provided", async () => {
+      const scenarios = await loadScenarios(["/nonexistent/file.ts"]);
+      assertEquals(scenarios, []);
     });
   });
 });

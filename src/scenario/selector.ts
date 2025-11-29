@@ -4,8 +4,26 @@
  * @module
  */
 
-import type { ScenarioDefinition } from "../src/runner/types.ts";
-import type { Selector, SelectorType } from "./types.ts";
+import type { ScenarioDefinition } from "./types.ts";
+
+/**
+ * Selector type for filtering scenarios
+ */
+export type SelectorType = "tag" | "name";
+
+/**
+ * Selector for filtering scenarios
+ */
+export interface Selector {
+  /** Type of selector */
+  readonly type: SelectorType;
+
+  /** Pattern to match */
+  readonly value: RegExp;
+
+  /** Negation flag - if true, matches scenarios that do NOT match the selector */
+  readonly negated: boolean;
+}
 
 /**
  * Parse a selector string into an array of Selector objects
@@ -71,14 +89,10 @@ export function matchesSelector(
   scenario: ScenarioDefinition,
   selector: Selector,
 ): boolean {
-  const pattern = selector.value instanceof RegExp
-    ? selector.value
-    : new RegExp(selector.value);
-
   if (selector.type === "tag") {
-    return scenario.options.tags.some((tag) => pattern.test(tag));
+    return scenario.options.tags.some((tag) => selector.value.test(tag));
   } else if (selector.type === "name") {
-    return pattern.test(scenario.name);
+    return selector.value.test(scenario.name);
   }
 
   return false;

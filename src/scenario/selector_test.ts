@@ -6,7 +6,7 @@
 
 import { assertEquals } from "@std/assert";
 import { describe, it } from "@std/testing/bdd";
-import type { ScenarioDefinition } from "../src/runner/types.ts";
+import type { ScenarioDefinition } from "./types.ts";
 import { applySelectors, parseSelector } from "./selector.ts";
 
 describe("selector", () => {

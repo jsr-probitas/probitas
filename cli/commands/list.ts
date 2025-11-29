@@ -7,11 +7,10 @@
 import { parseArgs } from "@std/cli";
 import { resolve } from "@std/path";
 import type { ScenarioDefinition } from "../../src/runner/types.ts";
+import { applySelectors, loadScenarios } from "../../src/scenario/mod.ts";
 import { EXIT_CODE } from "../constants.ts";
 import { loadConfig } from "../config.ts";
 import { discoverScenarioFiles } from "../discover.ts";
-import { loadScenarios } from "../loader.ts";
-import { applySelectors } from "../selector.ts";
 import { findDenoConfigFile, readAsset } from "../utils.ts";
 
 /**
@@ -79,7 +78,12 @@ export async function listCommand(
         excludes,
       },
     );
-    const scenarios = await loadScenarios(scenarioFiles);
+    const scenarios = await loadScenarios(scenarioFiles, {
+      onImportError: (file, err) => {
+        const m = err instanceof Error ? err.message : String(err);
+        throw new Error(`Failed to load scenario from ${file}: ${m}`);
+      },
+    });
 
     // Apply selectors to filter scenarios
     const selectors = parsed.selector ?? config?.selectors ?? [];

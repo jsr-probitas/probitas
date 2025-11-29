@@ -9,8 +9,7 @@
 
 import { as, ensure, is, type Predicate } from "@core/unknownutil";
 import { ScenarioRunner } from "../../../src/runner/scenario_runner.ts";
-import { loadScenarios } from "../../loader.ts";
-import { applySelectors } from "../../selector.ts";
+import { applySelectors, loadScenarios } from "../../../src/scenario/mod.ts";
 import { resolveReporter } from "../../utils.ts";
 import type { ReporterOptions } from "../../../src/reporter/types.ts";
 
@@ -77,7 +76,12 @@ async function main(): Promise<number> {
 
   try {
     // Load scenarios
-    let scenarios = await loadScenarios(files);
+    let scenarios = await loadScenarios(files, {
+      onImportError: (file, err) => {
+        const m = err instanceof Error ? err.message : String(err);
+        throw new Error(`Failed to load scenario from ${file}: ${m}`);
+      },
+    });
     if (scenarios.length === 0) {
       console.error("Error: No scenarios found in specified files");
       return 1;
