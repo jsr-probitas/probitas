@@ -403,12 +403,16 @@ export function testReporter(
           name: "after onScenarioStart - Simple passing scenario (1)",
         });
 
-        await reporter.onStepStart(stepDefinitions.passing);
+        await reporter.onStepStart(stepDefinitions.passing, scenarios[0]);
         await assertSnapshot(t, getRawBufferOutput(buffer), {
           name: "after onStepStart - Step that passes (1)",
         });
 
-        await reporter.onStepEnd(stepDefinitions.passing, stepResults.passed);
+        await reporter.onStepEnd(
+          stepDefinitions.passing,
+          stepResults.passed,
+          scenarios[0],
+        );
         await assertSnapshot(t, getRawBufferOutput(buffer), {
           name: "after onStepEnd - Step that passes (1)",
         });
@@ -424,12 +428,16 @@ export function testReporter(
           name: "after onScenarioStart - Simple passing scenario (2)",
         });
 
-        await reporter.onStepStart(stepDefinitions.passing);
+        await reporter.onStepStart(stepDefinitions.passing, scenarios[1]);
         await assertSnapshot(t, getRawBufferOutput(buffer), {
           name: "after onStepStart - Step that passes (2)",
         });
 
-        await reporter.onStepEnd(stepDefinitions.passing, stepResults.passed);
+        await reporter.onStepEnd(
+          stepDefinitions.passing,
+          stepResults.passed,
+          scenarios[1],
+        );
         await assertSnapshot(t, getRawBufferOutput(buffer), {
           name: "after onStepEnd - Step that passes (2)",
         });
@@ -445,12 +453,16 @@ export function testReporter(
           name: "after onScenarioStart - Simple passing scenario (3)",
         });
 
-        await reporter.onStepStart(stepDefinitions.passing);
+        await reporter.onStepStart(stepDefinitions.passing, scenarios[2]);
         await assertSnapshot(t, getRawBufferOutput(buffer), {
           name: "after onStepStart - Step that passes (3)",
         });
 
-        await reporter.onStepEnd(stepDefinitions.passing, stepResults.passed);
+        await reporter.onStepEnd(
+          stepDefinitions.passing,
+          stepResults.passed,
+          scenarios[2],
+        );
         await assertSnapshot(t, getRawBufferOutput(buffer), {
           name: "after onStepEnd - Step that passes (3)",
         });
@@ -491,12 +503,16 @@ export function testReporter(
           name: "after onScenarioStart - Simple passing scenario (1)",
         });
 
-        await reporter.onStepStart(stepDefinitions.passing);
+        await reporter.onStepStart(stepDefinitions.passing, scenarios[0]);
         await assertSnapshot(t, getRawBufferOutput(buffer), {
           name: "after onStepStart - Step that passes (1)",
         });
 
-        await reporter.onStepEnd(stepDefinitions.passing, stepResults.passed);
+        await reporter.onStepEnd(
+          stepDefinitions.passing,
+          stepResults.passed,
+          scenarios[0],
+        );
         await assertSnapshot(t, getRawBufferOutput(buffer), {
           name: "after onStepEnd - Step that passes (1)",
         });
@@ -512,17 +528,21 @@ export function testReporter(
           name: "after onScenarioStart - Scenario with failing step (2)",
         });
 
-        await reporter.onStepStart(stepDefinitions.passing);
+        await reporter.onStepStart(stepDefinitions.passing, scenarios[1]);
         await assertSnapshot(t, getRawBufferOutput(buffer), {
           name: "after onStepStart - Step that passes (2-1)",
         });
 
-        await reporter.onStepEnd(stepDefinitions.passing, stepResults.passed);
+        await reporter.onStepEnd(
+          stepDefinitions.passing,
+          stepResults.passed,
+          scenarios[1],
+        );
         await assertSnapshot(t, getRawBufferOutput(buffer), {
           name: "after onStepEnd - Step that passes (2-1)",
         });
 
-        await reporter.onStepStart(stepDefinitions.failing);
+        await reporter.onStepStart(stepDefinitions.failing, scenarios[1]);
         await assertSnapshot(t, getRawBufferOutput(buffer), {
           name: "after onStepStart - Step that fails (2-2)",
         });
@@ -530,6 +550,7 @@ export function testReporter(
         await reporter.onStepError(
           stepDefinitions.failing,
           new Error("Assertion failed"),
+          scenarios[1],
         );
         await assertSnapshot(t, getRawBufferOutput(buffer), {
           name: "after onStepError - Step that fails (2-2)",
@@ -546,12 +567,16 @@ export function testReporter(
           name: "after onScenarioStart - Simple passing scenario (3)",
         });
 
-        await reporter.onStepStart(stepDefinitions.passing);
+        await reporter.onStepStart(stepDefinitions.passing, scenarios[2]);
         await assertSnapshot(t, getRawBufferOutput(buffer), {
           name: "after onStepStart - Step that passes (3)",
         });
 
-        await reporter.onStepEnd(stepDefinitions.passing, stepResults.passed);
+        await reporter.onStepEnd(
+          stepDefinitions.passing,
+          stepResults.passed,
+          scenarios[2],
+        );
         await assertSnapshot(t, getRawBufferOutput(buffer), {
           name: "after onStepEnd - Step that passes (3)",
         });
@@ -615,12 +640,16 @@ export function testReporter(
           name: "after onScenarioStart - Simple passing scenario (1)",
         });
 
-        await reporter.onStepStart(stepDefinitions.passing);
+        await reporter.onStepStart(stepDefinitions.passing, scenarios[0]);
         await assertSnapshot(t, getBufferOutputNoColor(buffer), {
           name: "after onStepStart - Step that passes (1)",
         });
 
-        await reporter.onStepEnd(stepDefinitions.passing, stepResults.passed);
+        await reporter.onStepEnd(
+          stepDefinitions.passing,
+          stepResults.passed,
+          scenarios[0],
+        );
         await assertSnapshot(t, getBufferOutputNoColor(buffer), {
           name: "after onStepEnd - Step that passes (1)",
         });
@@ -636,12 +665,16 @@ export function testReporter(
           name: "after onScenarioStart - Simple passing scenario (2)",
         });
 
-        await reporter.onStepStart(stepDefinitions.passing);
+        await reporter.onStepStart(stepDefinitions.passing, scenarios[1]);
         await assertSnapshot(t, getBufferOutputNoColor(buffer), {
           name: "after onStepStart - Step that passes (2)",
         });
 
-        await reporter.onStepEnd(stepDefinitions.passing, stepResults.passed);
+        await reporter.onStepEnd(
+          stepDefinitions.passing,
+          stepResults.passed,
+          scenarios[1],
+        );
         await assertSnapshot(t, getBufferOutputNoColor(buffer), {
           name: "after onStepEnd - Step that passes (2)",
         });
@@ -657,12 +690,16 @@ export function testReporter(
           name: "after onScenarioStart - Simple passing scenario (3)",
         });
 
-        await reporter.onStepStart(stepDefinitions.passing);
+        await reporter.onStepStart(stepDefinitions.passing, scenarios[2]);
         await assertSnapshot(t, getBufferOutputNoColor(buffer), {
           name: "after onStepStart - Step that passes (3)",
         });
 
-        await reporter.onStepEnd(stepDefinitions.passing, stepResults.passed);
+        await reporter.onStepEnd(
+          stepDefinitions.passing,
+          stepResults.passed,
+          scenarios[2],
+        );
         await assertSnapshot(t, getBufferOutputNoColor(buffer), {
           name: "after onStepEnd - Step that passes (3)",
         });
@@ -703,12 +740,16 @@ export function testReporter(
           name: "after onScenarioStart - Simple passing scenario (1)",
         });
 
-        await reporter.onStepStart(stepDefinitions.passing);
+        await reporter.onStepStart(stepDefinitions.passing, scenarios[0]);
         await assertSnapshot(t, getBufferOutputNoColor(buffer), {
           name: "after onStepStart - Step that passes (1)",
         });
 
-        await reporter.onStepEnd(stepDefinitions.passing, stepResults.passed);
+        await reporter.onStepEnd(
+          stepDefinitions.passing,
+          stepResults.passed,
+          scenarios[0],
+        );
         await assertSnapshot(t, getBufferOutputNoColor(buffer), {
           name: "after onStepEnd - Step that passes (1)",
         });
@@ -724,17 +765,21 @@ export function testReporter(
           name: "after onScenarioStart - Scenario with failing step (2)",
         });
 
-        await reporter.onStepStart(stepDefinitions.passing);
+        await reporter.onStepStart(stepDefinitions.passing, scenarios[1]);
         await assertSnapshot(t, getBufferOutputNoColor(buffer), {
           name: "after onStepStart - Step that passes (2-1)",
         });
 
-        await reporter.onStepEnd(stepDefinitions.passing, stepResults.passed);
+        await reporter.onStepEnd(
+          stepDefinitions.passing,
+          stepResults.passed,
+          scenarios[1],
+        );
         await assertSnapshot(t, getBufferOutputNoColor(buffer), {
           name: "after onStepEnd - Step that passes (2-1)",
         });
 
-        await reporter.onStepStart(stepDefinitions.failing);
+        await reporter.onStepStart(stepDefinitions.failing, scenarios[1]);
         await assertSnapshot(t, getBufferOutputNoColor(buffer), {
           name: "after onStepStart - Step that fails (2-2)",
         });
@@ -742,6 +787,7 @@ export function testReporter(
         await reporter.onStepError(
           stepDefinitions.failing,
           new Error("Assertion failed"),
+          scenarios[1],
         );
         await assertSnapshot(t, getBufferOutputNoColor(buffer), {
           name: "after onStepError - Step that fails (2-2)",
@@ -758,12 +804,16 @@ export function testReporter(
           name: "after onScenarioStart - Simple passing scenario (3)",
         });
 
-        await reporter.onStepStart(stepDefinitions.passing);
+        await reporter.onStepStart(stepDefinitions.passing, scenarios[2]);
         await assertSnapshot(t, getBufferOutputNoColor(buffer), {
           name: "after onStepStart - Step that passes (3)",
         });
 
-        await reporter.onStepEnd(stepDefinitions.passing, stepResults.passed);
+        await reporter.onStepEnd(
+          stepDefinitions.passing,
+          stepResults.passed,
+          scenarios[2],
+        );
         await assertSnapshot(t, getBufferOutputNoColor(buffer), {
           name: "after onStepEnd - Step that passes (3)",
         });

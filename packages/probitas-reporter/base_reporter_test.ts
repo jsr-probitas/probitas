@@ -37,9 +37,17 @@ class TestReporter extends BaseReporter {
   }
 
   onScenarioStart(_scenario: ScenarioDefinition): void {}
-  onStepStart(_step: StepDefinition): void {}
-  onStepEnd(_step: StepDefinition, _result: StepResult): void {}
-  onStepError(_step: StepDefinition, _error: Error): void {}
+  onStepStart(_step: StepDefinition, _scenario: ScenarioDefinition): void {}
+  onStepEnd(
+    _step: StepDefinition,
+    _result: StepResult,
+    _scenario: ScenarioDefinition,
+  ): void {}
+  onStepError(
+    _step: StepDefinition,
+    _error: Error,
+    _scenario: ScenarioDefinition,
+  ): void {}
   onScenarioEnd(_scenario: ScenarioDefinition, _result: ScenarioResult): void {}
 }
 

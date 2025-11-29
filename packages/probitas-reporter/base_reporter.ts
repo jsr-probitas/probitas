@@ -159,23 +159,39 @@ export abstract class BaseReporter implements Reporter {
 
   /**
    * Called when step starts (to be implemented by subclass)
+   *
+   * @param step - The step definition being executed
+   * @param scenario - The scenario containing the step (for parallel-safe reporting)
    */
-  abstract onStepStart(step: StepDefinition): void | Promise<void>;
+  abstract onStepStart(
+    step: StepDefinition,
+    scenario: ScenarioDefinition,
+  ): void | Promise<void>;
 
   /**
    * Called when step completes successfully (to be implemented by subclass)
+   *
+   * @param step - The step definition that completed
+   * @param result - The step execution result
+   * @param scenario - The scenario containing the step (for parallel-safe reporting)
    */
   abstract onStepEnd(
     step: StepDefinition,
     result: StepResult,
+    scenario: ScenarioDefinition,
   ): void | Promise<void>;
 
   /**
    * Called when step fails (to be implemented by subclass)
+   *
+   * @param step - The step definition that failed
+   * @param error - The error that occurred
+   * @param scenario - The scenario containing the step (for parallel-safe reporting)
    */
   abstract onStepError(
     step: StepDefinition,
     error: Error,
+    scenario: ScenarioDefinition,
   ): void | Promise<void>;
 
   /**

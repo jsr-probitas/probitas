@@ -67,11 +67,16 @@ export class JSONReporter extends BaseReporter {
    * Called when step starts
    *
    * @param step The step being executed
+   * @param scenario The scenario being executed
    */
-  override async onStepStart(step: StepDefinition): Promise<void> {
+  override async onStepStart(
+    step: StepDefinition,
+    scenario: ScenarioDefinition,
+  ): Promise<void> {
     await this.write(
       JSON.stringify({
         type: "stepStart",
+        scenario: scenario.name,
         name: step.name,
         location: step.location,
       }) + "\n",
@@ -83,14 +88,17 @@ export class JSONReporter extends BaseReporter {
    *
    * @param _step The step definition
    * @param result The step execution result
+   * @param scenario The scenario being executed
    */
   override async onStepEnd(
     _step: StepDefinition,
     result: StepResult,
+    scenario: ScenarioDefinition,
   ): Promise<void> {
     await this.write(
       JSON.stringify({
         type: "stepEnd",
+        scenario: scenario.name,
         name: result.metadata.name,
         status: result.status,
         duration: result.duration,
@@ -103,14 +111,17 @@ export class JSONReporter extends BaseReporter {
    *
    * @param step The step definition
    * @param error The error that occurred
+   * @param scenario The scenario being executed
    */
   override async onStepError(
     step: StepDefinition,
     error: Error,
+    scenario: ScenarioDefinition,
   ): Promise<void> {
     await this.write(
       JSON.stringify({
         type: "stepError",
+        scenario: scenario.name,
         name: step.name,
         error: {
           message: error.message,

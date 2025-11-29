@@ -98,13 +98,17 @@ export class DotReporter extends BaseReporter {
     // no-op
   }
 
-  override async onStepStart(_step: StepDefinition): Promise<void> {
+  override async onStepStart(
+    _step: StepDefinition,
+    _scenario: ScenarioDefinition,
+  ): Promise<void> {
     // no-op
   }
 
   override async onStepEnd(
     _step: StepDefinition,
     _result: StepResult,
+    _scenario: ScenarioDefinition,
   ): Promise<void> {
     // no-op
   }
@@ -112,6 +116,7 @@ export class DotReporter extends BaseReporter {
   override async onStepError(
     _step: StepDefinition,
     _error: Error,
+    _scenario: ScenarioDefinition,
   ): Promise<void> {
     // no-op
   }

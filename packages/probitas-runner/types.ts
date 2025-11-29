@@ -127,18 +127,40 @@ export interface Reporter {
 
   /**
    * Called when step starts
+   *
+   * @param step - The step definition being executed
+   * @param scenario - The scenario containing the step (for parallel-safe reporting)
    */
-  onStepStart(step: StepDefinition): void | Promise<void>;
+  onStepStart(
+    step: StepDefinition,
+    scenario: ScenarioDefinition,
+  ): void | Promise<void>;
 
   /**
    * Called when step completes successfully
+   *
+   * @param step - The step definition that completed
+   * @param result - The step execution result
+   * @param scenario - The scenario containing the step (for parallel-safe reporting)
    */
-  onStepEnd(step: StepDefinition, result: StepResult): void | Promise<void>;
+  onStepEnd(
+    step: StepDefinition,
+    result: StepResult,
+    scenario: ScenarioDefinition,
+  ): void | Promise<void>;
 
   /**
    * Called when step fails
+   *
+   * @param step - The step definition that failed
+   * @param error - The error that occurred
+   * @param scenario - The scenario containing the step (for parallel-safe reporting)
    */
-  onStepError(step: StepDefinition, error: Error): void | Promise<void>;
+  onStepError(
+    step: StepDefinition,
+    error: Error,
+    scenario: ScenarioDefinition,
+  ): void | Promise<void>;
 
   /**
    * Called when scenario completes

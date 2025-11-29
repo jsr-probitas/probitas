@@ -21,8 +21,6 @@ import type {
  * List Reporter - outputs results in flat list format
  */
 export class ListReporter extends BaseReporter {
-  #currentScenario?: string;
-
   /**
    * Initialize List reporter
    *
@@ -33,24 +31,25 @@ export class ListReporter extends BaseReporter {
   }
 
   /**
-   * Called when scenario starts - track current scenario name
+   * Called when scenario starts
    *
-   * @param scenario The scenario being executed
+   * @param _scenario The scenario being executed
    */
-  override onScenarioStart(scenario: ScenarioDefinition): Promise<void> {
-    this.#currentScenario = scenario.name;
+  override onScenarioStart(_scenario: ScenarioDefinition): Promise<void> {
     return Promise.resolve();
   }
 
   /**
    * Called when step completes - output result line
    *
-   * @param step The step definition
+   * @param _step The step definition
    * @param result The step execution result
+   * @param scenario The scenario being executed
    */
   override async onStepEnd(
     _step: StepDefinition,
     result: StepResult,
+    scenario: ScenarioDefinition,
   ): Promise<void> {
     const icon = this.theme.success("✓");
     const location = result.metadata.location
@@ -63,7 +62,7 @@ export class ListReporter extends BaseReporter {
     const time = ` ${this.theme.dim(`[${result.duration.toFixed(3)}ms]`)}`;
 
     await this.write(
-      `${icon} ${this.#currentScenario} ${this.theme.dim(">")} ` +
+      `${icon} ${scenario.name} ${this.theme.dim(">")} ` +
         `${result.metadata.name}${location}${time}\n`,
     );
   }
@@ -73,10 +72,12 @@ export class ListReporter extends BaseReporter {
    *
    * @param step The step definition
    * @param error The error that occurred
+   * @param scenario The scenario being executed
    */
   override async onStepError(
     step: StepDefinition,
     error: Error,
+    scenario: ScenarioDefinition,
   ): Promise<void> {
     const icon = this.theme.failure("✗");
     const location = step.location
@@ -84,7 +85,7 @@ export class ListReporter extends BaseReporter {
       : "";
 
     await this.write(
-      `${icon} ${this.#currentScenario} ${this.theme.dim(">")} ` +
+      `${icon} ${scenario.name} ${this.theme.dim(">")} ` +
         `${step.name}${location}\n`,
     );
     await this.write(`  ${this.theme.failure(error.message)}\n`);
@@ -149,7 +150,10 @@ export class ListReporter extends BaseReporter {
   }
 
   // No-op methods for unneeded events
-  override async onStepStart(_step: StepDefinition): Promise<void> {
+  override async onStepStart(
+    _step: StepDefinition,
+    _scenario: ScenarioDefinition,
+  ): Promise<void> {
     // no-op
   }
 

@@ -14,23 +14,23 @@ snapshot[`after onScenarioStart - Simple passing scenario (1) 1`] = `
 snapshot[`after onStepStart - Step that passes (1) 1`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
 '
 `;
 
 snapshot[`after onStepEnd - Step that passes (1) 1`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 '
 `;
 
 snapshot[`after onScenarioEnd - Simple passing scenario (1) 1`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 '
 `;
@@ -38,8 +38,8 @@ snapshot[`after onScenarioEnd - Simple passing scenario (1) 1`] = `
 snapshot[`after onScenarioStart - Simple passing scenario (2) 1`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
 '
@@ -48,35 +48,35 @@ snapshot[`after onScenarioStart - Simple passing scenario (2) 1`] = `
 snapshot[`after onStepStart - Step that passes (2) 1`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
 '
 `;
 
 snapshot[`after onStepEnd - Step that passes (2) 1`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 '
 `;
 
 snapshot[`after onScenarioEnd - Simple passing scenario (2) 1`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 '
 `;
@@ -84,12 +84,12 @@ snapshot[`after onScenarioEnd - Simple passing scenario (2) 1`] = `
 snapshot[`after onScenarioStart - Simple passing scenario (3) 1`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
 '
@@ -98,47 +98,47 @@ snapshot[`after onScenarioStart - Simple passing scenario (3) 1`] = `
 snapshot[`after onStepStart - Step that passes (3) 1`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
 '
 `;
 
 snapshot[`after onStepEnd - Step that passes (3) 1`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 '
 `;
 
 snapshot[`after onScenarioEnd - Simple passing scenario (3) 1`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 '
 `;
@@ -146,16 +146,16 @@ snapshot[`after onScenarioEnd - Simple passing scenario (3) 1`] = `
 snapshot[`after onRunEnd 1`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"runEnd","summary":{"total":3,"passed":3,"failed":0,"duration":45}}
 '
@@ -175,23 +175,23 @@ snapshot[`after onScenarioStart - Simple passing scenario (1) 2`] = `
 snapshot[`after onStepStart - Step that passes (1) 2`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
 '
 `;
 
 snapshot[`after onStepEnd - Step that passes (1) 2`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 '
 `;
 
 snapshot[`after onScenarioEnd - Simple passing scenario (1) 2`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 '
 `;
@@ -199,8 +199,8 @@ snapshot[`after onScenarioEnd - Simple passing scenario (1) 2`] = `
 snapshot[`after onScenarioStart - Scenario with failing step (2) 1`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Scenario with failing step","location":{"file":"test.scenario.ts","line":10},"tags":[]}
 '
@@ -209,64 +209,64 @@ snapshot[`after onScenarioStart - Scenario with failing step (2) 1`] = `
 snapshot[`after onStepStart - Step that passes (2-1) 1`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Scenario with failing step","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
 '
 `;
 
 snapshot[`after onStepEnd - Step that passes (2-1) 1`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Scenario with failing step","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Scenario with failing step","name":"Step that passes","status":"passed","duration":10}
 '
 `;
 
 snapshot[`after onStepStart - Step that fails (2-2) 1`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Scenario with failing step","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
-{"type":"stepStart","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Scenario with failing step","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
 '
 `;
 
 snapshot[`after onStepError - Step that fails (2-2) 1`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Scenario with failing step","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
-{"type":"stepStart","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
-{"type":"stepError","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:532:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Scenario with failing step","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
+{"type":"stepError","scenario":"Scenario with failing step","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:552:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
 '
 `;
 
 snapshot[`after onScenarioEnd - Scenario with failing step (2) 1`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Scenario with failing step","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
-{"type":"stepStart","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
-{"type":"stepError","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:532:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Scenario with failing step","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
+{"type":"stepError","scenario":"Scenario with failing step","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:552:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
 {"type":"scenarioEnd","name":"Scenario with failing step","status":"failed","duration":15}
 '
 `;
@@ -274,14 +274,14 @@ snapshot[`after onScenarioEnd - Scenario with failing step (2) 1`] = `
 snapshot[`after onScenarioStart - Simple passing scenario (3) 2`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Scenario with failing step","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
-{"type":"stepStart","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
-{"type":"stepError","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:532:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Scenario with failing step","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
+{"type":"stepError","scenario":"Scenario with failing step","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:552:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
 {"type":"scenarioEnd","name":"Scenario with failing step","status":"failed","duration":15}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
 '
@@ -290,53 +290,53 @@ snapshot[`after onScenarioStart - Simple passing scenario (3) 2`] = `
 snapshot[`after onStepStart - Step that passes (3) 2`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Scenario with failing step","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
-{"type":"stepStart","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
-{"type":"stepError","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:532:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Scenario with failing step","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
+{"type":"stepError","scenario":"Scenario with failing step","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:552:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
 {"type":"scenarioEnd","name":"Scenario with failing step","status":"failed","duration":15}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
 '
 `;
 
 snapshot[`after onStepEnd - Step that passes (3) 2`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Scenario with failing step","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
-{"type":"stepStart","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
-{"type":"stepError","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:532:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Scenario with failing step","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
+{"type":"stepError","scenario":"Scenario with failing step","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:552:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
 {"type":"scenarioEnd","name":"Scenario with failing step","status":"failed","duration":15}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 '
 `;
 
 snapshot[`after onScenarioEnd - Simple passing scenario (3) 2`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Scenario with failing step","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
-{"type":"stepStart","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
-{"type":"stepError","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:532:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Scenario with failing step","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
+{"type":"stepError","scenario":"Scenario with failing step","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:552:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
 {"type":"scenarioEnd","name":"Scenario with failing step","status":"failed","duration":15}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 '
 `;
@@ -344,18 +344,18 @@ snapshot[`after onScenarioEnd - Simple passing scenario (3) 2`] = `
 snapshot[`after onRunEnd 2`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Scenario with failing step","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
-{"type":"stepStart","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
-{"type":"stepError","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:532:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Scenario with failing step","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
+{"type":"stepError","scenario":"Scenario with failing step","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:552:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
 {"type":"scenarioEnd","name":"Scenario with failing step","status":"failed","duration":15}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"runEnd","summary":{"total":3,"passed":2,"failed":1,"duration":35}}
 '
@@ -386,23 +386,23 @@ snapshot[`after onScenarioStart - Simple passing scenario (1) 3`] = `
 snapshot[`after onStepStart - Step that passes (1) 3`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
 '
 `;
 
 snapshot[`after onStepEnd - Step that passes (1) 3`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 '
 `;
 
 snapshot[`after onScenarioEnd - Simple passing scenario (1) 3`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 '
 `;
@@ -410,8 +410,8 @@ snapshot[`after onScenarioEnd - Simple passing scenario (1) 3`] = `
 snapshot[`after onScenarioStart - Simple passing scenario (2) 2`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
 '
@@ -420,35 +420,35 @@ snapshot[`after onScenarioStart - Simple passing scenario (2) 2`] = `
 snapshot[`after onStepStart - Step that passes (2) 2`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
 '
 `;
 
 snapshot[`after onStepEnd - Step that passes (2) 2`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 '
 `;
 
 snapshot[`after onScenarioEnd - Simple passing scenario (2) 2`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 '
 `;
@@ -456,12 +456,12 @@ snapshot[`after onScenarioEnd - Simple passing scenario (2) 2`] = `
 snapshot[`after onScenarioStart - Simple passing scenario (3) 3`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
 '
@@ -470,47 +470,47 @@ snapshot[`after onScenarioStart - Simple passing scenario (3) 3`] = `
 snapshot[`after onStepStart - Step that passes (3) 3`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
 '
 `;
 
 snapshot[`after onStepEnd - Step that passes (3) 3`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 '
 `;
 
 snapshot[`after onScenarioEnd - Simple passing scenario (3) 3`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 '
 `;
@@ -518,16 +518,16 @@ snapshot[`after onScenarioEnd - Simple passing scenario (3) 3`] = `
 snapshot[`after onRunEnd 4`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"runEnd","summary":{"total":3,"passed":3,"failed":0,"duration":45}}
 '
@@ -547,23 +547,23 @@ snapshot[`after onScenarioStart - Simple passing scenario (1) 4`] = `
 snapshot[`after onStepStart - Step that passes (1) 4`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
 '
 `;
 
 snapshot[`after onStepEnd - Step that passes (1) 4`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 '
 `;
 
 snapshot[`after onScenarioEnd - Simple passing scenario (1) 4`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 '
 `;
@@ -571,8 +571,8 @@ snapshot[`after onScenarioEnd - Simple passing scenario (1) 4`] = `
 snapshot[`after onScenarioStart - Scenario with failing step (2) 2`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Scenario with failing step","location":{"file":"test.scenario.ts","line":10},"tags":[]}
 '
@@ -581,64 +581,64 @@ snapshot[`after onScenarioStart - Scenario with failing step (2) 2`] = `
 snapshot[`after onStepStart - Step that passes (2-1) 2`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Scenario with failing step","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
 '
 `;
 
 snapshot[`after onStepEnd - Step that passes (2-1) 2`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Scenario with failing step","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Scenario with failing step","name":"Step that passes","status":"passed","duration":10}
 '
 `;
 
 snapshot[`after onStepStart - Step that fails (2-2) 2`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Scenario with failing step","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
-{"type":"stepStart","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Scenario with failing step","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
 '
 `;
 
 snapshot[`after onStepError - Step that fails (2-2) 2`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Scenario with failing step","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
-{"type":"stepStart","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
-{"type":"stepError","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:744:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Scenario with failing step","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
+{"type":"stepError","scenario":"Scenario with failing step","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:789:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
 '
 `;
 
 snapshot[`after onScenarioEnd - Scenario with failing step (2) 2`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Scenario with failing step","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
-{"type":"stepStart","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
-{"type":"stepError","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:744:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Scenario with failing step","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
+{"type":"stepError","scenario":"Scenario with failing step","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:789:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
 {"type":"scenarioEnd","name":"Scenario with failing step","status":"failed","duration":15}
 '
 `;
@@ -646,14 +646,14 @@ snapshot[`after onScenarioEnd - Scenario with failing step (2) 2`] = `
 snapshot[`after onScenarioStart - Simple passing scenario (3) 4`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Scenario with failing step","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
-{"type":"stepStart","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
-{"type":"stepError","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:744:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Scenario with failing step","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
+{"type":"stepError","scenario":"Scenario with failing step","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:789:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
 {"type":"scenarioEnd","name":"Scenario with failing step","status":"failed","duration":15}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
 '
@@ -662,53 +662,53 @@ snapshot[`after onScenarioStart - Simple passing scenario (3) 4`] = `
 snapshot[`after onStepStart - Step that passes (3) 4`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Scenario with failing step","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
-{"type":"stepStart","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
-{"type":"stepError","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:744:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Scenario with failing step","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
+{"type":"stepError","scenario":"Scenario with failing step","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:789:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
 {"type":"scenarioEnd","name":"Scenario with failing step","status":"failed","duration":15}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
 '
 `;
 
 snapshot[`after onStepEnd - Step that passes (3) 4`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Scenario with failing step","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
-{"type":"stepStart","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
-{"type":"stepError","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:744:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Scenario with failing step","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
+{"type":"stepError","scenario":"Scenario with failing step","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:789:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
 {"type":"scenarioEnd","name":"Scenario with failing step","status":"failed","duration":15}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 '
 `;
 
 snapshot[`after onScenarioEnd - Simple passing scenario (3) 4`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Scenario with failing step","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
-{"type":"stepStart","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
-{"type":"stepError","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:744:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Scenario with failing step","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
+{"type":"stepError","scenario":"Scenario with failing step","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:789:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
 {"type":"scenarioEnd","name":"Scenario with failing step","status":"failed","duration":15}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 '
 `;
@@ -716,18 +716,18 @@ snapshot[`after onScenarioEnd - Simple passing scenario (3) 4`] = `
 snapshot[`after onRunEnd 5`] = `
 '{"type":"runStart","scenarios":3}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"scenarioStart","name":"Scenario with failing step","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
-{"type":"stepStart","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
-{"type":"stepError","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:744:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Scenario with failing step","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Scenario with failing step","name":"Step that fails","location":{"file":"test.scenario.ts","line":20}}
+{"type":"stepError","scenario":"Scenario with failing step","name":"Step that fails","error":{"message":"Assertion failed","stack":"Error: Assertion failed\\\\n    at Object.<anonymous> (<file>:789:11)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:429:7)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async TestSuiteInternal.runTest (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:417:9)\\\\n    at async fn (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:378:13)\\\\n    at async innerWrapped (ext:cli/40_test.js:181:5)\\\\n    at async exitSanitizer (ext:cli/40_test.js:97:27)\\\\n    at async Object.outerWrapped [as fn] (ext:cli/40_test.js:124:14)\\\\n    at async TestContext.step (ext:cli/40_test.js:511:22)\\\\n    at async TestSuiteInternal.run (https://jsr.io/@std/testing/1.0.16/_test_suite.ts:394:7)"}}
 {"type":"scenarioEnd","name":"Scenario with failing step","status":"failed","duration":15}
 {"type":"scenarioStart","name":"Simple passing scenario","location":{"file":"test.scenario.ts","line":10},"tags":[]}
-{"type":"stepStart","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
-{"type":"stepEnd","name":"Step that passes","status":"passed","duration":10}
+{"type":"stepStart","scenario":"Simple passing scenario","name":"Step that passes","location":{"file":"test.scenario.ts","line":15}}
+{"type":"stepEnd","scenario":"Simple passing scenario","name":"Step that passes","status":"passed","duration":10}
 {"type":"scenarioEnd","name":"Simple passing scenario","status":"passed","duration":10}
 {"type":"runEnd","summary":{"total":3,"passed":2,"failed":1,"duration":35}}
 '

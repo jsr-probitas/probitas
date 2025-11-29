@@ -232,7 +232,7 @@ export class ScenarioRunner {
 
               // Notify reporter of step start
               if (reporter?.onStepStart) {
-                await reporter.onStepStart(stepDef);
+                await reporter.onStepStart(stepDef, scenario);
               }
 
               let error: Error | undefined;
@@ -262,12 +262,12 @@ export class ScenarioRunner {
               // Notify reporter about result
               if (error) {
                 if (reporter?.onStepError) {
-                  await reporter.onStepError(stepDef, error);
+                  await reporter.onStepError(stepDef, error, scenario);
                 }
                 // Stop executing remaining entries
                 throw error;
               } else if (reporter?.onStepEnd) {
-                await reporter.onStepEnd(stepDef, stepResult);
+                await reporter.onStepEnd(stepDef, stepResult, scenario);
               }
               break;
             }

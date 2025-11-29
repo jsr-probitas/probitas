@@ -22,7 +22,6 @@ import type {
 export class TAPReporter extends BaseReporter {
   #testNumber = 0;
   #totalSteps = 0;
-  #currentScenario?: string;
 
   /**
    * Initialize TAP reporter
@@ -54,28 +53,29 @@ export class TAPReporter extends BaseReporter {
   }
 
   /**
-   * Called when scenario starts - track current scenario name
+   * Called when scenario starts
    *
-   * @param scenario The scenario being executed
+   * @param _scenario The scenario being executed
    */
-  override onScenarioStart(scenario: ScenarioDefinition): Promise<void> {
-    this.#currentScenario = scenario.name;
+  override onScenarioStart(_scenario: ScenarioDefinition): Promise<void> {
     return Promise.resolve();
   }
 
   /**
    * Called when step completes - output TAP result
    *
-   * @param step The step definition
+   * @param _step The step definition
    * @param result The step execution result
+   * @param scenario The scenario being executed
    */
   override async onStepEnd(
     _step: StepDefinition,
     result: StepResult,
+    scenario: ScenarioDefinition,
   ): Promise<void> {
     this.#testNumber++;
     const status = result.status === "passed" ? "ok" : "not ok";
-    const testName = `${this.#currentScenario} > ${result.metadata.name}`;
+    const testName = `${scenario.name} > ${result.metadata.name}`;
 
     await this.write(`${status} ${this.#testNumber} - ${testName}\n`);
 
@@ -106,13 +106,17 @@ export class TAPReporter extends BaseReporter {
   }
 
   // No-op methods for unneeded events
-  override async onStepStart(_step: StepDefinition): Promise<void> {
+  override async onStepStart(
+    _step: StepDefinition,
+    _scenario: ScenarioDefinition,
+  ): Promise<void> {
     // no-op
   }
 
   override async onStepError(
     _step: StepDefinition,
     _error: Error,
+    _scenario: ScenarioDefinition,
   ): Promise<void> {
     // no-op
   }
