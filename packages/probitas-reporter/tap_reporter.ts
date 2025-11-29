@@ -110,10 +110,12 @@ export class TAPReporter extends BaseReporter {
    *
    * @param scenario The scenario that was skipped
    * @param reason Optional skip reason
+   * @param _duration Scenario execution duration (not used in TAP format)
    */
   async onScenarioSkip(
     scenario: ScenarioDefinition,
-    reason?: string,
+    reason: string | undefined,
+    _duration: number,
   ): Promise<void> {
     const stepCount = this.#skippedScenarioSteps.get(scenario.name) ?? 0;
     const directive = reason ? `# SKIP ${reason}` : "# SKIP";

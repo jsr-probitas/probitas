@@ -232,11 +232,13 @@ export interface Reporter {
    *
    * @param step - The step definition that failed
    * @param error - The error that occurred
+   * @param duration - Step execution duration in milliseconds
    * @param scenario - The scenario containing the step (for parallel-safe reporting)
    */
   onStepError?(
     step: StepDefinition,
     error: Error,
+    duration: number,
     scenario: ScenarioDefinition,
   ): void | Promise<void>;
 
@@ -245,10 +247,12 @@ export interface Reporter {
    *
    * @param scenario - The scenario that was skipped
    * @param reason - Optional skip reason
+   * @param duration - Scenario execution duration in milliseconds
    */
   onScenarioSkip?(
     scenario: ScenarioDefinition,
-    reason?: string,
+    reason: string | undefined,
+    duration: number,
   ): void | Promise<void>;
 
   /**

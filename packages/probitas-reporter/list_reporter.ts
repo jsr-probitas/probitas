@@ -62,21 +62,24 @@ export class ListReporter extends BaseReporter {
    *
    * @param step The step definition
    * @param error The error that occurred
+   * @param duration Step execution duration in milliseconds
    * @param scenario The scenario being executed
    */
   async onStepError(
     step: StepDefinition,
     error: Error,
+    duration: number,
     scenario: ScenarioDefinition,
   ): Promise<void> {
     const icon = this.theme.failure("✗");
     const location = step.location
       ? ` ${this.theme.dim(`(${step.location.file}:${step.location.line})`)}`
       : "";
+    const time = ` ${this.theme.info(`[${duration.toFixed(3)}ms]`)}`;
 
     await this.write(
       `${icon} ${scenario.name} ${this.theme.dim(">")} ` +
-        `${step.name}${location}\n`,
+        `${step.name}${location}${time}\n`,
     );
     await this.write(`  ${this.theme.failure(error.message)}\n`);
 
@@ -95,10 +98,12 @@ export class ListReporter extends BaseReporter {
    *
    * @param scenario The scenario that was skipped
    * @param reason Optional skip reason
+   * @param duration Scenario execution duration in milliseconds
    */
   async onScenarioSkip(
     scenario: ScenarioDefinition,
-    reason?: string,
+    reason: string | undefined,
+    duration: number,
   ): Promise<void> {
     const icon = this.theme.skip("⊘");
     const location = scenario.location
@@ -109,9 +114,10 @@ export class ListReporter extends BaseReporter {
       }`
       : "";
     const reasonText = reason ? ` ${this.theme.dim(`(${reason})`)}` : "";
+    const time = ` ${this.theme.info(`[${duration.toFixed(3)}ms]`)}`;
 
     await this.write(
-      `${icon} ${scenario.name}${location}${reasonText}\n`,
+      `${icon} ${scenario.name}${location}${reasonText}${time}\n`,
     );
   }
 

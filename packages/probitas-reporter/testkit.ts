@@ -553,6 +553,7 @@ export function testReporter(
         await reporter.onStepError?.(
           stepDefinitions.failing,
           new Error("Assertion failed"),
+          5, // duration in ms
           scenarios[1],
         );
         await assertSnapshot(t, getRawBufferOutput(buffer), {
@@ -790,6 +791,7 @@ export function testReporter(
         await reporter.onStepError?.(
           stepDefinitions.failing,
           new Error("Assertion failed"),
+          5, // duration in ms
           scenarios[1],
         );
         await assertSnapshot(t, getBufferOutputNoColor(buffer), {

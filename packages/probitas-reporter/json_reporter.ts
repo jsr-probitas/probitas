@@ -235,11 +235,13 @@ export class JSONReporter extends BaseReporter {
    *
    * @param step The step definition
    * @param error The error that occurred
+   * @param duration Step execution duration in milliseconds
    * @param scenario The scenario being executed
    */
   async onStepError(
     step: StepDefinition,
     error: Error,
+    duration: number,
     scenario: ScenarioDefinition,
   ): Promise<void> {
     await this.write(
@@ -247,6 +249,7 @@ export class JSONReporter extends BaseReporter {
         type: "stepError",
         step,
         scenario,
+        duration,
         error: {
           message: error.message,
           stack: error.stack ? this.sanitizeStack(error.stack) : undefined,
@@ -260,16 +263,19 @@ export class JSONReporter extends BaseReporter {
    *
    * @param scenario The scenario that was skipped
    * @param reason Optional skip reason
+   * @param duration Scenario execution duration in milliseconds
    */
   async onScenarioSkip(
     scenario: ScenarioDefinition,
-    reason?: string,
+    reason: string | undefined,
+    duration: number,
   ): Promise<void> {
     await this.write(
       JSON.stringify({
         type: "scenarioSkip",
         scenario,
         reason,
+        duration,
       }) + "\n",
     );
   }

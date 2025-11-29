@@ -314,7 +314,12 @@ export class ScenarioRunner {
               // Notify reporter about result
               if (error) {
                 if (reporter?.onStepError) {
-                  await reporter.onStepError(stepDef, error, scenario);
+                  await reporter.onStepError(
+                    stepDef,
+                    error,
+                    stepDuration,
+                    scenario,
+                  );
                 }
                 // Stop executing remaining entries
                 throw error;
@@ -355,7 +360,7 @@ export class ScenarioRunner {
 
     // Notify reporter of skip if skipped
     if (status === "skipped" && reporter?.onScenarioSkip) {
-      await reporter.onScenarioSkip(scenario, skipReason);
+      await reporter.onScenarioSkip(scenario, skipReason, duration);
     }
 
     const result: ScenarioResult = {
