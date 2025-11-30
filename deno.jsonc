@@ -16,7 +16,8 @@
     "check": "deno check ./**/*.ts",
     "test": "deno test -A --parallel --shuffle",
     "test:coverage": "deno task test --coverage=.coverage",
-    "coverage": "deno coverage .coverage --include='/packages/'"
+    "coverage": "deno coverage .coverage --include='/packages/'",
+    "verify": "deno fmt && deno lint && deno task check && deno task test"
   },
   "imports": {
     // JSR dependencies (shared across workspace)
