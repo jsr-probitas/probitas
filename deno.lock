@@ -149,12 +149,6 @@
       "jsr:@std/testing@^1.0.16"
     ],
     "members": {
-      "packages/probitas-builder": {
-        "dependencies": [
-          "jsr:@probitas/runner@0",
-          "jsr:@probitas/scenario@0"
-        ]
-      },
       "packages/probitas-cli": {
         "dependencies": [
           "jsr:@core/errorutil@^1.2.1",
@@ -172,22 +166,6 @@
           "jsr:@std/jsonc@^1.0.2",
           "jsr:@std/path@^1.1.3",
           "jsr:@std/streams@^1.0.14"
-        ]
-      },
-      "packages/probitas-reporter": {
-        "dependencies": [
-          "jsr:@probitas/runner@0",
-          "jsr:@probitas/scenario@0"
-        ]
-      },
-      "packages/probitas-runner": {
-        "dependencies": [
-          "jsr:@probitas/scenario@0"
-        ]
-      },
-      "packages/probitas-std": {
-        "dependencies": [
-          "jsr:@probitas/builder@0"
         ]
       }
     }

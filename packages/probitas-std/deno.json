@@ -7,8 +7,5 @@
       "**/*_test.ts",
       "**/*_bench.ts"
     ]
-  },
-  "imports": {
-    "@probitas/builder": "jsr:@probitas/builder@^0"
   }
 }

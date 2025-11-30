@@ -7,9 +7,5 @@
       "**/*_test.ts",
       "**/*_bench.ts"
     ]
-  },
-  "imports": {
-    "@probitas/scenario": "jsr:@probitas/scenario@^0",
-    "@probitas/runner": "jsr:@probitas/runner@^0"
   }
 }
