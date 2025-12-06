@@ -1,5 +1,5 @@
 {
-  "name": "@probitas/std",
+  "name": "@probitas/probitas",
   "version": "0.0.0",
   "exports": "./mod.ts",
   "publish": {

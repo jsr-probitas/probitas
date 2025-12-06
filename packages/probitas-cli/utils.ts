@@ -125,7 +125,7 @@ export async function readAsset(path: string): Promise<string> {
  * @returns Version string, or undefined if not running from JSR
  */
 export function getVersion(): string | undefined {
-  const prefix = "https://jsr.io/@probitas/std/";
+  const prefix = "https://jsr.io/@probitas/probitas/";
   if (import.meta.url.startsWith(prefix)) {
     return import.meta.url.slice(prefix.length).split("/").at(0);
   }
