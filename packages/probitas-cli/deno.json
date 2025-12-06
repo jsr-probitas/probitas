@@ -1,6 +1,6 @@
 {
   "name": "@probitas/cli",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "exports": "./mod.ts",
   "publish": {
     "exclude": [
