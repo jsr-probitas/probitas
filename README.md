@@ -41,11 +41,11 @@ probitas init
 This creates:
 
 - `deno.json` - Configuration with probitas import and settings
-- `scenarios/example.scenario.ts` - Example scenario
+- `probitas/example.probitas.ts` - Example scenario
 
 ### Write Your First Scenario
 
-Create `scenarios/hello.scenario.ts`:
+Create `probitas/hello.probitas.ts`:
 
 ```typescript
 import { scenario, Skip } from "probitas";
@@ -160,8 +160,8 @@ Add to `deno.json` or `deno.jsonc`:
     "probitas": "jsr:@probitas/probitas"
   },
   "probitas": {
-    "includes": ["scenarios/**/*.scenario.ts"],
-    "excludes": ["**/*.skip.scenario.ts"],
+    "includes": ["probitas/**/*.probitas.ts"],
+    "excludes": ["**/*.skip.probitas.ts"],
     "reporter": "list",
     "maxConcurrency": 4,
     "selectors": ["!tag:wip"]

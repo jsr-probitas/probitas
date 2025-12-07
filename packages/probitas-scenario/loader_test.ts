@@ -17,7 +17,7 @@ describe("scenario loader", () => {
     it("loads single scenario from file", async () => {
       await using sbox = await sandbox();
 
-      const scenarioPath = sbox.resolve("test.scenario.ts");
+      const scenarioPath = sbox.resolve("test.probitas.ts");
       const content = outdent`
         export default {
           name: "Test Scenario",
@@ -37,7 +37,7 @@ describe("scenario loader", () => {
     it("loads multiple scenarios from array export", async () => {
       await using sbox = await sandbox();
 
-      const scenarioPath = sbox.resolve("multi.scenario.ts");
+      const scenarioPath = sbox.resolve("multi.probitas.ts");
       const content = outdent`
         export default [
           {
@@ -66,8 +66,8 @@ describe("scenario loader", () => {
     it("loads from multiple files", async () => {
       await using sbox = await sandbox();
 
-      const file1 = sbox.resolve("test1.scenario.ts");
-      const file2 = sbox.resolve("test2.scenario.ts");
+      const file1 = sbox.resolve("test1.probitas.ts");
+      const file2 = sbox.resolve("test2.probitas.ts");
 
       const content = (name: string, path: string) =>
         outdent`
@@ -98,7 +98,7 @@ describe("scenario loader", () => {
     it("calls onImportError for invalid syntax in scenario file", async () => {
       await using sbox = await sandbox();
 
-      const scenarioPath = sbox.resolve("invalid.scenario.ts");
+      const scenarioPath = sbox.resolve("invalid.probitas.ts");
       await Deno.writeTextFile(
         scenarioPath,
         "export default { invalid: syntax here",

@@ -77,7 +77,7 @@ describe("config loader", () => {
         JSON.stringify({
           probitas: {
             reporter: "list",
-            includes: ["**/*.scenario.ts"],
+            includes: ["**/*.probitas.ts"],
             excludes: ["**/*.skip.ts"],
             selectors: ["tag:smoke", "!tag:slow"],
             maxConcurrency: 5,
@@ -89,7 +89,7 @@ describe("config loader", () => {
       const config = await loadConfig(configPath);
 
       assertEquals(config.reporter, "list");
-      assertEquals(config.includes, ["**/*.scenario.ts"]);
+      assertEquals(config.includes, ["**/*.probitas.ts"]);
       assertEquals(config.excludes, ["**/*.skip.ts"]);
       assertEquals(config.selectors, ["tag:smoke", "!tag:slow"]);
       assertEquals(config.maxConcurrency, 5);

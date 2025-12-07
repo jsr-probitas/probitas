@@ -9,7 +9,7 @@ import { getLogger } from "@probitas/logger";
 
 const logger = getLogger("probitas", "discover");
 
-const DEFAULT_INCLUDE_PATTERNS = ["**/*.scenario.ts"];
+const DEFAULT_INCLUDE_PATTERNS = ["**/*.probitas.ts"];
 const DEFAULT_EXCLUDE_PATTERNS: string[] = [];
 
 /**
@@ -38,7 +38,7 @@ export interface DiscoverOptions {
  *
  * @example
  * // Specific files and directories
- * await discoverScenarioFiles(["test.scenario.ts", "api/"], {});
+ * await discoverScenarioFiles(["test.probitas.ts", "api/"], {});
  *
  * // With custom patterns
  * const files = await discoverScenarioFiles(["api/"], {

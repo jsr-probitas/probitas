@@ -61,7 +61,7 @@ Initialize project.
 probitas init [--force]
 ```
 
-Creates `deno.json` and `scenarios/example.scenario.ts`.
+Creates `deno.json` and `probitas/example.probitas.ts`.
 
 ## Selector Syntax
 
@@ -93,7 +93,7 @@ Creates `deno.json` and `scenarios/example.scenario.ts`.
 
 ## File Discovery
 
-**Default pattern:** `**/*.scenario.ts`
+**Default pattern:** `**/*.probitas.ts`
 
 **Priority:**
 
@@ -109,7 +109,7 @@ In `deno.json` or `deno.jsonc`:
 ```json
 {
   "probitas": {
-    "includes": ["scenarios/**/*.scenario.ts"],
+    "includes": ["probitas/**/*.probitas.ts"],
     "excludes": [],
     "reporter": "list",
     "maxConcurrency": 4,

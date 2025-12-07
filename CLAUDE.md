@@ -114,7 +114,7 @@ Follow test-driven development principles:
 **Example Scenarios (`example/`)**
 
 - Example scenarios for documentation and manual testing
-- Files named `*.scenario.ts`
+- Files named `*.probitas.ts`
 - Run with `deno task probitas run`
 
 ## Commands

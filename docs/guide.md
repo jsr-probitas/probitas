@@ -17,7 +17,7 @@ probitas run
 
 ## Writing Scenarios
 
-Create `*.scenario.ts` files with a default export:
+Create `*.probitas.ts` files with a default export:
 
 ```typescript
 import { scenario } from "probitas";
@@ -125,8 +125,8 @@ export default [
 
 ```bash
 probitas run                      # All scenarios
-probitas run scenarios/           # Specific directory
-probitas run login.scenario.ts    # Specific file
+probitas run probitas/           # Specific directory
+probitas run login.probitas.ts    # Specific file
 ```
 
 ### Filtering
@@ -173,8 +173,8 @@ Add to `deno.json` or `deno.jsonc`:
     "probitas": "jsr:@probitas/probitas"
   },
   "probitas": {
-    "includes": ["scenarios/**/*.scenario.ts"],
-    "excludes": ["**/*.skip.scenario.ts"],
+    "includes": ["probitas/**/*.probitas.ts"],
+    "excludes": ["**/*.skip.probitas.ts"],
     "reporter": "list",
     "maxConcurrency": 4,
     "maxFailures": 0,

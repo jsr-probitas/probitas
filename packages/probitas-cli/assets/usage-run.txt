@@ -40,11 +40,11 @@ Selector Format:
 Examples:
   probitas run                              Run all scenarios
   probitas run examples/                    Run scenarios in examples/
-  probitas run test.scenario.ts             Run specific file
+  probitas run test.probitas.ts             Run specific file
 
   # Filter by file pattern
-  probitas run --include "e2e/**/*.scenario.ts"     Run scenarios in e2e directory
-  probitas run --exclude "**/*.skip.scenario.ts"    Exclude skip files
+  probitas run --include "e2e/**/*.probitas.ts"     Run scenarios in e2e directory
+  probitas run --exclude "**/*.skip.probitas.ts"    Exclude skip files
 
   # Select by tag
   probitas run -s tag:smoke                 Run scenarios with @smoke tag
@@ -71,7 +71,7 @@ Examples:
   probitas run --exclude "**/*.skip.ts" -s "!tag:slow" Exclude skip files and slow scenarios
 
   # File + selector
-  probitas run scenarios/auth/ -s tag:smoke Run smoke tests in auth/ directory
+  probitas run probitas/auth/ -s tag:smoke Run smoke tests in auth/ directory
 
   # Execution control
   probitas run --max-concurrency 5          Run up to 5 scenarios in parallel
