@@ -1,5 +1,11 @@
 ### 2025.12.07
 
+#### @probitas/probitas 0.3.3 (patch)
+
+- fix(probitas): export types used in expect function signatures
+
+### 2025.12.07
+
 #### @probitas/builder 0.2.4 (patch)
 
 - fix(*): update examples and docs for probitas-client 0.1.0 breaking changes
