@@ -1,6 +1,6 @@
 # Probitas
 
-Scenario-based testing and workflow execution framework for Deno.
+Scenario-based testing and workflow execution framework.
 
 ## Quick Reference
 

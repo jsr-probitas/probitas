@@ -4,7 +4,7 @@
 [![Test](https://github.com/jsr-probitas/probitas/actions/workflows/test.yml/badge.svg)](https://github.com/jsr-probitas/probitas/actions/workflows/test.yml)
 [![codecov](https://codecov.io/github/jsr-probitas/probitas/graph/badge.svg?token=Yu0GPZAMv6)](https://codecov.io/github/jsr-probitas/probitas)
 
-Scenario-based testing & workflow execution framework for Deno.
+Scenario-based testing & workflow execution framework.
 
 ## Features
 
