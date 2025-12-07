@@ -282,7 +282,7 @@ describe("init command", () => {
   });
 
   describe("probitas directory", () => {
-    it("creates probitas directory and example file", async () => {
+    it("creates probitas directory, example file, and Claude Code skill", async () => {
       await using sbox = await sandbox();
 
       const exitCode = await initCommand([], sbox.path);
@@ -291,12 +291,24 @@ describe("init command", () => {
 
       const probitasDir = sbox.resolve("probitas");
       const examplePath = sbox.resolve("probitas/example.probitas.ts");
+      const skillPath = sbox.resolve(".claude/skills/probitas/SKILL.md");
+      const overviewPath = sbox.resolve(".claude/skills/probitas/overview.md");
 
       assertEquals(await exists(probitasDir), true);
       assertEquals(await exists(examplePath), true);
+      assertEquals(await exists(skillPath), true);
+      assertEquals(await exists(overviewPath), true);
 
       const exampleContent = await Deno.readTextFile(examplePath);
       assertStringIncludes(exampleContent, "Example Scenario");
+
+      const skillContent = await Deno.readTextFile(skillPath);
+      assertStringIncludes(skillContent, "Probitas Skill");
+      assertStringIncludes(skillContent, "documents.probitas.deno.net");
+
+      const overviewContent = await Deno.readTextFile(overviewPath);
+      assertStringIncludes(overviewContent, "Probitas Overview");
+      assertStringIncludes(overviewContent, "documents.probitas.deno.net");
     });
 
     it("returns error when example exists without --force", async () => {
@@ -336,6 +348,64 @@ describe("init command", () => {
         sbox.resolve("probitas/example.probitas.ts"),
       );
       assertStringIncludes(content, "Example Scenario");
+    });
+  });
+
+  describe("Claude Code skill", () => {
+    it("returns error when skill exists without --force", async () => {
+      await using sbox = await sandbox();
+
+      const skillPath = sbox.resolve(".claude/skills/probitas/SKILL.md");
+      await Deno.mkdir(sbox.resolve(".claude/skills/probitas"), {
+        recursive: true,
+      });
+      await Deno.writeTextFile(skillPath, "old skill content");
+
+      const exitCode = await initCommand([], sbox.path);
+
+      assertEquals(exitCode, 2);
+
+      const content = await Deno.readTextFile(skillPath);
+      assertEquals(content, "old skill content");
+    });
+
+    it("returns error when overview exists without --force", async () => {
+      await using sbox = await sandbox();
+
+      const overviewPath = sbox.resolve(".claude/skills/probitas/overview.md");
+      await Deno.mkdir(sbox.resolve(".claude/skills/probitas"), {
+        recursive: true,
+      });
+      await Deno.writeTextFile(overviewPath, "old overview content");
+
+      const exitCode = await initCommand([], sbox.path);
+
+      assertEquals(exitCode, 2);
+
+      const content = await Deno.readTextFile(overviewPath);
+      assertEquals(content, "old overview content");
+    });
+
+    it("overwrites skill with --force", async () => {
+      await using sbox = await sandbox();
+
+      const skillPath = sbox.resolve(".claude/skills/probitas/SKILL.md");
+      const overviewPath = sbox.resolve(".claude/skills/probitas/overview.md");
+      await Deno.mkdir(sbox.resolve(".claude/skills/probitas"), {
+        recursive: true,
+      });
+      await Deno.writeTextFile(skillPath, "old skill content");
+      await Deno.writeTextFile(overviewPath, "old overview content");
+
+      const exitCode = await initCommand(["--force"], sbox.path);
+
+      assertEquals(exitCode, 0);
+
+      const content = await Deno.readTextFile(skillPath);
+      assertStringIncludes(content, "Probitas Skill");
+
+      const overviewContent = await Deno.readTextFile(overviewPath);
+      assertStringIncludes(overviewContent, "Probitas Overview");
     });
   });
 

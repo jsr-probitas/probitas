@@ -6,6 +6,11 @@ Generates the following structure:
   deno.json                    Deno config with probitas settings (created or updated)
   probitas/
     example.probitas.ts        Sample scenario
+  .claude/
+    skills/
+      probitas/
+        SKILL.md               Claude Code skill that links to Probitas docs
+        overview.md            Local Probitas overview for quick reference
 
 If deno.json or deno.jsonc already exists, adds probitas configuration to it.
 Comments in .jsonc files are preserved.

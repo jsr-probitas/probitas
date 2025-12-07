@@ -102,6 +102,28 @@ function displayExampleExistsError(): void {
 }
 
 /**
+ * Display error for existing Claude Code skill file
+ */
+function displaySkillExistsError(): void {
+  displayError(
+    "Claude Code skill already exists",
+    ".claude/skills/probitas/SKILL.md or overview.md already exists.",
+    outdent`
+      To fix this, either:
+
+        1. Use --force to overwrite:
+
+          $ probitas init --force
+
+        2. Or delete the file manually:
+
+          $ rm .claude/skills/probitas/SKILL.md
+             .claude/skills/probitas/overview.md
+    `,
+  );
+}
+
+/**
  * Display error for invalid config syntax
  */
 function displayInvalidSyntaxError(
@@ -335,6 +357,48 @@ export async function initCommand(
   await Deno.writeTextFile(examplePath, exampleContent);
   logger.debug("Created example scenario", { path: examplePath });
   console.log("Created example scenario", examplePath);
+
+  // Create Claude Code skill
+  const skillDir = resolve(cwd, ".claude", "skills", "probitas");
+  await Deno.mkdir(skillDir, { recursive: true });
+  logger.debug("Created Claude skill directory", { path: skillDir });
+
+  const skillPath = resolve(skillDir, "SKILL.md");
+  const overviewPath = resolve(skillDir, "overview.md");
+
+  if (!force) {
+    try {
+      await Deno.stat(skillPath);
+      logger.info("Claude Code skill already exists", { path: skillPath });
+      displaySkillExistsError();
+      return EXIT_CODE.USAGE_ERROR;
+    } catch {
+      // File doesn't exist, continue
+    }
+
+    try {
+      await Deno.stat(overviewPath);
+      logger.info("Claude Code skill overview already exists", {
+        path: overviewPath,
+      });
+      displaySkillExistsError();
+      return EXIT_CODE.USAGE_ERROR;
+    } catch {
+      // File doesn't exist, continue
+    }
+  }
+
+  const skillContent = await readTemplate("probitas-skill/SKILL.md.tpl");
+  await Deno.writeTextFile(skillPath, skillContent);
+  logger.debug("Created Claude Code skill", { path: skillPath });
+  console.log("Created Claude Code skill", skillPath);
+
+  const overviewContent = await readTemplate(
+    "probitas-skill/overview.md.tpl",
+  );
+  await Deno.writeTextFile(overviewPath, overviewContent);
+  logger.debug("Created Claude Code skill overview", { path: overviewPath });
+  console.log("Created Claude Code skill overview", overviewPath);
 
   console.log(
     "\nInitialization complete! Run 'probitas run' to execute the example scenario.",
