@@ -27,6 +27,8 @@ Scenario-based testing & workflow execution framework.
 
 ### Installation
 
+#### Using Deno
+
 ```bash
 deno install -grAf -n probitas jsr:@probitas/cli
 ```
@@ -36,6 +38,19 @@ deno install -grAf -n probitas jsr:@probitas/cli
 - `-A` All permissions
 - `-f` Force overwrite existing
 - `-n probitas` Command name
+
+#### Using Nix
+
+```bash
+# Run without installing
+nix run github:jsr-probitas/probitas
+
+# Install into your profile
+nix profile install github:jsr-probitas/probitas#probitas
+```
+
+The flake packages a wrapper that runs the bundled CLI with the repository
+import map and lockfile.
 
 ### Initialize a Project
 
