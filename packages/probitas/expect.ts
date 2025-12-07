@@ -23,6 +23,23 @@ import {
 import { expect as expectStd } from "@std/expect";
 
 /**
+ * Re-export types used in the `expect` function overload signatures.
+ * These types are needed for users to properly type-annotate their code.
+ */
+export type {
+  ConnectRpcResponse,
+  DenoKvResult,
+  GraphqlResponse,
+  HttpResponse,
+  MongoResult,
+  RabbitMqResult,
+  RedisResult,
+  SqlQueryResult,
+  SqlQueryResultExpectation,
+  SqsResult,
+};
+
+/**
  * Extract row type from SqlQueryResult<T>
  */
 type ExtractSqlRowType<T> = T extends SqlQueryResult<infer R> ? R : never;
