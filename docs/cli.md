@@ -149,4 +149,4 @@ Probitas dependencies override user's to ensure correct resolution.
 ## Related
 
 - [Guide](./guide.md) - Usage examples
-- [Architecture](./architecture.md) - Design overview
+- [Architecture](./develop/architecture.md) - Design overview
