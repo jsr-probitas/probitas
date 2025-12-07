@@ -25,3 +25,5 @@ Options:
 Examples:
   probitas init           Initialize new project
   probitas init --force   Overwrite existing files
+
+Documentation: https://documents.probitas.deno.net/

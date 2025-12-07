@@ -67,3 +67,5 @@ Examples:
   probitas list --reload                        Reload dependencies before listing
 
 Note: Uses patterns from config file or defaults to "**/*.probitas.ts"
+
+Documentation: https://documents.probitas.deno.net/

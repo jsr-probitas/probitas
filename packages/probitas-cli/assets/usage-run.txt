@@ -91,3 +91,5 @@ Examples:
 
 Environment Variables:
   NO_COLOR         Disable colored output
+
+Documentation: https://documents.probitas.deno.net/
