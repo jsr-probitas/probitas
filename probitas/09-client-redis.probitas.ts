@@ -10,8 +10,7 @@ export default scenario("Redis Client Example", {
 })
   .resource("redis", () =>
     client.redis.createRedisClient({
-      host: "localhost",
-      port: 16379,
+      url: "redis://localhost:16379",
     }))
   .setup((ctx) => {
     const { redis } = ctx.resources;
@@ -32,7 +31,7 @@ export default scenario("Redis Client Example", {
     await redis.set("test:key", "hello world");
     const result = await redis.get("test:key");
 
-    expect(result).ok().value("hello world");
+    expect(result).ok().data("hello world");
   })
   .step("SET with expiry", async (ctx) => {
     const { redis } = ctx.resources;
@@ -44,7 +43,7 @@ export default scenario("Redis Client Example", {
     const { redis } = ctx.resources;
     const result = await redis.get("test:nonexistent");
 
-    expect(result).ok().value(null);
+    expect(result).ok().data(null);
   })
   .step("INCR counter", async (ctx) => {
     const { redis } = ctx.resources;
@@ -60,7 +59,7 @@ export default scenario("Redis Client Example", {
     await redis.incr("test:counter");
     const getResult = await redis.get("test:counter");
 
-    expect(getResult).ok().value("4");
+    expect(getResult).ok().data("4");
   })
   .step("DECR counter", async (ctx) => {
     const { redis } = ctx.resources;
@@ -74,13 +73,13 @@ export default scenario("Redis Client Example", {
     await redis.hset("test:hash", "field2", "value2");
     const result = await redis.hget("test:hash", "field1");
 
-    expect(result).ok().value("value1");
+    expect(result).ok().data("value1");
   })
   .step("HGETALL hash", async (ctx) => {
     const { redis } = ctx.resources;
     const result = await redis.hgetall("test:hash");
 
-    expect(result).ok().valueMatch((value) => {
+    expect(result).ok().dataMatch((value: Record<string, string>) => {
       if (value.field1 !== "value1" || value.field2 !== "value2") {
         throw new Error("Expected hash with field1=value1, field2=value2");
       }
@@ -91,7 +90,7 @@ export default scenario("Redis Client Example", {
     await redis.lpush("test:list", "c", "b", "a");
     const result = await redis.lrange("test:list", 0, -1);
 
-    expect(result).ok().length(3).contains("a");
+    expect(result).ok().count(3).contains("a");
   })
   .step("LLEN list", async (ctx) => {
     const { redis } = ctx.resources;
@@ -104,13 +103,13 @@ export default scenario("Redis Client Example", {
     await redis.sadd("test:set", "member1", "member2", "member3");
     const result = await redis.smembers("test:set");
 
-    expect(result).ok().length(3);
+    expect(result).ok().count(3);
   })
   .step("SISMEMBER set membership", async (ctx) => {
     const { redis } = ctx.resources;
     const result = await redis.sismember("test:set", "member1");
 
-    expect(result).ok().value(true);
+    expect(result).ok().data(true);
   })
   .step("DEL key", async (ctx) => {
     const { redis } = ctx.resources;

@@ -47,11 +47,11 @@ function hasType(value: unknown): value is { type: string } {
  * ```ts
  * // HTTP response
  * const httpRes = await http.get("/users");
- * expect(httpRes).ok().jsonContains({ users: [] });
+ * expect(httpRes).ok().dataContains({ users: [] });
  *
  * // SQL query result
  * const sqlRes = await db.query("SELECT * FROM users");
- * expect(sqlRes).ok().rowCount(10);
+ * expect(sqlRes).ok().count(10);
  *
  * // Falls back to @std/expect for other values
  * expect(42).toBe(42);

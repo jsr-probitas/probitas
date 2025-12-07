@@ -65,7 +65,7 @@ export default scenario("DuckDB Client Example", {
 
     expect(result)
       .ok()
-      .rowCountAtLeast(2);
+      .countAtLeast(2);
   })
   .step("Window function query", async (ctx) => {
     const { duckdb } = ctx.resources;
@@ -85,7 +85,7 @@ export default scenario("DuckDB Client Example", {
 
     expect(result)
       .ok()
-      .rowCountAtLeast(6);
+      .countAtLeast(6);
   })
   .step("Parameterized query", async (ctx) => {
     const { duckdb } = ctx.resources;
@@ -98,7 +98,7 @@ export default scenario("DuckDB Client Example", {
 
     expect(result)
       .ok()
-      .rowCountAtLeast(2);
+      .countAtLeast(2);
   })
   .step("Complex analytical query", async (ctx) => {
     const { duckdb } = ctx.resources;
@@ -119,7 +119,7 @@ export default scenario("DuckDB Client Example", {
 
     expect(result)
       .ok()
-      .rowCountAtLeast(4);
+      .countAtLeast(4);
   })
   .step("Update row", async (ctx) => {
     const { duckdb } = ctx.resources;
@@ -147,8 +147,8 @@ export default scenario("DuckDB Client Example", {
 
     expect(result)
       .ok()
-      .rowCount(1)
-      .rowContains({ product_name: "TxProduct" });
+      .count(1)
+      .dataContains({ product_name: "TxProduct" });
   })
   .step("Transaction - rollback on error", async (ctx) => {
     const { duckdb } = ctx.resources;
@@ -172,7 +172,7 @@ export default scenario("DuckDB Client Example", {
 
     expect(result)
       .ok()
-      .rowCount(0);
+      .count(0);
   })
   .step("Delete row", async (ctx) => {
     const { duckdb } = ctx.resources;

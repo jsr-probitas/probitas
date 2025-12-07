@@ -21,7 +21,7 @@ export default scenario("HTTP Client Example", {
 })
   .resource("http", () =>
     client.http.createHttpClient({
-      baseUrl: "http://localhost:18080",
+      url: "http://localhost:18080",
     }))
   .step("GET /get - echo request info", async (ctx) => {
     const { http } = ctx.resources;
@@ -31,7 +31,7 @@ export default scenario("HTTP Client Example", {
       .ok()
       .status(200)
       .contentType(/application\/json/)
-      .jsonContains({ args: { name: "probitas", version: "1" } });
+      .dataContains({ args: { name: "probitas", version: "1" } });
   })
   .step("POST /post - send JSON body", async (ctx) => {
     const { http } = ctx.resources;
@@ -43,7 +43,7 @@ export default scenario("HTTP Client Example", {
     expect(res)
       .ok()
       .contentType(/application\/json/)
-      .jsonContains({ json: { message: "Hello from probitas", count: 42 } });
+      .dataContains({ json: { message: "Hello from probitas", count: 42 } });
   })
   .step("PUT /put - update resource", async (ctx) => {
     const { http } = ctx.resources;
@@ -51,7 +51,7 @@ export default scenario("HTTP Client Example", {
 
     expect(res)
       .ok()
-      .jsonContains({ json: { id: 1, name: "updated" } });
+      .dataContains({ json: { id: 1, name: "updated" } });
   })
   .step("PATCH /patch - partial update", async (ctx) => {
     const { http } = ctx.resources;
@@ -59,7 +59,7 @@ export default scenario("HTTP Client Example", {
 
     expect(res)
       .ok()
-      .jsonContains({ json: { name: "patched" } });
+      .dataContains({ json: { name: "patched" } });
   })
   .step("DELETE /delete - remove resource", async (ctx) => {
     const { http } = ctx.resources;
@@ -67,7 +67,7 @@ export default scenario("HTTP Client Example", {
 
     expect(res)
       .ok()
-      .jsonContains({ args: { id: "123" } });
+      .dataContains({ args: { id: "123" } });
   })
   .step("GET /headers - custom headers", async (ctx) => {
     const { http } = ctx.resources;
@@ -80,7 +80,7 @@ export default scenario("HTTP Client Example", {
 
     expect(res)
       .ok()
-      .jsonContains({
+      .dataContains({
         headers: {
           "X-Custom-Header": "custom-value",
           "X-Request-Id": "req-12345",
@@ -126,7 +126,7 @@ export default scenario("HTTP Client Example", {
 
     expect(res)
       .ok()
-      .jsonContains({ authenticated: true, user: "testuser" });
+      .dataContains({ authenticated: true, user: "testuser" });
   })
   .step("GET /basic-auth - invalid credentials", async (ctx) => {
     const { http } = ctx.resources;
@@ -146,7 +146,7 @@ export default scenario("HTTP Client Example", {
 
     expect(res)
       .ok()
-      .jsonContains({ authenticated: true, token: "my-secret-token" });
+      .dataContains({ authenticated: true, token: "my-secret-token" });
   })
   .step("GET /bearer - missing token", async (ctx) => {
     const { http } = ctx.resources;
@@ -162,7 +162,7 @@ export default scenario("HTTP Client Example", {
 
     expect(res)
       .ok()
-      .jsonContains({ cookies: { session: "abc123", user: "probitas" } });
+      .dataContains({ cookies: { session: "abc123", user: "probitas" } });
   })
   .step("ANY /anything - echo everything", async (ctx) => {
     const { http } = ctx.resources;
@@ -173,7 +173,7 @@ export default scenario("HTTP Client Example", {
     expect(res)
       .ok()
       .contentType(/application\/json/)
-      .jsonContains({ method: "POST", args: { key: "value" } });
+      .dataContains({ method: "POST", args: { key: "value" } });
   })
   .step("GET /ip - get client IP", async (ctx) => {
     const { http } = ctx.resources;
@@ -191,7 +191,7 @@ export default scenario("HTTP Client Example", {
     const { http } = ctx.resources;
     const res = await http.get("/health");
 
-    expect(res).ok().jsonContains({ status: "ok" });
+    expect(res).ok().dataContains({ status: "ok" });
   })
   .step("GET /bytes/{n} - random bytes", async (ctx) => {
     const { http } = ctx.resources;

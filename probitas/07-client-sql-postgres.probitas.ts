@@ -11,13 +11,7 @@ export default scenario("PostgreSQL Client Example", {
 })
   .resource("pg", () =>
     client.sql.postgres.createPostgresClient({
-      connection: {
-        host: "localhost",
-        port: 15432,
-        database: "testdb",
-        user: "testuser",
-        password: "testpassword",
-      },
+      url: "postgres://testuser:testpassword@localhost:15432/testdb",
     }))
   .setup(async (ctx) => {
     const { pg } = ctx.resources;
@@ -45,7 +39,7 @@ export default scenario("PostgreSQL Client Example", {
 
     expect(result)
       .ok()
-      .rowCount(1);
+      .count(1);
   })
   .step("Insert multiple rows", async (ctx) => {
     const { pg } = ctx.resources;
@@ -56,7 +50,7 @@ export default scenario("PostgreSQL Client Example", {
 
     expect(result)
       .ok()
-      .rowCount(2);
+      .count(2);
   })
   .step("Select with WHERE clause", async (ctx) => {
     const { pg } = ctx.resources;
@@ -67,8 +61,8 @@ export default scenario("PostgreSQL Client Example", {
 
     expect(result)
       .ok()
-      .rowCount(1)
-      .rowContains({ name: "Alice" });
+      .count(1)
+      .dataContains({ name: "Alice" });
   })
   .step("Select all rows", async (ctx) => {
     const { pg } = ctx.resources;
@@ -78,7 +72,7 @@ export default scenario("PostgreSQL Client Example", {
 
     expect(result)
       .ok()
-      .rowCountAtLeast(3);
+      .countAtLeast(3);
   })
   .step("Update row", async (ctx) => {
     const { pg } = ctx.resources;
@@ -89,7 +83,7 @@ export default scenario("PostgreSQL Client Example", {
 
     expect(result)
       .ok()
-      .rowCount(1);
+      .count(1);
   })
   .step("Transaction - commit", async (ctx) => {
     const { pg } = ctx.resources;
@@ -107,8 +101,8 @@ export default scenario("PostgreSQL Client Example", {
 
     expect(result)
       .ok()
-      .rowCount(1)
-      .rowContains({ name: "TxUser" });
+      .count(1)
+      .dataContains({ name: "TxUser" });
   })
   .step("Transaction - rollback on error", async (ctx) => {
     const { pg } = ctx.resources;
@@ -131,7 +125,7 @@ export default scenario("PostgreSQL Client Example", {
 
     expect(result)
       .ok()
-      .rowCount(0);
+      .count(0);
   })
   .step("Delete row", async (ctx) => {
     const { pg } = ctx.resources;
@@ -142,6 +136,6 @@ export default scenario("PostgreSQL Client Example", {
 
     expect(result)
       .ok()
-      .rowCount(1);
+      .count(1);
   })
   .build();

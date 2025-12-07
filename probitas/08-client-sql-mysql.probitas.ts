@@ -11,13 +11,7 @@ export default scenario("MySQL Client Example", {
 })
   .resource("mysql", () =>
     client.sql.mysql.createMySqlClient({
-      connection: {
-        host: "localhost",
-        port: 13306,
-        database: "testdb",
-        user: "testuser",
-        password: "testpassword",
-      },
+      url: "mysql://testuser:testpassword@localhost:13306/testdb",
     }))
   .setup(async (ctx) => {
     const { mysql } = ctx.resources;
@@ -45,7 +39,7 @@ export default scenario("MySQL Client Example", {
 
     expect(result)
       .ok()
-      .rowCount(1);
+      .count(1);
   })
   .step("Insert multiple rows", async (ctx) => {
     const { mysql } = ctx.resources;
@@ -56,7 +50,7 @@ export default scenario("MySQL Client Example", {
 
     expect(result)
       .ok()
-      .rowCount(2);
+      .count(2);
   })
   .step("Select with WHERE clause", async (ctx) => {
     const { mysql } = ctx.resources;
@@ -67,8 +61,8 @@ export default scenario("MySQL Client Example", {
 
     expect(result)
       .ok()
-      .rowCount(1)
-      .rowContains({ name: "Widget" });
+      .count(1)
+      .dataContains({ name: "Widget" });
   })
   .step("Select all rows", async (ctx) => {
     const { mysql } = ctx.resources;
@@ -80,7 +74,7 @@ export default scenario("MySQL Client Example", {
 
     expect(result)
       .ok()
-      .rowCountAtLeast(3);
+      .countAtLeast(3);
   })
   .step("Update row", async (ctx) => {
     const { mysql } = ctx.resources;
@@ -91,7 +85,7 @@ export default scenario("MySQL Client Example", {
 
     expect(result)
       .ok()
-      .rowCount(1);
+      .count(1);
   })
   .step("Transaction - commit", async (ctx) => {
     const { mysql } = ctx.resources;
@@ -109,8 +103,8 @@ export default scenario("MySQL Client Example", {
 
     expect(result)
       .ok()
-      .rowCount(1)
-      .rowContains({ name: "TxProduct" });
+      .count(1)
+      .dataContains({ name: "TxProduct" });
   })
   .step("Delete row", async (ctx) => {
     const { mysql } = ctx.resources;
@@ -121,6 +115,6 @@ export default scenario("MySQL Client Example", {
 
     expect(result)
       .ok()
-      .rowCount(1);
+      .count(1);
   })
   .build();

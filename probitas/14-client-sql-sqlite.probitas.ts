@@ -42,7 +42,7 @@ export default scenario("SQLite Client Example", {
 
     expect(result)
       .ok()
-      .rowCount(1);
+      .count(1);
   })
   .step("Insert multiple rows", async (ctx) => {
     const { sqlite } = ctx.resources;
@@ -59,7 +59,7 @@ export default scenario("SQLite Client Example", {
 
     expect(result)
       .ok()
-      .rowCount(1);
+      .count(1);
   })
   .step("Select with WHERE clause", async (ctx) => {
     const { sqlite } = ctx.resources;
@@ -70,8 +70,8 @@ export default scenario("SQLite Client Example", {
 
     expect(result)
       .ok()
-      .rowCount(1)
-      .rowContains({ title: "The Pragmatic Programmer" });
+      .count(1)
+      .dataContains({ title: "The Pragmatic Programmer" });
   })
   .step("Select all rows", async (ctx) => {
     const { sqlite } = ctx.resources;
@@ -83,7 +83,7 @@ export default scenario("SQLite Client Example", {
 
     expect(result)
       .ok()
-      .rowCountAtLeast(3);
+      .countAtLeast(3);
   })
   .step("Update row", async (ctx) => {
     const { sqlite } = ctx.resources;
@@ -94,7 +94,7 @@ export default scenario("SQLite Client Example", {
 
     expect(result)
       .ok()
-      .rowCount(1);
+      .count(1);
   })
   .step("Transaction - commit", async (ctx) => {
     const { sqlite } = ctx.resources;
@@ -112,8 +112,8 @@ export default scenario("SQLite Client Example", {
 
     expect(result)
       .ok()
-      .rowCount(1)
-      .rowContains({ title: "Refactoring" });
+      .count(1)
+      .dataContains({ title: "Refactoring" });
   })
   .step("Transaction - rollback on error", async (ctx) => {
     const { sqlite } = ctx.resources;
@@ -136,7 +136,7 @@ export default scenario("SQLite Client Example", {
 
     expect(result)
       .ok()
-      .rowCount(0);
+      .count(0);
   })
   .step("Delete row", async (ctx) => {
     const { sqlite } = ctx.resources;
@@ -147,6 +147,6 @@ export default scenario("SQLite Client Example", {
 
     expect(result)
       .ok()
-      .rowCount(1);
+      .count(1);
   })
   .build();

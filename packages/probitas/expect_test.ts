@@ -24,14 +24,14 @@ describe("expect", () => {
         arrayBuffer: () => null,
         blob: () => null,
         text: () => null,
-        json: () => null,
+        data: () => null,
       };
 
       const result = expect(httpResponse);
       // HttpResponseExpectation has ok() method that returns this
       assertEquals(typeof result.ok, "function");
       assertEquals(typeof result.status, "function");
-      assertEquals(typeof result.jsonContains, "function");
+      assertEquals(typeof result.dataContains, "function");
     });
 
     it("dispatches ConnectRpcResponse to expectConnectRpcResponse", () => {
@@ -48,7 +48,7 @@ describe("expect", () => {
 
       const result = expect(connectRpcResponse);
       assertEquals(typeof result.ok, "function");
-      assertEquals(typeof result.code, "function");
+      assertEquals(typeof result.status, "function");
     });
 
     it("dispatches GraphqlResponse to expectGraphqlResponse", () => {
@@ -65,7 +65,7 @@ describe("expect", () => {
 
       const result = expect(graphqlResponse);
       assertEquals(typeof result.ok, "function");
-      assertEquals(typeof result.hasData, "function");
+      assertEquals(typeof result.hasContent, "function");
       assertEquals(typeof result.dataContains, "function");
     });
 
@@ -272,7 +272,7 @@ describe("expect", () => {
         arrayBuffer: () => null,
         blob: () => null,
         text: () => null,
-        json: () => null,
+        data: () => null,
       };
 
       // This should compile and have HttpResponseExpectation methods

@@ -48,7 +48,7 @@ export default scenario("Deno KV Client Example", {
     expect(result)
       .ok()
       .hasContent()
-      .valueContains({ name: "Alice" });
+      .dataContains({ name: "Alice" });
   })
   .step("Set multiple values", async (ctx) => {
     const { kv } = ctx.resources;

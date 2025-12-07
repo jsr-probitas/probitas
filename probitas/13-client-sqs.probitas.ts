@@ -11,7 +11,7 @@ export default scenario("SQS Client Example", {
 })
   .resource("sqs", () =>
     client.sqs.createSqsClient({
-      endpoint: "http://localhost:4566",
+      url: "http://localhost:4566",
       region: "us-east-1",
       credentials: {
         accessKeyId: "test",

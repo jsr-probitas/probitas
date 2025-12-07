@@ -87,7 +87,7 @@
  *   .step("Fetch users", async () => {
  *     const response = await http.get("/users");
  *     expect(response.status).toBe(200);
- *     return { users: await response.json() };
+ *     return { users: await response.data() };
  *   })
  *   .build();
  * ```

@@ -29,7 +29,7 @@
  *   .step("Fetch users", async () => {
  *     const response = await api.get("/users");
  *     expect(response.status).toBe(200);
- *     return response.json();
+ *     return response.data();
  *   })
  *   .build();
  * ```

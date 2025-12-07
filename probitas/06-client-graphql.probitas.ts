@@ -11,7 +11,7 @@ export default scenario("GraphQL Client Example", {
 })
   .resource("gql", () =>
     client.graphql.createGraphqlClient({
-      endpoint: "http://localhost:14000/graphql",
+      url: "http://localhost:14000/graphql",
     }))
   .step("echo - simple query", async (ctx) => {
     const { gql } = ctx.resources;
@@ -65,7 +65,7 @@ export default scenario("GraphQL Client Example", {
       { throwOnError: false },
     );
 
-    expect(res).hasErrors();
+    expect(res).notOk();
   })
   .step("echoNull - null handling", async (ctx) => {
     const { gql } = ctx.resources;

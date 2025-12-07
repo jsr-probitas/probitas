@@ -11,7 +11,7 @@ export default scenario("gRPC Client Example", {
 })
   .resource("grpc", () =>
     client.grpc.createGrpcClient({
-      address: "localhost:50051",
+      url: "localhost:50051",
     }))
   .step("Echo - simple message", async (ctx) => {
     const { grpc } = ctx.resources;
@@ -46,7 +46,7 @@ export default scenario("gRPC Client Example", {
 
     expect(res)
       .notOk()
-      .code(5);
+      .status(5);
   })
   .step("EchoError - INVALID_ARGUMENT error", async (ctx) => {
     const { grpc } = ctx.resources;
@@ -59,7 +59,7 @@ export default scenario("gRPC Client Example", {
 
     expect(res)
       .notOk()
-      .code(3);
+      .status(3);
   })
   .step("EchoRequestMetadata - echo headers", async (ctx) => {
     const { grpc } = ctx.resources;

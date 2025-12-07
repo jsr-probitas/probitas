@@ -11,7 +11,7 @@ export default scenario("MongoDB Client Example", {
 })
   .resource("mongo", () =>
     client.mongodb.createMongoClient({
-      uri: "mongodb://localhost:27017/?replicaSet=rs0",
+      url: "mongodb://localhost:27017/?replicaSet=rs0",
       database: "testdb",
     }))
   .setup(async (ctx) => {
@@ -54,14 +54,14 @@ export default scenario("MongoDB Client Example", {
 
     expect(result)
       .ok()
-      .docContains({ name: "Alice" });
+      .dataContains({ name: "Alice" });
   })
   .step("Find with filter", async (ctx) => {
     const { mongo } = ctx.resources;
     const users = mongo.collection<{ name: string; age: number }>("test_users");
     const result = await users.find({ age: { $gte: 30 } });
 
-    expect(result).ok().docs(2);
+    expect(result).ok().count(2);
   })
   .step("Find with sort and limit", async (ctx) => {
     const { mongo } = ctx.resources;
@@ -73,8 +73,8 @@ export default scenario("MongoDB Client Example", {
 
     expect(result)
       .ok()
-      .docs(2)
-      .docMatch((docs) => {
+      .count(2)
+      .dataMatch((docs) => {
         if (docs.first()?.age !== 35) {
           throw new Error("Expected oldest user first");
         }

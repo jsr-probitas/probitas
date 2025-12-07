@@ -11,7 +11,7 @@ export default scenario("ConnectRPC Client Example", {
 })
   .resource("rpc", () =>
     client.connectrpc.createConnectRpcClient({
-      address: "localhost:18082",
+      url: "localhost:18082",
     }))
   .step("Echo - simple message", async (ctx) => {
     const { rpc } = ctx.resources;
@@ -45,7 +45,7 @@ export default scenario("ConnectRPC Client Example", {
 
     expect(res)
       .notOk()
-      .code(5);
+      .status(5);
   })
   .step("EchoError - UNAUTHENTICATED", async (ctx) => {
     const { rpc } = ctx.resources;
@@ -58,7 +58,7 @@ export default scenario("ConnectRPC Client Example", {
 
     expect(res)
       .notOk()
-      .code(16);
+      .status(16);
   })
   .step("EchoRequestMetadata - custom headers", async (ctx) => {
     const { rpc } = ctx.resources;
