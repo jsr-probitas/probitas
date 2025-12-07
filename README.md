@@ -1,4 +1,8 @@
-# ✅ Probitas
+<p align="center">
+  <img src="https://documents.probitas.deno.net/static/probitas.png" alt="Probitas Logo" width="200">
+</p>
+
+<h1 align="center">Probitas</h1>
 
 [![JSR](https://jsr.io/badges/@probitas/cli)](https://jsr.io/@probitas/cli)
 [![Test](https://github.com/jsr-probitas/probitas/actions/workflows/test.yml/badge.svg)](https://github.com/jsr-probitas/probitas/actions/workflows/test.yml)
