@@ -2,10 +2,9 @@
  * BaseReporter abstract class
  *
  * Provides common functionality for all Reporter implementations:
- * - Output stream management
- * - Console suppression/restoration based on log level
- * - NO_COLOR environment variable support
- * - Color function selection
+ * - Output stream management with serialized writes
+ * - Theme selection (colored or plain text)
+ * - Stack trace sanitization for portable output
  *
  * @module
  */
@@ -23,22 +22,49 @@ import type {
 const logger = getLogger("probitas", "reporter");
 
 /**
- * Abstract base class for all reporters
+ * Abstract base class for all reporter implementations.
  *
- * Provides common functionality for output management and console control.
- * Subclasses override only the methods they need.
+ * Provides common functionality that all reporters need:
+ * - Output stream management with serialized writes
+ * - Theme selection (colored or plain)
+ * - Stack trace sanitization for portable output
+ *
+ * Subclasses should override the reporter hook methods they need
+ * (e.g., `onStepEnd`, `onScenarioEnd`, `onRunEnd`).
+ *
+ * @example Creating a custom reporter
+ * ```ts
+ * class MyReporter extends BaseReporter {
+ *   async onScenarioEnd(scenario, result) {
+ *     const icon = result.status === "passed" ? "✓" : "✗";
+ *     await this.write(`${icon} ${scenario.name}\n`);
+ *   }
+ *
+ *   async onRunEnd(summary) {
+ *     await this.write(`\n${summary.passed}/${summary.total} passed\n`);
+ *   }
+ * }
+ * ```
+ *
+ * @see {@linkcode ListReporter} for a detailed hierarchical reporter
+ * @see {@linkcode DotReporter} for a compact progress reporter
  */
 export abstract class BaseReporter implements Reporter {
+  /** Output stream for writing results */
   protected output: WritableStream;
+
+  /** Theme for styling output text */
   protected theme: Theme;
+
+  /** Reporter configuration options */
   protected options: ReporterOptions;
 
   #writeQueue: Promise<void> = Promise.resolve();
 
   /**
-   * Initialize the reporter
+   * Initialize the reporter with the given options.
    *
-   * @param options Configuration options
+   * @param options - Configuration options for output and styling
    */
   constructor(options: ReporterOptions = {}) {
     this.output = options.output ?? Deno.stderr.writable;
@@ -60,12 +86,19 @@ export abstract class BaseReporter implements Reporter {
   }
 
   /**
-   * Write text to output stream
+   * Write text to the output stream.
    *
    * Serializes all write operations to prevent "stream is already locked" errors
-   * when multiple scenarios write concurrently.
+   * when multiple scenarios run concurrently. Each write is queued and executed
+   * in order.
    *
-   * @param text Text to write
+   * @param text - Text to write (will be UTF-8 encoded)
+   *
+   * @example
+   * ```ts
+   * await this.write("✓ Test passed\n");
+   * await this.write(this.theme.success("PASSED") + "\n");
+   * ```
    */
   protected async write(text: string): Promise<void> {
     logger.debug("Queueing write operation", {

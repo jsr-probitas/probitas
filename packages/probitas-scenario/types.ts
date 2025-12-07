@@ -9,52 +9,153 @@
  */
 
 /**
- * Source location in a file (for better error messages)
+ * Source location in a file for error reporting and debugging.
+ *
+ * Captured automatically when defining scenarios, steps, and setups.
+ * Used by reporters to show meaningful stack traces.
+ *
+ * @example
+ * ```ts
+ * // Example location object
+ * const location: SourceLocation = {
+ *   file: "/project/tests/auth.probitas.ts",
+ *   line: 42
+ * };
+ * ```
  */
 export interface SourceLocation {
-  /** File path */
+  /** Absolute file path where the element was defined */
   readonly file: string;
 
-  /** Line number */
+  /** Line number in the file (1-indexed) */
   readonly line: number;
 }
 
 /**
- * Options for individual step execution
+ * Configuration options for individual step execution.
+ *
+ * Controls timeout and retry behavior for a step. These options can be set at:
+ * 1. Step level (highest priority)
+ * 2. Scenario level (applies to all steps in scenario)
+ * 3. Default values (30s timeout, no retry)
+ *
+ * @example
+ * ```ts
+ * const options: StepOptions = {
+ *   timeout: 60000,  // 60 seconds
+ *   retry: {
+ *     maxAttempts: 3,
+ *     backoff: "exponential"  // Waits 1s, 2s, 4s between retries
+ *   }
+ * };
+ * ```
  */
 export interface StepOptions {
-  /** Timeout in milliseconds */
+  /**
+   * Maximum execution time in milliseconds.
+   *
+   * If the step takes longer, a {@linkcode TimeoutError} is thrown.
+   * Default: 30000 (30 seconds)
+   */
   readonly timeout: number;
 
-  /** Retry configuration */
+  /** Retry configuration for handling transient failures */
   readonly retry: {
-    /** Maximum number of attempts (1 = no retry) */
+    /**
+     * Maximum number of execution attempts.
+     *
+     * - `1` = No retry (fail immediately on error)
+     * - `2` = One retry (2 total attempts)
+     * - `n` = n-1 retries (n total attempts)
+     *
+     * Default: 1 (no retry)
+     */
     readonly maxAttempts: number;
 
-    /** Backoff strategy between retries */
+    /**
+     * Backoff strategy for delay between retry attempts.
+     *
+     * - `"linear"`: Fixed 1 second delay between attempts
+     * - `"exponential"`: Doubles delay each attempt (1s, 2s, 4s, 8s...)
+     *
+     * Default: "linear"
+     */
     readonly backoff: "linear" | "exponential";
   };
 }
 
 /**
- * Options for scenario execution
+ * Configuration options for scenario execution.
+ *
+ * Defines metadata and default behavior for an entire scenario.
+ *
+ * @example
+ * ```ts
+ * const options: ScenarioOptions = {
+ *   tags: ["api", "integration", "slow"],
+ *   stepOptions: {
+ *     timeout: 60000,
+ *     retry: { maxAttempts: 2, backoff: "linear" }
+ *   }
+ * };
+ * ```
+ *
+ * @see {@linkcode StepOptions} for step-level configuration
  */
 export interface ScenarioOptions {
-  /** Tags for filtering scenarios */
+  /**
+   * Tags for filtering and organizing scenarios.
+   *
+   * Tags can be used with the CLI to run specific subsets:
+   * ```bash
+   * probitas run -s "tag:api"           # Run scenarios tagged "api"
+   * probitas run -s "tag:api,tag:fast"  # Run scenarios with both tags
+   * probitas run -s "!tag:slow"         # Exclude slow scenarios
+   * ```
+   */
   readonly tags: readonly string[];
 
-  /** Default options applied to all steps in scenario */
+  /**
+   * Default options applied to all steps in this scenario.
+   *
+   * Individual steps can override these defaults by specifying
+   * their own options in the `.step()` call.
+   */
   readonly stepOptions: StepOptions;
 }
 
 /**
- * Cleanup returned by setup functions
+ * Cleanup handler returned by setup functions.
  *
- * Supports multiple cleanup patterns:
- * - `void`: No cleanup needed
- * - Function: Cleanup function to be called
+ * Setup functions can return various cleanup mechanisms that are automatically
+ * invoked after the scenario completes (regardless of success or failure).
+ *
+ * Supported cleanup patterns:
+ * - `void` / `undefined`: No cleanup needed
+ * - `() => void`: Synchronous cleanup function
+ * - `() => Promise<void>`: Async cleanup function
  * - `Disposable`: Object with `[Symbol.dispose]()` method
  * - `AsyncDisposable`: Object with `[Symbol.asyncDispose]()` method
+ *
+ * @example Cleanup function
+ * ```ts
+ * scenario("File Test")
+ *   .setup(() => {
+ *     const file = Deno.makeTempFileSync();
+ *     return () => Deno.removeSync(file);  // Cleanup function
+ *   })
+ *   .build();
+ * ```
+ *
+ * @example Disposable object
+ * ```ts
+ * scenario("Connection Test")
+ *   .setup(async () => {
+ *     const conn = await connect();
+ *     return conn;  // If conn implements AsyncDisposable
+ *   })
+ *   .build();
+ * ```
  */
 export type SetupCleanup =
   | void
@@ -63,43 +164,126 @@ export type SetupCleanup =
   | AsyncDisposable;
 
 /**
- * Context provided to steps, resources, and setup hooks
+ * Execution context provided to steps, resources, and setup hooks.
  *
- * @template Previous - Type of the previous step result
- * @template Results - Tuple type of accumulated results from all previous steps
- * @template Resources - Record type of available resources
+ * The context provides access to:
+ * - Previous step results with full type inference
+ * - All accumulated results as a typed tuple
+ * - Named resources registered with `.resource()`
+ * - Shared storage for cross-step communication
+ * - Abort signal for timeout and cancellation handling
+ *
+ * @typeParam Previous - Type of the previous step's return value
+ * @typeParam Results - Tuple type of all accumulated results from previous steps
+ * @typeParam Resources - Record type mapping resource names to their types
+ *
+ * @example Accessing previous result
+ * ```ts
+ * scenario("Chained Steps")
+ *   .step("First", () => ({ id: 123 }))
+ *   .step("Second", (ctx) => {
+ *     console.log(ctx.previous.id);  // 123 (typed as number)
+ *   })
+ *   .build();
+ * ```
+ *
+ * @example Using shared store
+ * ```ts
+ * scenario("Store Example")
+ *   .setup((ctx) => {
+ *     ctx.store.set("startTime", Date.now());
+ *   })
+ *   .step("Check duration", (ctx) => {
+ *     const start = ctx.store.get("startTime") as number;
+ *     console.log(`Elapsed: ${Date.now() - start}ms`);
+ *   })
+ *   .build();
+ * ```
  */
 export interface StepContext<
   Previous = unknown,
   Results extends readonly unknown[] = readonly unknown[],
   Resources extends Record<string, unknown> = Record<string, unknown>,
 > {
-  /** Step index (0-based) */
+  /**
+   * Current step index (0-based).
+   *
+   * Useful for conditional logic based on position in the scenario.
+   */
   readonly index: number;
 
-  /** Result from previous step */
+  /**
+   * Result from the previous step.
+   *
+   * Fully typed based on what the previous step returned.
+   * For the first step, this is `unknown`.
+   */
   readonly previous: Previous;
 
-  /** All accumulated results as typed tuple */
+  /**
+   * All accumulated results as a typed tuple.
+   *
+   * Allows accessing any previous result by index:
+   * ```ts
+   * ctx.results[0]  // First step's result
+   * ctx.results[1]  // Second step's result
+   * ```
+   */
   readonly results: Results;
 
-  /** Shared storage between steps */
+  /**
+   * Shared key-value storage for cross-step communication.
+   *
+   * Use this for data that doesn't fit the step result pattern,
+   * such as metadata or configuration set during setup.
+   */
   readonly store: Map<string, unknown>;
 
-  /** Abort signal (combines timeout + manual abort) */
+  /**
+   * Abort signal that fires on timeout or manual cancellation.
+   *
+   * Pass this to fetch() or other APIs that support AbortSignal
+   * for proper timeout handling.
+   */
   readonly signal: AbortSignal;
 
-  /** Available resources */
+  /**
+   * Named resources registered with `.resource()`.
+   *
+   * Resources are typed based on their registration:
+   * ```ts
+   * .resource("db", () => createDbConnection())
+   * .step((ctx) => ctx.resources.db.query(...))
+   * ```
+   */
   readonly resources: Resources;
 }
 
 /**
- * Function signature for a step
+ * Function signature for step execution.
  *
- * @template T - Type of this step's return value
- * @template Previous - Type of the previous step result
- * @template Results - Tuple type of accumulated results
- * @template Resources - Available resources
+ * A step function receives the execution context and returns a value
+ * (sync or async) that becomes available to subsequent steps.
+ *
+ * @typeParam T - Type of this step's return value
+ * @typeParam Previous - Type of the previous step's result (from `ctx.previous`)
+ * @typeParam Results - Tuple type of all accumulated results
+ * @typeParam Resources - Record of available resources
+ *
+ * @example Sync step returning data
+ * ```ts
+ * const step: StepFunction<{ name: string }> = (ctx) => {
+ *   return { name: "Alice" };
+ * };
+ * ```
+ *
+ * @example Async step with API call
+ * ```ts
+ * const step: StepFunction<User> = async (ctx) => {
+ *   const response = await fetch("/api/user", { signal: ctx.signal });
+ *   return response.json();
+ * };
+ * ```
  */
 export type StepFunction<
   T = unknown,
@@ -109,14 +293,34 @@ export type StepFunction<
 > = (ctx: StepContext<Previous, Results, Resources>) => T | Promise<T>;
 
 /**
- * Function signature for setup hooks
+ * Function signature for setup hooks.
  *
- * Setup hooks can access accumulated results and resources.
- * They return a cleanup function/disposable that will be called after the scenario.
+ * Setup functions run before steps and can return a cleanup handler
+ * that executes after the scenario completes (success or failure).
  *
- * @template Previous - Type of the previous step result
- * @template Results - Tuple type of accumulated results
- * @template Resources - Available resources
+ * @typeParam Previous - Type of the previous step's result
+ * @typeParam Results - Tuple type of accumulated results
+ * @typeParam Resources - Record of available resources
+ *
+ * @example Setup with cleanup function
+ * ```ts
+ * const setup: SetupFunction = (ctx) => {
+ *   const server = startTestServer();
+ *   ctx.store.set("serverUrl", server.url);
+ *   return () => server.close();  // Cleanup after scenario
+ * };
+ * ```
+ *
+ * @example Async setup returning Disposable
+ * ```ts
+ * const setup: SetupFunction = async (ctx) => {
+ *   const db = await Database.connect();
+ *   await db.migrate();
+ *   return db;  // db[Symbol.asyncDispose]() called on cleanup
+ * };
+ * ```
+ *
+ * @see {@linkcode SetupCleanup} for supported cleanup return types
  */
 export type SetupFunction<
   Previous = unknown,
@@ -127,15 +331,32 @@ export type SetupFunction<
 ) => SetupCleanup | Promise<SetupCleanup>;
 
 /**
- * Function signature for resource factories
+ * Function signature for resource factory functions.
  *
- * Resource factories create resources that will be available to subsequent
- * steps, setups, and other resource factories.
+ * Resource factories create named dependencies that are:
+ * - Initialized before any steps run
+ * - Available to all steps via `ctx.resources[name]`
+ * - Automatically disposed after the scenario (if Disposable)
  *
- * @template T - Type of resource to create
- * @template Previous - Type of the previous step result
- * @template Results - Tuple type of accumulated results
- * @template Resources - Already registered resources available to this factory
+ * @typeParam T - Type of resource to create
+ * @typeParam Previous - Type of the previous step's result
+ * @typeParam Results - Tuple type of accumulated results
+ * @typeParam Resources - Previously registered resources available to this factory
+ *
+ * @example Database connection resource
+ * ```ts
+ * const dbFactory: ResourceFactory<Database> = async (ctx) => {
+ *   const conn = await Database.connect(process.env.DATABASE_URL);
+ *   return conn;  // Disposed automatically if implements AsyncDisposable
+ * };
+ * ```
+ *
+ * @example Resource depending on another resource
+ * ```ts
+ * // Second resource can access the first
+ * const apiFactory: ResourceFactory<ApiClient, unknown, [], { config: Config }> =
+ *   (ctx) => new ApiClient(ctx.resources.config.apiUrl);
+ * ```
  */
 export type ResourceFactory<
   T = unknown,
@@ -145,12 +366,19 @@ export type ResourceFactory<
 > = (ctx: StepContext<Previous, Results, Resources>) => T | Promise<T>;
 
 /**
- * Definition of a step (immutable)
+ * Immutable definition of a scenario step.
  *
- * @template T - Type of this step's return value
- * @template Previous - Type of the previous step result
- * @template Results - Tuple type of accumulated results
- * @template Resources - Available resources
+ * Contains all information needed to execute a single step:
+ * the step function, its options, and debugging metadata.
+ *
+ * @typeParam T - Type of this step's return value
+ * @typeParam Previous - Type of the previous step's result
+ * @typeParam Results - Tuple type of accumulated results
+ * @typeParam Resources - Record of available resources
+ *
+ * @remarks
+ * Step definitions are created by the builder and consumed by the runner.
+ * They are immutable and should not be modified after creation.
  */
 export interface StepDefinition<
   T = unknown,
@@ -158,45 +386,51 @@ export interface StepDefinition<
   Results extends readonly unknown[] = readonly unknown[],
   Resources extends Record<string, unknown> = Record<string, unknown>,
 > {
-  /** Step name */
+  /** Human-readable step name (displayed in reports) */
   readonly name: string;
 
   /** Step function to execute */
   readonly fn: StepFunction<T, Previous, Results, Resources>;
 
-  /** Step options (final, with defaults applied) */
+  /** Step execution options (timeout, retry) with defaults applied */
   readonly options: StepOptions;
 
-  /** Source location for debugging */
+  /** Source location where the step was defined (for error messages) */
   readonly location?: SourceLocation;
 }
 
 /**
- * Definition of a setup hook (immutable)
+ * Immutable definition of a setup hook.
  *
- * @template Previous - Type of the previous step result
- * @template Results - Tuple type of accumulated results
- * @template Resources - Available resources
+ * Setup definitions contain the setup function and its source location.
+ * Unlike steps, setups don't have names or configurable options.
+ *
+ * @typeParam Previous - Type of the previous step's result
+ * @typeParam Results - Tuple type of accumulated results
+ * @typeParam Resources - Record of available resources
  */
 export interface SetupDefinition<
   Previous = unknown,
   Results extends readonly unknown[] = readonly unknown[],
   Resources extends Record<string, unknown> = Record<string, unknown>,
 > {
-  /** Setup function to execute */
+  /** Setup function to execute (may return cleanup handler) */
   readonly fn: SetupFunction<Previous, Results, Resources>;
 
-  /** Source location for debugging */
+  /** Source location where the setup was defined */
   readonly location?: SourceLocation;
 }
 
 /**
- * Definition of a resource (immutable)
+ * Immutable definition of a named resource.
  *
- * @template T - Type of the resource
- * @template Previous - Type of the previous step result
- * @template Results - Tuple type of accumulated results
- * @template Resources - Already registered resources available to this factory
+ * Resource definitions contain everything needed to create and identify
+ * a resource: its name, factory function, and source location.
+ *
+ * @typeParam T - Type of the resource value
+ * @typeParam Previous - Type of the previous step's result
+ * @typeParam Results - Tuple type of accumulated results
+ * @typeParam Resources - Previously registered resources available to this factory
  */
 export interface ResourceDefinition<
   T = unknown,
@@ -204,21 +438,39 @@ export interface ResourceDefinition<
   Results extends readonly unknown[] = readonly unknown[],
   Resources extends Record<string, unknown> = Record<string, unknown>,
 > {
-  /** Resource name (used as key in resources object) */
+  /** Unique resource name (used as key in `ctx.resources`) */
   readonly name: string;
 
-  /** Resource factory function */
+  /** Factory function that creates the resource */
   readonly factory: ResourceFactory<T, Previous, Results, Resources>;
 
-  /** Source location for debugging */
+  /** Source location where the resource was defined */
   readonly location?: SourceLocation;
 }
 
 /**
- * Entry in a scenario - discriminated union of step, resource, or setup
+ * Discriminated union representing an entry in a scenario.
  *
- * The `kind` field serves as the discriminant for type narrowing.
- * Uses default type parameters (all `unknown`) for storage.
+ * A scenario consists of an ordered sequence of entries, where each entry
+ * is either a step, resource, or setup. The `kind` field serves as the
+ * discriminant for type narrowing.
+ *
+ * @example Type narrowing with kind
+ * ```ts
+ * function processEntry(entry: Entry) {
+ *   switch (entry.kind) {
+ *     case "step":
+ *       console.log(`Step: ${entry.value.name}`);
+ *       break;
+ *     case "resource":
+ *       console.log(`Resource: ${entry.value.name}`);
+ *       break;
+ *     case "setup":
+ *       console.log("Setup hook");
+ *       break;
+ *   }
+ * }
+ * ```
  */
 export type Entry =
   | { readonly kind: "step"; readonly value: StepDefinition }
@@ -226,42 +478,76 @@ export type Entry =
   | { readonly kind: "setup"; readonly value: SetupDefinition };
 
 /**
- * Definition of a scenario (immutable)
+ * Complete, immutable definition of a scenario.
  *
- * This is the core type that represents a complete scenario definition.
- * It contains all the information needed to execute the scenario.
+ * This is the core type produced by the builder and consumed by the runner.
+ * It contains everything needed to execute a scenario: its name, options,
+ * and ordered sequence of entries (steps, resources, setups).
+ *
+ * @remarks
+ * Scenario definitions are:
+ * - **Immutable**: The entries array is frozen after creation
+ * - **Self-contained**: All options have defaults applied
+ * - **Portable**: Can be serialized (minus functions) for tooling
+ *
+ * @example Typical scenario structure
+ * ```ts
+ * // Created by: scenario("Login Flow").step(...).build()
+ * const definition: ScenarioDefinition = {
+ *   name: "Login Flow",
+ *   options: {
+ *     tags: ["auth", "smoke"],
+ *     stepOptions: { timeout: 30000, retry: { maxAttempts: 1, backoff: "linear" } }
+ *   },
+ *   entries: [
+ *     { kind: "resource", value: { name: "api", factory: ... } },
+ *     { kind: "step", value: { name: "Login", fn: ..., options: ... } },
+ *     { kind: "step", value: { name: "Verify", fn: ..., options: ... } }
+ *   ],
+ *   location: { file: "/tests/auth.probitas.ts", line: 5 }
+ * };
+ * ```
  */
 export interface ScenarioDefinition {
-  /** Scenario name */
+  /** Human-readable scenario name (displayed in reports and CLI) */
   readonly name: string;
 
-  /** Scenario options (final, with defaults applied) */
+  /** Scenario configuration with all defaults applied */
   readonly options: ScenarioOptions;
 
-  /** Entries to execute (steps, resources, setups) in order */
+  /** Ordered sequence of entries (resources → setups → steps) */
   readonly entries: readonly Entry[];
 
-  /** Source location for debugging */
+  /** Source location where the scenario was defined */
   readonly location?: SourceLocation;
 }
 
 /**
- * Metadata for a step (serializable, without function)
+ * Serializable step metadata (without the function).
+ *
+ * Used for JSON output, tooling, and inspection without executing code.
  */
 export type StepMetadata = Omit<StepDefinition, "fn">;
 
 /**
- * Metadata for a setup (serializable, without function)
+ * Serializable setup metadata (without the function).
+ *
+ * Contains only the source location since setups have no name or options.
  */
 export type SetupMetadata = Omit<SetupDefinition, "fn">;
 
 /**
- * Metadata for a resource (serializable, without function)
+ * Serializable resource metadata (without the factory function).
+ *
+ * Contains the resource name and source location.
  */
 export type ResourceMetadata = Omit<ResourceDefinition, "factory">;
 
 /**
- * Metadata entry - discriminated union for serializable entries
+ * Serializable entry metadata for JSON output and tooling.
+ *
+ * Same discriminated union structure as {@linkcode Entry}, but with
+ * functions omitted for serialization.
  */
 export type EntryMetadata =
   | { readonly kind: "step"; readonly value: StepMetadata }
@@ -269,18 +555,33 @@ export type EntryMetadata =
   | { readonly kind: "setup"; readonly value: SetupMetadata };
 
 /**
- * Metadata for a scenario (serializable, without functions)
+ * Serializable scenario metadata (without executable functions).
+ *
+ * Used by the JSON reporter and tooling to output scenario information
+ * without including non-serializable function references.
+ *
+ * @example JSON reporter output
+ * ```json
+ * {
+ *   "name": "Login Flow",
+ *   "options": { "tags": ["auth"], "stepOptions": { ... } },
+ *   "entries": [
+ *     { "kind": "step", "value": { "name": "Login", "options": { ... } } }
+ *   ],
+ *   "location": { "file": "/tests/auth.probitas.ts", "line": 5 }
+ * }
+ * ```
  */
 export interface ScenarioMetadata {
   /** Scenario name */
   readonly name: string;
 
-  /** Scenario options */
+  /** Scenario configuration options */
   readonly options: ScenarioOptions;
 
-  /** Entry metadata (without functions) */
+  /** Entry metadata (functions omitted for serialization) */
   readonly entries: readonly EntryMetadata[];
 
-  /** Source location for debugging */
+  /** Source location where the scenario was defined */
   readonly location?: SourceLocation;
 }

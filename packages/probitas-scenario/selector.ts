@@ -10,34 +10,77 @@ import type { ScenarioDefinition } from "./types.ts";
 const logger = getLogger("probitas", "scenario", "selector");
 
 /**
- * Selector type for filtering scenarios
+ * Type of selector for filtering scenarios.
+ *
+ * - `"tag"`: Match against scenario tags
+ * - `"name"`: Match against scenario name
  */
 export type SelectorType = "tag" | "name";
 
 /**
- * Selector for filtering scenarios
+ * Parsed selector for filtering scenarios.
+ *
+ * Created by {@linkcode parseSelector}. Used by {@linkcode matchesSelector}
+ * and {@linkcode applySelectors} to filter scenarios.
+ *
+ * @example
+ * ```ts
+ * // Result of parseSelector("tag:api")
+ * const selector: Selector = {
+ *   type: "tag",
+ *   value: /api/i,
+ *   negated: false
+ * };
+ * ```
  */
 export interface Selector {
-  /** Type of selector */
+  /** Type of match: "tag" for tags, "name" for scenario name */
   readonly type: SelectorType;
 
-  /** Pattern to match */
+  /** Regular expression pattern for matching (case-insensitive) */
   readonly value: RegExp;
 
-  /** Negation flag - if true, matches scenarios that do NOT match the selector */
+  /** If true, selector matches scenarios that do NOT match the pattern */
   readonly negated: boolean;
 }
 
 /**
- * Parse a selector string into an array of Selector objects
+ * Parse a selector string into an array of Selector objects.
  *
- * @param input - Selector string (e.g., "tag:api", "login", "!tag:slow", "tag:api,!tag:slow")
- * @returns Array of Selector objects
+ * Selector syntax:
+ * - `tag:pattern` - Match scenarios with a tag matching the pattern
+ * - `name:pattern` - Match scenarios with a name matching the pattern
+ * - `pattern` - Shorthand for `name:pattern`
+ * - `!selector` - Negate the selector (exclude matches)
+ * - `sel1,sel2` - Combine selectors with AND logic
  *
- * @example
- * parseSelector("tag:api") // [{ type: "tag", value: /api/, negated: false }]
- * parseSelector("!tag:slow") // [{ type: "tag", value: /slow/, negated: true }]
- * parseSelector("tag:api,!tag:slow") // [{ type: "tag", value: /api/, negated: false }, { type: "tag", value: /slow/, negated: true }]
+ * @param input - Selector string to parse
+ * @returns Array of parsed Selector objects (comma-separated = multiple selectors)
+ * @throws {Error} If selector type is invalid (must be "tag" or "name")
+ *
+ * @example Basic selectors
+ * ```ts
+ * parseSelector("tag:api");
+ * // → [{ type: "tag", value: /api/i, negated: false }]
+ *
+ * parseSelector("login");  // Shorthand for name:login
+ * // → [{ type: "name", value: /login/i, negated: false }]
+ * ```
+ *
+ * @example Negation
+ * ```ts
+ * parseSelector("!tag:slow");
+ * // → [{ type: "tag", value: /slow/i, negated: true }]
+ * ```
+ *
+ * @example Combined selectors (AND logic)
+ * ```ts
+ * parseSelector("tag:api,!tag:slow");
+ * // → [
+ * //     { type: "tag", value: /api/i, negated: false },
+ * //     { type: "tag", value: /slow/i, negated: true }
+ * //   ]
+ * ```
  */
 export function parseSelector(input: string): Selector[] {
   const parts = input.split(",").map((s) => s.trim()).filter((s) =>
@@ -82,11 +125,28 @@ export function parseSelector(input: string): Selector[] {
 }
 
 /**
- * Check if a scenario matches a single selector
+ * Check if a scenario matches a single selector.
  *
- * @param scenario - Scenario definition to check
- * @param selector - Selector to match against
- * @returns True if the scenario matches the selector
+ * Tests whether the scenario's name or tags match the selector's pattern.
+ * Does not apply negation - returns the raw match result.
+ *
+ * @param scenario - Scenario definition to test
+ * @param selector - Selector containing the pattern to match
+ * @returns `true` if the scenario matches the pattern (before negation)
+ *
+ * @example
+ * ```ts
+ * const scenario = { name: "Login Test", options: { tags: ["auth"] } };
+ *
+ * matchesSelector(scenario, { type: "tag", value: /auth/i, negated: false });
+ * // → true
+ *
+ * matchesSelector(scenario, { type: "name", value: /login/i, negated: false });
+ * // → true
+ *
+ * matchesSelector(scenario, { type: "tag", value: /api/i, negated: false });
+ * // → false
+ * ```
  */
 export function matchesSelector(
   scenario: ScenarioDefinition,
@@ -102,29 +162,48 @@ export function matchesSelector(
 }
 
 /**
- * Apply selectors to scenarios with AND/OR/NOT logic
+ * Filter scenarios using selector strings with AND/OR/NOT logic.
  *
- * Logic:
- * - Multiple selector strings: OR condition
- * - Comma-separated selectors within a string: AND condition
- * - ! prefix: NOT condition (negation)
+ * This is the main entry point for scenario filtering. It combines
+ * multiple selector strings with the following logic:
  *
- * @param scenarios - All scenarios to filter
- * @param selectorInputs - Array of selector strings (OR between strings, AND within strings)
- * @returns Filtered scenarios
+ * - **Multiple strings**: OR condition (match any)
+ * - **Comma-separated in string**: AND condition (match all)
+ * - **`!` prefix**: NOT condition (exclude matches)
  *
- * @example
- * // Select scenarios with "api" OR "db" tag
- * applySelectors(scenarios, ["tag:api", "tag:db"])
+ * @param scenarios - Array of scenarios to filter
+ * @param selectorInputs - Selector strings from CLI `-s` flags
+ * @returns Filtered scenarios matching the selector criteria
  *
- * // Select scenarios with "api" AND "critical" tag
- * applySelectors(scenarios, ["tag:api,tag:critical"])
+ * @remarks
+ * If no selectors are provided, all scenarios are returned unchanged.
  *
- * // Select "api" tag, excluding "slow" tag
- * applySelectors(scenarios, ["tag:api,!tag:slow"])
+ * @example OR logic - match any selector string
+ * ```ts
+ * // Scenarios with "api" tag OR "db" tag
+ * applySelectors(scenarios, ["tag:api", "tag:db"]);
+ * ```
  *
- * // Exclude scenarios with "wip" in name
- * applySelectors(scenarios, ["!wip"])
+ * @example AND logic - match all within comma-separated
+ * ```ts
+ * // Scenarios with BOTH "api" AND "critical" tags
+ * applySelectors(scenarios, ["tag:api,tag:critical"]);
+ * ```
+ *
+ * @example Combined AND/OR/NOT
+ * ```ts
+ * // (api AND critical) OR (db AND !slow)
+ * applySelectors(scenarios, [
+ *   "tag:api,tag:critical",
+ *   "tag:db,!tag:slow"
+ * ]);
+ * ```
+ *
+ * @example Exclude by name pattern
+ * ```ts
+ * // All scenarios except those with "wip" in name
+ * applySelectors(scenarios, ["!wip"]);
+ * ```
  */
 export function applySelectors(
   scenarios: ScenarioDefinition[],

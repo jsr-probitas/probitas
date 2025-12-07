@@ -11,23 +11,64 @@ import type { ScenarioDefinition } from "./types.ts";
 const logger = getLogger("probitas", "scenario");
 
 /**
- * Options for loading scenarios
+ * Options for loading scenarios from files.
+ *
+ * @example Handling import errors
+ * ```ts
+ * const scenarios = await loadScenarios(files, {
+ *   onImportError: (file, err) => {
+ *     console.error(`Failed to load ${file}:`, err);
+ *   }
+ * });
+ * ```
  */
 export interface LoadScenariosOptions {
   /**
-   * Callback invoked when an import error occurs
+   * Callback invoked when a scenario file fails to import.
    *
-   * If not provided, errors are silently ignored.
+   * Use this for custom error handling or logging. If not provided,
+   * import errors are logged but otherwise silently ignored (the file
+   * is skipped and loading continues with other files).
+   *
+   * @param scenarioFile - The file path or URL that failed to import
+   * @param err - The error that occurred during import
    */
   onImportError?: (scenarioFile: string | URL, err: unknown) => void;
 }
 
 /**
- * Load scenarios from specified file paths
+ * Load scenario definitions from file paths.
  *
- * @param scenarioFiles - Array of absolute file paths or URLs to load
- * @param options - Options for loading scenarios
- * @returns Array of loaded ScenarioDefinition objects
+ * Dynamically imports scenario files and extracts their default exports.
+ * Supports both single scenario exports and arrays of scenarios.
+ *
+ * @param scenarioFiles - Absolute file paths or file:// URLs to load
+ * @param options - Optional error handling configuration
+ * @returns Array of loaded scenario definitions
+ *
+ * @remarks
+ * - Files must export a default value (single scenario or array)
+ * - Import errors are logged and skipped (won't throw)
+ * - Use with {@linkcode discoverScenarioFiles} from `@probitas/discover`
+ *
+ * @example Loading discovered files
+ * ```ts
+ * import { discoverScenarioFiles } from "@probitas/discover";
+ * import { loadScenarios } from "@probitas/scenario";
+ *
+ * const files = await discoverScenarioFiles({
+ *   includes: ["**\/*.probitas.ts"]
+ * });
+ * const scenarios = await loadScenarios(files);
+ * ```
+ *
+ * @example Loading specific files
+ * ```ts
+ * const scenarios = await loadScenarios([
+ *   "/project/tests/auth.probitas.ts",
+ *   "/project/tests/api.probitas.ts"
+ * ]);
+ * ```
  */
 export async function loadScenarios(
   scenarioFiles: readonly (string | URL)[],

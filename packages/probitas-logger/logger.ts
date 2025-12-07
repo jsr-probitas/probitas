@@ -16,19 +16,36 @@ import { getPrettyFormatter } from "@logtape/pretty";
 
 /**
  * Configure the logging system with the specified log level.
- * Can be called multiple times; LogTape will handle reconfiguration.
  *
- * @param level - The minimum log level to output (default: "warning")
- *   - "fatal": Only fatal errors
- *   - "warning": Warnings, errors, and fatal (default)
- *   - "info": Info, warnings, errors, and fatal
- *   - "debug": All logs including debug
+ * Initializes LogTape with pretty-printed console output. Can be called
+ * multiple times to change the log level during execution.
  *
- * @example
+ * @param level - Minimum log level to output
+ *
+ * @remarks
+ * Log levels from least to most verbose:
+ * - `"fatal"`: Only critical errors that stop execution
+ * - `"error"`: Errors that don't stop execution
+ * - `"warning"`: Potential issues (default)
+ * - `"info"`: Informational messages about execution
+ * - `"debug"`: Detailed debugging information
+ *
+ * @example Basic configuration
  * ```ts
  * import { configureLogging } from "@probitas/logger";
  *
+ * // Enable debug logging for troubleshooting
  * await configureLogging("debug");
+ * ```
+ *
+ * @example In test setup
+ * ```ts
+ * // Suppress logs during tests
+ * await configureLogging("fatal");
+ *
+ * // ... run tests ...
+ *
+ * await resetLogging();
  * ```
  */
 export async function configureLogging(
@@ -65,18 +82,34 @@ export async function configureLogging(
 }
 
 /**
- * Get a logger for the specified category path.
- * Categories follow the package hierarchy.
+ * Get a logger instance for the specified category.
  *
- * @param category - Category segments (e.g., "probitas", "cli", "run")
- * @returns A logger instance
+ * Categories follow a hierarchical structure matching the package organization.
+ * Child loggers inherit configuration from their parents.
  *
- * @example
+ * @param category - Category path segments (e.g., "probitas", "runner", "step")
+ * @returns Logger instance with `debug`, `info`, `warning`, `error`, `fatal` methods
+ *
+ * @example Basic usage
  * ```ts
  * import { getLogger } from "@probitas/logger";
  *
  * const logger = getLogger("probitas", "cli", "run");
+ *
  * logger.info("Starting run command");
+ * logger.debug("Processing options", { maxConcurrency: 4 });
+ * logger.error("Failed to load scenario", { file, error });
+ * ```
+ *
+ * @example In a module
+ * ```ts
+ * // At module top level
+ * const logger = getLogger("probitas", "runner");
+ *
+ * export function runScenario(scenario: ScenarioDefinition) {
+ *   logger.info("Running scenario", { name: scenario.name });
+ *   // ...
+ * }
  * ```
  */
 export function getLogger(...category: string[]): Logger {
@@ -84,14 +117,22 @@ export function getLogger(...category: string[]): Logger {
 }
 
 /**
- * Reset logging configuration.
- * Primarily used for testing to ensure clean state between tests.
+ * Reset the logging configuration to its initial state.
  *
- * @example
+ * Clears all configured sinks and loggers. Primarily used in tests
+ * to ensure clean state between test cases.
+ *
+ * @example Test cleanup
  * ```ts
- * import { resetLogging } from "@probitas/logger";
+ * import { configureLogging, resetLogging } from "@probitas/logger";
  *
- * await resetLogging();
+ * Deno.test("my test", async () => {
+ *   await configureLogging("fatal");  // Suppress logs during test
+ *
+ *   // ... test code ...
+ *
+ *   await resetLogging();  // Clean up
+ * });
  * ```
  */
 export async function resetLogging(): Promise<void> {

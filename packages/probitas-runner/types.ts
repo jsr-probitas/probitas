@@ -18,118 +18,250 @@ import type {
 } from "@probitas/scenario";
 
 /**
- * Context provided to scenario setup/teardown
+ * Runtime context for scenario execution.
+ *
+ * Provides access to scenario metadata, accumulated results, shared storage,
+ * and resources during scenario execution. This is the "live" counterpart
+ * to the static {@linkcode ScenarioDefinition}.
+ *
+ * @typeParam Resources - Record of available resource types
+ *
+ * @example Accessing context in a step
+ * ```ts
+ * scenario("Context Example")
+ *   .step("Use context", (ctx) => {
+ *     console.log(`Running: ${ctx.name}`);
+ *     console.log(`Tags: ${ctx.options.tags.join(", ")}`);
+ *     console.log(`Previous results: ${ctx.results.length}`);
+ *   })
+ *   .build();
+ * ```
  */
 export interface ScenarioContext<
   Resources extends Record<string, unknown> = Record<string, never>,
 > {
-  /** Scenario name */
+  /** Human-readable scenario name */
   readonly name: string;
 
-  /** Scenario options */
+  /** Scenario configuration options */
   readonly options: ScenarioOptions;
 
-  /** Accumulated step results */
+  /** Array of all step results so far */
   readonly results: unknown[];
 
-  /** Shared storage between steps */
+  /** Shared key-value storage for cross-step communication */
   readonly store: Map<string, unknown>;
 
-  /** Abort signal for cancellation */
+  /** Abort signal (fires on timeout or manual cancellation) */
   readonly signal: AbortSignal;
 
-  /** Available resources */
+  /** Named resources registered with `.resource()` */
   readonly resources: Resources;
 }
 
 /**
- * Result from executing a single step
+ * Result from executing a single step.
+ *
+ * Contains the step's execution status, timing, and either the return
+ * value (on success) or error (on failure). Used by reporters to display
+ * step-level results.
+ *
+ * @example Passed step result
+ * ```ts
+ * const result: StepResult = {
+ *   metadata: { name: "Create user", options: { ... } },
+ *   status: "passed",
+ *   duration: 150,
+ *   value: { userId: "123" }
+ * };
+ * ```
+ *
+ * @example Failed step result
+ * ```ts
+ * const result: StepResult = {
+ *   metadata: { name: "Validate input", options: { ... } },
+ *   status: "failed",
+ *   duration: 50,
+ *   error: new Error("Invalid email format")
+ * };
+ * ```
  */
 export interface StepResult {
-  /** Step metadata (serializable) */
+  /** Step metadata (serializable, without function) */
   readonly metadata: StepMetadata;
 
-  /** Execution status */
+  /** Execution outcome: "passed" or "failed" */
   readonly status: "passed" | "failed";
 
-  /** Execution duration in milliseconds */
+  /** Execution time in milliseconds */
   readonly duration: number;
 
-  /** Return value from step (if successful) */
+  /** Return value from step function (only if status is "passed") */
   readonly value?: unknown;
 
-  /** Error (if failed) */
+  /** Error that caused failure (only if status is "failed") */
   readonly error?: Error;
 }
 
 /**
- * Result from executing a scenario
+ * Result from executing a complete scenario.
+ *
+ * Contains the overall scenario status, timing, all step results,
+ * and any error or skip reason. Passed to reporters and included
+ * in the final {@linkcode RunSummary}.
+ *
+ * @example Passed scenario
+ * ```ts
+ * const result: ScenarioResult = {
+ *   metadata: { name: "Login Flow", options: { ... }, entries: [...] },
+ *   status: "passed",
+ *   duration: 1250,
+ *   steps: [{ status: "passed", ... }, { status: "passed", ... }]
+ * };
+ * ```
+ *
+ * @example Skipped scenario
+ * ```ts
+ * const result: ScenarioResult = {
+ *   metadata: { name: "Premium Feature", ... },
+ *   status: "skipped",
+ *   duration: 5,
+ *   steps: [],
+ *   skipReason: "Feature flag not enabled"
+ * };
+ * ```
  */
 export interface ScenarioResult {
-  /** Scenario metadata (serializable) */
+  /** Scenario metadata (serializable, without functions) */
   readonly metadata: ScenarioMetadata;
 
-  /** Execution status */
+  /** Overall execution outcome */
   readonly status: "passed" | "failed" | "skipped";
 
-  /** Execution duration in milliseconds */
+  /** Total execution time in milliseconds (including setup/teardown) */
   readonly duration: number;
 
-  /** Results from each step */
+  /** Results from each executed step */
   readonly steps: readonly StepResult[];
 
-  /** Error (if failed during setup/teardown) */
+  /** Error if failed during resource/setup/teardown (not step errors) */
   readonly error?: Error;
 
-  /** Skip reason (if skipped) */
+  /** Reason for skipping (only if status is "skipped") */
   readonly skipReason?: string;
 }
 
 /**
- * Summary of all scenario executions
+ * Summary of all scenario executions in a test run.
+ *
+ * Provides aggregate statistics and detailed results for the entire run.
+ * Passed to {@linkcode Reporter.onRunEnd} after all scenarios complete.
+ *
+ * @example
+ * ```ts
+ * const summary: RunSummary = {
+ *   total: 10,
+ *   passed: 8,
+ *   failed: 1,
+ *   skipped: 1,
+ *   duration: 5432,
+ *   scenarios: [...]
+ * };
+ *
+ * console.log(`${summary.passed}/${summary.total} passed`);
+ * // → "8/10 passed"
+ * ```
  */
 export interface RunSummary {
-  /** Total number of scenarios */
+  /** Total number of scenarios in the run */
   readonly total: number;
 
-  /** Number of passed scenarios */
+  /** Number of scenarios that passed */
   readonly passed: number;
 
-  /** Number of failed scenarios */
+  /** Number of scenarios that failed */
   readonly failed: number;
 
-  /** Number of skipped scenarios */
+  /** Number of scenarios that were skipped */
   readonly skipped: number;
 
-  /** Total execution duration in milliseconds */
+  /** Total execution time in milliseconds */
   readonly duration: number;
 
-  /** Results for each scenario */
+  /** Detailed result for each scenario */
   readonly scenarios: readonly ScenarioResult[];
 }
 
 /**
- * Filter for selecting scenarios to run
+ * Filter configuration for selecting scenarios to run.
+ *
+ * Allows filtering scenarios by tags and/or name pattern.
+ * Both conditions must match if both are specified (AND logic).
+ *
+ * @example Filter by tags
+ * ```ts
+ * const filter: RunFilter = {
+ *   tags: ["api", "integration"]  // Must have BOTH tags
+ * };
+ * ```
+ *
+ * @example Filter by name pattern
+ * ```ts
+ * const filter: RunFilter = {
+ *   pattern: /login/i  // Name must contain "login"
+ * };
+ * ```
  */
 export interface RunFilter {
-  /** Tags to match (AND) */
+  /** Tags that scenarios must have (all must match) */
   readonly tags?: readonly string[];
 
-  /** Pattern to match in scenario name */
+  /** Pattern to match against scenario name */
   readonly pattern?: string | RegExp;
 }
 
 /**
- * Reporter interface for observing test execution
+ * Reporter interface for observing and reporting test execution.
+ *
+ * Implement this interface to create custom reporters. All methods are
+ * optional - implement only the hooks you need. Methods can be sync or async.
+ *
+ * Built-in reporters:
+ * - {@linkcode ListReporter} - Detailed hierarchical output
+ * - {@linkcode DotReporter} - Compact dot notation
+ * - {@linkcode TAPReporter} - TAP format for CI integration
+ * - {@linkcode JSONReporter} - Machine-readable JSON
+ *
+ * @example Custom reporter
+ * ```ts
+ * class MyReporter implements Reporter {
+ *   onRunStart(scenarios) {
+ *     console.log(`Running ${scenarios.length} scenarios...`);
+ *   }
+ *
+ *   onScenarioEnd(scenario, result) {
+ *     const icon = result.status === "passed" ? "✓" : "✗";
+ *     console.log(`${icon} ${scenario.name}`);
+ *   }
+ *
+ *   onRunEnd(summary) {
+ *     console.log(`\n${summary.passed}/${summary.total} passed`);
+ *   }
+ * }
+ * ```
  */
 export interface Reporter {
   /**
-   * Called when test run starts
+   * Called when the test run starts, before any scenarios execute.
+   *
+   * @param scenarios - All scenarios that will be executed
    */
   onRunStart?(scenarios: readonly ScenarioDefinition[]): void | Promise<void>;
 
   /**
-   * Called when scenario starts
+   * Called when a scenario begins execution.
+   *
+   * @param scenario - The scenario definition about to run
    */
   onScenarioStart?(scenario: ScenarioDefinition): void | Promise<void>;
 
@@ -270,29 +402,55 @@ export interface Reporter {
 }
 
 /**
- * Options for running scenarios
+ * Configuration options for the scenario runner.
+ *
+ * Controls execution behavior including concurrency, failure handling,
+ * and reporting.
+ *
+ * @example Sequential execution with fail-fast
+ * ```ts
+ * const options: RunOptions = {
+ *   reporter: new ListReporter(),
+ *   maxConcurrency: 1,  // Run one at a time
+ *   maxFailures: 1      // Stop after first failure
+ * };
+ * ```
+ *
+ * @example Parallel execution with limit
+ * ```ts
+ * const options: RunOptions = {
+ *   reporter: new DotReporter(),
+ *   maxConcurrency: 4   // Run up to 4 scenarios at once
+ * };
+ * ```
  */
 export interface RunOptions {
-  /** Reporter for observing execution */
+  /** Reporter instance for execution events */
   readonly reporter?: Reporter;
 
   /**
-   * Maximum number of scenarios to run concurrently
-   * - undefined or 0: unlimited (all scenarios in parallel)
-   * - 1: sequential execution
-   * - N: run up to N scenarios in parallel
+   * Maximum number of scenarios to run in parallel.
+   *
+   * - `undefined` or `0`: Unlimited (all scenarios run in parallel)
+   * - `1`: Sequential execution (one at a time)
+   * - `n`: Run up to n scenarios concurrently
    */
   readonly maxConcurrency?: number;
 
   /**
-   * Maximum number of failures before stopping
-   * - undefined or Infinity: continue all (never stop)
-   * - 1: fail-fast (stop after first failure)
-   * - N: stop after N failures
+   * Maximum number of failures before stopping the run.
+   *
+   * - `undefined`: Continue all scenarios regardless of failures
+   * - `1`: Fail-fast (stop immediately on first failure)
+   * - `n`: Stop after n failures
    */
   readonly maxFailures?: number;
 
-  /** Abort signal for cancellation */
+  /**
+   * Abort signal for external cancellation.
+   *
+   * When aborted, running scenarios complete but no new ones start.
+   */
   readonly signal?: AbortSignal;
 }
 

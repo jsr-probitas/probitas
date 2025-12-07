@@ -13,38 +13,68 @@ const DEFAULT_INCLUDE_PATTERNS = ["**/*.probitas.ts"];
 const DEFAULT_EXCLUDE_PATTERNS: string[] = [];
 
 /**
- * Options for discovering scenario files
+ * Options for discovering scenario files.
+ *
+ * Controls which files are included or excluded when scanning directories.
  */
 export interface DiscoverOptions {
-  /** Include patterns (glob) for directory discovery */
+  /**
+   * Glob patterns for files to include when scanning directories.
+   *
+   * Uses standard glob syntax with `**` for recursive matching.
+   *
+   * @default ["**\/*.probitas.ts"]
+   */
   includes?: readonly string[];
 
-  /** Exclude patterns (glob) */
+  /**
+   * Glob patterns for files to exclude.
+   *
+   * @default []
+   */
   excludes?: readonly string[];
 }
 
 /**
- * Discover scenario files from paths
+ * Discover scenario files from paths (files or directories).
  *
- * Behavior:
- * - File path → Returns that file as absolute path
- * - Directory path → Discovers files within using include patterns
+ * Handles two input types:
+ * - **File path**: Returns the file directly (no pattern matching)
+ * - **Directory path**: Scans using include/exclude patterns
  *
- * @param paths - Paths (files or directories) - shell has already expanded globs
- * @param options - Discovery options with includes/excludes patterns
- * @returns Array of absolute file paths (sorted)
+ * @param paths - Array of file paths or directory paths to scan
+ * @param options - Include/exclude patterns for directory scanning
+ * @returns Array of absolute file paths, sorted alphabetically
  *
- * @requires --allow-read Permission to read files
+ * @remarks
+ * - Requires `--allow-read` permission
+ * - Non-existent paths are silently skipped
+ * - Duplicate files are automatically deduplicated
+ * - Output is always sorted for deterministic ordering
  *
- * @example
- * // Specific files and directories
- * await discoverScenarioFiles(["test.probitas.ts", "api/"], {});
+ * @example Discover from directories
+ * ```ts
+ * import { discoverScenarioFiles } from "@probitas/discover";
  *
- * // With custom patterns
- * const files = await discoverScenarioFiles(["api/"], {
- *   includes: ["test.ts"],
- *   excludes: ["skip.ts"]
+ * // Use default patterns (*.probitas.ts)
+ * const files = await discoverScenarioFiles(["./tests", "./integration"]);
+ * ```
+ *
+ * @example Discover with custom patterns
+ * ```ts
+ * const files = await discoverScenarioFiles(["./src"], {
+ *   includes: ["**\/*.test.ts", "**\/*.spec.ts"],
+ *   excludes: ["**\/__fixtures__/**"]
  * });
+ * ```
+ *
+ * @example Mixed files and directories
+ * ```ts
+ * const files = await discoverScenarioFiles([
+ *   "./tests/",           // Scan directory
+ *   "./smoke.probitas.ts" // Include specific file
+ * ]);
+ * ```
  */
 export async function discoverScenarioFiles(
   paths: readonly string[],

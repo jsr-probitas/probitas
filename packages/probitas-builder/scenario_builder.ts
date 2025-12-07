@@ -199,11 +199,54 @@ class ScenarioBuilderState<
 }
 
 /**
- * Scenario builder - allows resource(), setup(), step(), build() at any time
+ * Fluent scenario builder for defining test scenarios with type-safe step chaining.
  *
- * @template Previous - Type of the previous step result
- * @template Results - Tuple type of accumulated results
- * @template Resources - Accumulated resource types
+ * ScenarioBuilderInit provides a fluent API for constructing scenario definitions.
+ * It tracks type information across the builder chain, ensuring type safety for:
+ * - Step results passed via `ctx.previous`
+ * - Accumulated results accessible via `ctx.results`
+ * - Named resources available via `ctx.resources`
+ *
+ * The builder is immutable - each method returns a new builder instance with
+ * updated type parameters, preserving the original builder.
+ *
+ * @typeParam Previous - Type of the previous step's return value, accessible via `ctx.previous`
+ * @typeParam Results - Tuple type of all accumulated step results, accessible via `ctx.results`
+ * @typeParam Resources - Record of named resources, accessible via `ctx.resources`
+ *
+ * @example Basic step chaining with type inference
+ * ```ts
+ * import { scenario } from "@probitas/builder";
+ *
+ * scenario("User Flow")
+ *   .step("Create user", () => {
+ *     return { id: 1, name: "Alice" };  // Returns { id: number, name: string }
+ *   })
+ *   .step("Verify user", (ctx) => {
+ *     // ctx.previous is typed as { id: number, name: string }
+ *     console.log(ctx.previous.name);  // Type-safe access
+ *   })
+ *   .build();
+ * ```
+ *
+ * @example Using resources for shared dependencies
+ * ```ts
+ * import { scenario } from "@probitas/builder";
+ *
+ * scenario("Database Test")
+ *   .resource("db", async () => {
+ *     const conn = await Database.connect();
+ *     return conn;  // Auto-disposed if implements Disposable
+ *   })
+ *   .step("Query data", (ctx) => {
+ *     // ctx.resources.db is typed as Database connection
+ *     return ctx.resources.db.query("SELECT * FROM users");
+ *   })
+ *   .build();
+ * ```
+ *
+ * @see {@linkcode scenario} - Factory function to create a builder
+ * @see {@linkcode StepContext} - Context object passed to each step
  */
 class ScenarioBuilderInit<
   Previous = unknown,
@@ -212,22 +255,51 @@ class ScenarioBuilderInit<
 > {
   #state: ScenarioBuilderState<Resources>;
 
+  /** @internal */
   constructor(state: ScenarioBuilderState<Resources>) {
     this.#state = state;
   }
 
   /**
-   * Register a resource for this scenario
+   * Register a named resource for this scenario.
    *
-   * Resources are initialized in declaration order.
-   * If a resource implements AsyncDisposable or Disposable, it will be automatically
-   * disposed in reverse order.
+   * Resources are lifecycle-managed dependencies that are:
+   * - Initialized in declaration order before any steps run
+   * - Available to all steps via `ctx.resources[name]`
+   * - Automatically disposed in reverse order after the scenario completes
    *
-   * @template K - Resource name (string literal)
-   * @template T - Resource type
-   * @param name - Unique resource name
-   * @param factory - Function to create the resource (can access previously registered resources)
-   * @returns New builder with updated Resources type
+   * @typeParam K - Resource name as a string literal type
+   * @typeParam T - Resource value type
+   * @param name - Unique identifier for the resource (used as key in `ctx.resources`)
+   * @param factory - Async function that creates and returns the resource
+   * @returns New builder with the resource added to the Resources type
+   *
+   * @remarks
+   * - Factory receives the current context with access to previously registered resources
+   * - If the resource implements `Disposable` or `AsyncDisposable`, cleanup is automatic
+   * - Resources are disposed even if the scenario fails or is skipped
+   *
+   * @example Database connection resource
+   * ```ts
+   * scenario("DB Test")
+   *   .resource("db", async () => {
+   *     const conn = await pg.connect(DATABASE_URL);
+   *     return conn;  // conn[Symbol.asyncDispose] called automatically
+   *   })
+   *   .step("Query", (ctx) => ctx.resources.db.query("SELECT 1"))
+   *   .build();
+   * ```
+   *
+   * @example Resource depending on another resource
+   * ```ts
+   * scenario("Service Test")
+   *   .resource("config", async () => loadConfig())
+   *   .resource("api", async (ctx) => {
+   *     // Access previously registered resources
+   *     return new ApiClient(ctx.resources.config.apiUrl);
+   *   })
+   *   .build();
+   * ```
    */
   resource<K extends string, T>(
     name: K,
@@ -239,13 +311,48 @@ class ScenarioBuilderInit<
   }
 
   /**
-   * Add a setup function to the scenario
+   * Add a setup function for side effects that need cleanup.
    *
-   * Setup functions can return a cleanup function or Disposable for automatic cleanup.
-   * Can be called multiple times and at any point in the builder chain.
+   * Setup functions run before any steps and can return a cleanup function
+   * that executes after the scenario completes (regardless of success/failure).
    *
-   * @param fn - Setup function that can return cleanup
-   * @returns Same builder for chaining
+   * @param fn - Setup function that optionally returns a cleanup handler
+   * @returns New builder for chaining
+   *
+   * @remarks
+   * Unlike resources, setup functions:
+   * - Don't have a name (not accessible via `ctx.resources`)
+   * - Can perform arbitrary side effects (modify files, start servers, etc.)
+   * - Support both sync and async cleanup
+   * - Can return `Disposable`, `AsyncDisposable`, or a cleanup function
+   *
+   * @example Temporary file setup
+   * ```ts
+   * scenario("File Test")
+   *   .setup((ctx) => {
+   *     const tempFile = Deno.makeTempFileSync();
+   *     ctx.store.set("tempFile", tempFile);
+   *     return () => Deno.removeSync(tempFile);  // Cleanup function
+   *   })
+   *   .step("Write file", (ctx) => {
+   *     Deno.writeTextFileSync(ctx.store.get("tempFile"), "test");
+   *   })
+   *   .build();
+   * ```
+   *
+   * @example Environment variable setup
+   * ```ts
+   * scenario("Env Test")
+   *   .setup(() => {
+   *     const original = Deno.env.get("DEBUG");
+   *     Deno.env.set("DEBUG", "true");
+   *     return () => {
+   *       if (original) Deno.env.set("DEBUG", original);
+   *       else Deno.env.delete("DEBUG");
+   *     };
+   *   })
+   *   .build();
+   * ```
    */
   setup(
     fn: SetupFunction<Previous, Results, Resources>,
@@ -256,13 +363,33 @@ class ScenarioBuilderInit<
   }
 
   /**
-   * Add a named step to the scenario
+   * Add a named step to the scenario.
    *
-   * @template T - Type of this step's return value
-   * @param name - Step name
-   * @param fn - Step function
-   * @param options - Partial step options
-   * @returns New builder with updated generic types
+   * Steps are the core execution units of a scenario. Each step:
+   * - Receives a context with access to previous results and resources
+   * - Can return a value that becomes `ctx.previous` for the next step
+   * - Can be configured with timeout and retry options
+   *
+   * @typeParam T - Return type of this step (becomes `ctx.previous` for next step)
+   * @param name - Human-readable step name (shown in reports)
+   * @param fn - Step function receiving context and returning result
+   * @param options - Optional timeout and retry configuration
+   * @returns New builder with updated type parameters
+   *
+   * @example Named step with result passing
+   * ```ts
+   * scenario("API Flow")
+   *   .step("Create resource", async () => {
+   *     const res = await api.post("/items", { name: "test" });
+   *     return { id: res.id };  // T = { id: string }
+   *   })
+   *   .step("Verify resource", async (ctx) => {
+   *     // ctx.previous is { id: string }
+   *     const item = await api.get(`/items/${ctx.previous.id}`);
+   *     expect(item.name).toBe("test");
+   *   })
+   *   .build();
+   * ```
    */
   step<T>(
     name: string,
@@ -271,12 +398,23 @@ class ScenarioBuilderInit<
   ): ScenarioBuilderInit<T, readonly [...Results, T], Resources>;
 
   /**
-   * Add an unnamed step to the scenario (auto-named as "Step N")
+   * Add an unnamed step to the scenario (auto-named as "Step N").
    *
-   * @template T - Type of this step's return value
-   * @param fn - Step function
-   * @param options - Partial step options
-   * @returns New builder with updated generic types
+   * When no name is provided, steps are automatically named "Step 1", "Step 2", etc.
+   * Use this for simple scenarios where step names aren't important.
+   *
+   * @typeParam T - Return type of this step
+   * @param fn - Step function receiving context and returning result
+   * @param options - Optional timeout and retry configuration
+   * @returns New builder with updated type parameters
+   *
+   * @example Auto-named steps
+   * ```ts
+   * scenario("Quick Test")
+   *   .step(() => "first")   // Named "Step 1"
+   *   .step(() => "second")  // Named "Step 2"
+   *   .build();
+   * ```
    */
   step<T>(
     fn: StepFunction<T, Previous, Results, Resources>,
@@ -300,11 +438,31 @@ class ScenarioBuilderInit<
   }
 
   /**
-   * Build and return immutable scenario definition
+   * Build and return the immutable scenario definition.
    *
-   * Can be called at any time.
+   * Finalizes the builder chain and produces a {@linkcode ScenarioDefinition}
+   * that can be executed by the runner. The definition includes:
+   * - All registered resources, setups, and steps in declaration order
+   * - Merged options with defaults applied
+   * - Source location information for error reporting
    *
-   * @returns Immutable scenario definition with all defaults applied
+   * @returns Immutable scenario definition ready for execution
+   *
+   * @remarks
+   * - Can be called at any point (even with no steps)
+   * - The returned definition is frozen and cannot be modified
+   * - Typically exported as the default export of a `.probitas.ts` file
+   *
+   * @example Exporting a scenario
+   * ```ts
+   * // auth.probitas.ts
+   * import { scenario } from "@probitas/builder";
+   *
+   * export default scenario("Authentication")
+   *   .step("Login", async () => { ... })
+   *   .step("Verify session", async (ctx) => { ... })
+   *   .build();
+   * ```
    */
   build(): ScenarioDefinition {
     return this.#state.build();
@@ -312,25 +470,64 @@ class ScenarioBuilderInit<
 }
 
 /**
- * Create a new scenario builder with fluent API
+ * Create a new scenario builder with a fluent API.
  *
- * @param name - Human-readable scenario name
- * @param options - Optional partial scenario options
- * @returns New ScenarioBuilder instance with empty result chain
+ * This is the primary entry point for defining scenarios. It returns a builder
+ * that provides a type-safe, chainable API for constructing test scenarios.
  *
- * @example
+ * @param name - Human-readable scenario name (shown in test reports)
+ * @param options - Optional configuration for tags, timeouts, and retry behavior
+ * @returns New {@linkcode ScenarioBuilderInit} instance ready for chaining
+ *
+ * @remarks
+ * The builder pattern enables:
+ * - **Type-safe chaining**: Return values flow through steps with full type inference
+ * - **Resource management**: Automatic lifecycle handling with Disposable support
+ * - **Flexible configuration**: Override defaults at scenario or step level
+ *
+ * @example Basic scenario with type-safe step chaining
  * ```ts
- * const definition = scenario("User Registration")
+ * import { scenario } from "@probitas/builder";
+ *
+ * export default scenario("User Registration")
  *   .step("Create user", async () => {
  *     const user = await createUser({ email: "test@example.com" });
- *     return user.id;
+ *     return { userId: user.id };
  *   })
  *   .step("Verify email", async (ctx) => {
- *     const userId = ctx.previous;
- *     await verifyEmail(userId);
+ *     // ctx.previous is typed as { userId: string }
+ *     await verifyEmail(ctx.previous.userId);
  *   })
  *   .build();
  * ```
+ *
+ * @example Scenario with tags for filtering
+ * ```ts
+ * scenario("Payment Integration", {
+ *   tags: ["integration", "payment", "slow"],
+ *   stepOptions: { timeout: 60000 }  // 1 minute timeout for all steps
+ * })
+ *   .step("Process payment", async () => { ... })
+ *   .build();
+ *
+ * // Run with: probitas run -s "tag:payment"
+ * ```
+ *
+ * @example Scenario with resources and setup
+ * ```ts
+ * scenario("Database Test")
+ *   .resource("db", async () => await Database.connect())
+ *   .setup((ctx) => {
+ *     // Run migrations
+ *     return () => ctx.resources.db.rollback();
+ *   })
+ *   .step("Insert data", (ctx) => ctx.resources.db.insert(...))
+ *   .step("Query data", (ctx) => ctx.resources.db.query(...))
+ *   .build();
+ * ```
+ *
+ * @see {@linkcode ScenarioBuilderInit} for available builder methods
+ * @see {@linkcode BuilderScenarioOptions} for configuration options
  */
 export function scenario(
   name: string,

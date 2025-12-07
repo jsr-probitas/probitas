@@ -29,9 +29,8 @@
  *
  * - {@linkcode BaseReporter} - Abstract base class with common functionality:
  *   - Output stream management (defaults to stderr)
- *   - Console output suppression during tests
- *   - `NO_COLOR` environment variable support
- *   - Customizable color themes
+ *   - Serialized write operations for concurrent scenarios
+ *   - Customizable color themes (use `noColor` option to disable)
  *
  * ## Theming
  *
@@ -114,7 +113,7 @@
  * const reporter = new ListReporter({
  *   output: Deno.stdout.writable,  // Write to stdout instead of stderr
  *   logLevel: "debug",             // Show all log messages
- *   noColor: true,                 // Disable colors (or set NO_COLOR env)
+ *   noColor: Deno.noColor,         // Use Deno's NO_COLOR detection
  * });
  * ```
  *
