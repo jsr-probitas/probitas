@@ -27,4 +27,7 @@ export interface ProbitasConfig {
 
   /** Maximum failures before stopping */
   readonly maxFailures?: number;
+
+  /** Default timeout for scenario execution (string format like "30s", "10m") */
+  readonly timeout?: string;
 }

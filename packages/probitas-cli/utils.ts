@@ -103,6 +103,67 @@ export function parsePositiveInteger(
 }
 
 /**
+ * Parse timeout string to seconds
+ *
+ * Supports formats: "30s", "10m", "1h", or plain numbers (treated as seconds)
+ *
+ * @param value - Timeout value to parse (e.g., "30s", "10m", "1h", or number)
+ * @returns Timeout in seconds
+ * @throws Error if format is invalid or value is not positive
+ *
+ * @example
+ * ```ts
+ * parseTimeout("30s")  // 30
+ * parseTimeout("10m")  // 600
+ * parseTimeout("1h")   // 3600
+ * parseTimeout(30)     // 30
+ * ```
+ */
+export function parseTimeout(
+  value: string | number | undefined,
+): number | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  let seconds: number;
+
+  if (typeof value === "number") {
+    seconds = value;
+  } else {
+    const match = value.match(/^(\d+(?:\.\d+)?)(s|m|h)?$/i);
+    if (!match) {
+      throw new Error(
+        `Invalid timeout format: "${value}". Expected format: "30s", "10m", "1h", or a number`,
+      );
+    }
+
+    const num = parseFloat(match[1]);
+    const unit = (match[2] || "s").toLowerCase();
+
+    switch (unit) {
+      case "s":
+        seconds = num;
+        break;
+      case "m":
+        seconds = num * 60;
+        break;
+      case "h":
+        seconds = num * 3600;
+        break;
+      default:
+        throw new Error(`Invalid timeout unit: "${unit}"`);
+    }
+  }
+
+  if (seconds <= 0 || !Number.isFinite(seconds)) {
+    throw new Error(`Timeout must be a positive number, got: ${value}`);
+  }
+
+  return seconds;
+}
+
+/**
  * Read template file from assets/templates
  *
  * @param filename - Template filename

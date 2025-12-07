@@ -14,6 +14,7 @@ import {
   createTempSubprocessConfig,
   findDenoConfigFile,
   parsePositiveInteger,
+  parseTimeout,
   readAsset,
 } from "../utils.ts";
 
@@ -43,6 +44,7 @@ export async function runCommand(
         "include",
         "exclude",
         "selector",
+        "timeout",
       ],
       boolean: [
         "help",
@@ -153,6 +155,11 @@ export async function runCommand(
       ? parsePositiveInteger(parsed["max-failures"], "max-failures")
       : config?.maxFailures;
 
+    // Parse timeout: CLI > config
+    // Note: CLI accepts string format, config has string format, but we convert to seconds here
+    const timeoutString = parsed.timeout ?? config?.timeout;
+    const timeout = timeoutString ? parseTimeout(timeoutString) : undefined;
+
     const subprocessInput = {
       files: scenarioFiles,
       selectors,
@@ -161,6 +168,7 @@ export async function runCommand(
       logLevel,
       maxConcurrency,
       maxFailures,
+      timeout,
     };
 
     // Prepare config file for subprocess with scopes

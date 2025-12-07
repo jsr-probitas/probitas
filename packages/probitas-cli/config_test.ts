@@ -82,6 +82,7 @@ describe("config loader", () => {
             selectors: ["tag:smoke", "!tag:slow"],
             maxConcurrency: 5,
             maxFailures: 3,
+            timeout: "30s",
           },
         }),
       );
@@ -94,6 +95,7 @@ describe("config loader", () => {
       assertEquals(config.selectors, ["tag:smoke", "!tag:slow"]);
       assertEquals(config.maxConcurrency, 5);
       assertEquals(config.maxFailures, 3);
+      assertEquals(config.timeout, "30s");
     });
 
     it("validates reporter values", async () => {
@@ -172,6 +174,43 @@ describe("config loader", () => {
     it("throws error for non-existent file", async () => {
       await assertRejects(
         async () => await loadConfig("/nonexistent/deno.json"),
+        Error,
+      );
+    });
+
+    it("loads timeout configuration", async () => {
+      await using sbox = await sandbox();
+
+      const configPath = sbox.resolve("deno.json");
+      await Deno.writeTextFile(
+        configPath,
+        JSON.stringify({
+          probitas: {
+            timeout: "10m",
+          },
+        }),
+      );
+
+      const config = await loadConfig(configPath);
+
+      assertEquals(config.timeout, "10m");
+    });
+
+    it("validates timeout must be string", async () => {
+      await using sbox = await sandbox();
+
+      const configPath = sbox.resolve("deno.json");
+      await Deno.writeTextFile(
+        configPath,
+        JSON.stringify({
+          probitas: {
+            timeout: 123,
+          },
+        }),
+      );
+
+      await assertRejects(
+        async () => await loadConfig(configPath),
         Error,
       );
     });

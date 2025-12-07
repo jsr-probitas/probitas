@@ -34,6 +34,8 @@ interface SubprocessInput {
   maxConcurrency?: number;
   /** Maximum number of failures before stopping */
   maxFailures?: number;
+  /** Timeout for scenario execution in seconds */
+  timeout?: number;
 }
 
 const isSubprocessInput = is.ObjectOf({
@@ -46,6 +48,7 @@ const isSubprocessInput = is.ObjectOf({
   )),
   maxConcurrency: as.Optional(is.Number),
   maxFailures: as.Optional(is.Number),
+  timeout: as.Optional(is.Number),
 }) satisfies Predicate<SubprocessInput>;
 
 async function main(): Promise<number> {
@@ -70,6 +73,7 @@ async function main(): Promise<number> {
     logLevel,
     maxConcurrency,
     maxFailures,
+    timeout,
   } = input;
 
   // Configure logging
@@ -123,6 +127,7 @@ async function main(): Promise<number> {
       scenarioCount: scenarios.length,
       maxConcurrency,
       maxFailures,
+      timeout,
     });
 
     // Setup reporter
@@ -132,12 +137,16 @@ async function main(): Promise<number> {
     };
     const reporter = resolveReporter(reporterName, reporterOptions);
 
+    // Create abort controller for timeout if specified
+    const controller = timeout ? AbortSignal.timeout(timeout * 1000) : undefined;
+
     // Run scenarios
     const runner = new ScenarioRunner();
     const summary = await runner.run(scenarios, {
       reporter,
       maxConcurrency,
       maxFailures,
+      signal: controller,
     });
 
     logger.info("Scenarios completed", {
