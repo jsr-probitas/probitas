@@ -44,7 +44,7 @@ describe("run command", () => {
     it("returns 0 when all scenarios pass", async () => {
       await using sbox = await sandbox();
 
-      const scenarioPath = sbox.resolve("test.scenario.ts");
+      const scenarioPath = sbox.resolve("test.probitas.ts");
       await Deno.writeTextFile(
         scenarioPath,
         createScenario("Passing Test", scenarioPath),
@@ -58,7 +58,7 @@ describe("run command", () => {
     it("returns 1 when scenarios fail", async () => {
       await using sbox = await sandbox();
 
-      const scenarioPath = sbox.resolve("fail.scenario.ts");
+      const scenarioPath = sbox.resolve("fail.probitas.ts");
       await Deno.writeTextFile(
         scenarioPath,
         createScenario("Failing Test", scenarioPath, true),
@@ -77,7 +77,7 @@ describe("run command", () => {
     it("returns 2 on usage error", async () => {
       await using sbox = await sandbox();
 
-      const scenarioPath = sbox.resolve("test.scenario.ts");
+      const scenarioPath = sbox.resolve("test.probitas.ts");
       await Deno.writeTextFile(
         scenarioPath,
         `export default scenario("Test").step("Test", () => {}).build();`,
@@ -129,8 +129,8 @@ describe("run command", () => {
       await Deno.mkdir(sbox.resolve("api"), { recursive: true });
       await Deno.mkdir(sbox.resolve("e2e"), { recursive: true });
 
-      const apiScenario = sbox.resolve("api/test.scenario.ts");
-      const e2eScenario = sbox.resolve("e2e/test.scenario.ts");
+      const apiScenario = sbox.resolve("api/test.probitas.ts");
+      const e2eScenario = sbox.resolve("e2e/test.probitas.ts");
       await Deno.writeTextFile(
         apiScenario,
         createScenario("API Test", apiScenario),
@@ -141,7 +141,7 @@ describe("run command", () => {
       );
 
       const exitCode = await runCommand(
-        ["--include", "api/**/*.scenario.ts"],
+        ["--include", "api/**/*.probitas.ts"],
         sbox.path,
       );
 
@@ -151,8 +151,8 @@ describe("run command", () => {
     it("uses --exclude pattern to exclude files", async () => {
       await using sbox = await sandbox();
 
-      const regularScenario = sbox.resolve("test.scenario.ts");
-      const skipScenario = sbox.resolve("test.skip.scenario.ts");
+      const regularScenario = sbox.resolve("test.probitas.ts");
+      const skipScenario = sbox.resolve("test.skip.probitas.ts");
       await Deno.writeTextFile(
         regularScenario,
         createScenario("Regular Test", regularScenario),
@@ -163,7 +163,7 @@ describe("run command", () => {
       );
 
       const exitCode = await runCommand(
-        ["--exclude", "**/*.skip.scenario.ts"],
+        ["--exclude", "**/*.skip.probitas.ts"],
         sbox.path,
       );
 
@@ -176,9 +176,9 @@ describe("run command", () => {
       await Deno.mkdir(sbox.resolve("api"), { recursive: true });
       await Deno.mkdir(sbox.resolve("e2e"), { recursive: true });
 
-      const apiScenario = sbox.resolve("api/test.scenario.ts");
-      const apiSkipScenario = sbox.resolve("api/skip.scenario.ts");
-      const e2eScenario = sbox.resolve("e2e/test.scenario.ts");
+      const apiScenario = sbox.resolve("api/test.probitas.ts");
+      const apiSkipScenario = sbox.resolve("api/skip.probitas.ts");
+      const e2eScenario = sbox.resolve("e2e/test.probitas.ts");
       await Deno.writeTextFile(
         apiScenario,
         createScenario("API Test", apiScenario),
@@ -194,9 +194,9 @@ describe("run command", () => {
 
       const exitCode = await runCommand([
         "--include",
-        "api/**/*.scenario.ts",
+        "api/**/*.probitas.ts",
         "--exclude",
-        "**/skip.scenario.ts",
+        "**/skip.probitas.ts",
       ], sbox.path);
 
       assertEquals(exitCode, EXIT_CODE.SUCCESS);
@@ -207,7 +207,7 @@ describe("run command", () => {
     it("forwards --reload to subprocess", async () => {
       await using sbox = await sandbox();
 
-      const scenarioPath = sbox.resolve("reload.scenario.ts");
+      const scenarioPath = sbox.resolve("reload.probitas.ts");
       await Deno.writeTextFile(
         scenarioPath,
         createScenario("Reload Test", scenarioPath),

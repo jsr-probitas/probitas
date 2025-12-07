@@ -21,7 +21,7 @@ describe("run subprocess", { sanitizeResources: false }, () => {
     });
 
     // Create a simple passing scenario
-    const scenarioPath = sbox.resolve("test.scenario.ts");
+    const scenarioPath = sbox.resolve("test.probitas.ts");
     await Deno.writeTextFile(
       scenarioPath,
       outdent`
@@ -82,7 +82,7 @@ describe("run subprocess", { sanitizeResources: false }, () => {
     });
 
     // Create a failing scenario
-    const scenarioPath = sbox.resolve("test.scenario.ts");
+    const scenarioPath = sbox.resolve("test.probitas.ts");
     await Deno.writeTextFile(
       scenarioPath,
       outdent`
@@ -133,7 +133,7 @@ describe("run subprocess", { sanitizeResources: false }, () => {
     });
 
     // Create a scenario with tags
-    const scenarioPath = sbox.resolve("test.scenario.ts");
+    const scenarioPath = sbox.resolve("test.probitas.ts");
     await Deno.writeTextFile(
       scenarioPath,
       outdent`
@@ -182,7 +182,7 @@ describe("run subprocess", { sanitizeResources: false }, () => {
     });
 
     // Create scenarios with different tags
-    const scenarioPath = sbox.resolve("test.scenario.ts");
+    const scenarioPath = sbox.resolve("test.probitas.ts");
     await Deno.writeTextFile(
       scenarioPath,
       outdent`

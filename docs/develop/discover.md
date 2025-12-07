@@ -28,7 +28,7 @@ Uses standard glob patterns for flexible file matching:
 ### Scenario File
 
 A TypeScript file containing scenario definitions. By default, files matching
-`**/*.scenario.ts` are considered scenario files.
+`**/*.probitas.ts` are considered scenario files.
 
 ### Include Patterns
 
@@ -50,7 +50,7 @@ Discovers scenario files from the given paths.
 | Parameter          | Type                | Description                                    |
 | ------------------ | ------------------- | ---------------------------------------------- |
 | `paths`            | `readonly string[]` | File or directory paths                        |
-| `options.includes` | `readonly string[]` | Include patterns (default: `**/*.scenario.ts`) |
+| `options.includes` | `readonly string[]` | Include patterns (default: `**/*.probitas.ts`) |
 | `options.excludes` | `readonly string[]` | Exclude patterns                               |
 
 **Returns:** `Promise<string[]>` - Sorted array of absolute file paths.
@@ -71,7 +71,7 @@ const apiFiles = await discoverScenarioFiles(["./api"], {
 
 // Mix of files and directories
 const mixed = await discoverScenarioFiles([
-  "./auth.scenario.ts", // Direct file
+  "./auth.probitas.ts", // Direct file
   "./api/", // Directory to search
 ]);
 ```
@@ -80,7 +80,7 @@ const mixed = await discoverScenarioFiles([
 
 | Type    | Default Pattern    |
 | ------- | ------------------ |
-| Include | `**/*.scenario.ts` |
+| Include | `**/*.probitas.ts` |
 | Exclude | (none)             |
 
 ## Best Practices
@@ -88,10 +88,10 @@ const mixed = await discoverScenarioFiles([
 1. **Use specific paths** - Limit scope when running subsets of tests
 2. **Configure in deno.json** - Set project-wide patterns for consistency
 3. **Exclude generated files** - Add patterns for build output directories
-4. **Use semantic naming** - The `.scenario.ts` suffix makes intent clear
+4. **Use semantic naming** - The `.probitas.ts` suffix makes intent clear
 
 ## Related
 
 - [Architecture](./architecture.md) - Overall design
-- [CLI](./cli.md) - Command-line usage
-- [Guide](./guide.md) - Practical examples
+- [Command Reference](../command.md) - Command-line usage
+- [Guide](../guide.md) - Practical examples

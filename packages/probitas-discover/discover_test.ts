@@ -15,16 +15,16 @@ describe("discover", () => {
     it("discovers files from directory with default pattern", async () => {
       await using sbox = await sandbox();
 
-      await Deno.writeTextFile(sbox.resolve("test1.scenario.ts"), "");
-      await Deno.writeTextFile(sbox.resolve("test2.scenario.ts"), "");
+      await Deno.writeTextFile(sbox.resolve("test1.probitas.ts"), "");
+      await Deno.writeTextFile(sbox.resolve("test2.probitas.ts"), "");
       await Deno.writeTextFile(sbox.resolve("other.ts"), "");
 
       const files = await discoverScenarioFiles([sbox.path], {});
 
       assertEquals(files.length, 2);
       assertEquals(files.map((f) => relative(sbox.path, f)).sort(), [
-        "test1.scenario.ts",
-        "test2.scenario.ts",
+        "test1.probitas.ts",
+        "test2.probitas.ts",
       ]);
     });
 
@@ -34,22 +34,22 @@ describe("discover", () => {
       await Deno.mkdir(sbox.resolve("api"), { recursive: true });
       await Deno.mkdir(sbox.resolve("e2e"), { recursive: true });
 
-      await Deno.writeTextFile(sbox.resolve("api/test.scenario.ts"), "");
-      await Deno.writeTextFile(sbox.resolve("e2e/test.scenario.ts"), "");
+      await Deno.writeTextFile(sbox.resolve("api/test.probitas.ts"), "");
+      await Deno.writeTextFile(sbox.resolve("e2e/test.probitas.ts"), "");
 
       const files = await discoverScenarioFiles([sbox.path], {});
 
       assertEquals(files.length, 2);
       assertEquals(files.map((f) => relative(sbox.path, f)).sort(), [
-        "api/test.scenario.ts",
-        "e2e/test.scenario.ts",
+        "api/test.probitas.ts",
+        "e2e/test.probitas.ts",
       ]);
     });
 
     it("discovers from specific file path", async () => {
       await using sbox = await sandbox();
 
-      const testFile = sbox.resolve("test.scenario.ts");
+      const testFile = sbox.resolve("test.probitas.ts");
       await Deno.writeTextFile(testFile, "");
 
       const files = await discoverScenarioFiles([testFile], {});
@@ -64,35 +64,35 @@ describe("discover", () => {
       await Deno.mkdir(sbox.resolve("api"), { recursive: true });
       await Deno.mkdir(sbox.resolve("e2e"), { recursive: true });
 
-      await Deno.writeTextFile(sbox.resolve("api/test.scenario.ts"), "");
-      await Deno.writeTextFile(sbox.resolve("e2e/test.scenario.ts"), "");
+      await Deno.writeTextFile(sbox.resolve("api/test.probitas.ts"), "");
+      await Deno.writeTextFile(sbox.resolve("e2e/test.probitas.ts"), "");
 
       const apiDir = sbox.resolve("api");
       const files = await discoverScenarioFiles([apiDir], {});
 
       assertEquals(files.length, 1);
-      assertEquals(relative(sbox.path, files[0]), "api/test.scenario.ts");
+      assertEquals(relative(sbox.path, files[0]), "api/test.probitas.ts");
     });
 
     it("uses exclude patterns", async () => {
       await using sbox = await sandbox();
 
-      await Deno.writeTextFile(sbox.resolve("test.scenario.ts"), "");
-      await Deno.writeTextFile(sbox.resolve("skip.scenario.ts"), "");
+      await Deno.writeTextFile(sbox.resolve("test.probitas.ts"), "");
+      await Deno.writeTextFile(sbox.resolve("skip.probitas.ts"), "");
 
       const files = await discoverScenarioFiles([sbox.path], {
-        excludes: ["**/skip.scenario.ts"],
+        excludes: ["**/skip.probitas.ts"],
       });
 
       assertEquals(files.length, 1);
-      assertEquals(relative(sbox.path, files[0]), "test.scenario.ts");
+      assertEquals(relative(sbox.path, files[0]), "test.probitas.ts");
     });
 
     it("combines multiple paths", async () => {
       await using sbox = await sandbox();
 
-      const file1 = sbox.resolve("test1.scenario.ts");
-      const file2 = sbox.resolve("test2.scenario.ts");
+      const file1 = sbox.resolve("test1.probitas.ts");
+      const file2 = sbox.resolve("test2.probitas.ts");
       await Deno.writeTextFile(file1, "");
       await Deno.writeTextFile(file2, "");
 
@@ -105,16 +105,16 @@ describe("discover", () => {
     it("returns sorted file paths", async () => {
       await using sbox = await sandbox();
 
-      await Deno.writeTextFile(sbox.resolve("z.scenario.ts"), "");
-      await Deno.writeTextFile(sbox.resolve("a.scenario.ts"), "");
-      await Deno.writeTextFile(sbox.resolve("m.scenario.ts"), "");
+      await Deno.writeTextFile(sbox.resolve("z.probitas.ts"), "");
+      await Deno.writeTextFile(sbox.resolve("a.probitas.ts"), "");
+      await Deno.writeTextFile(sbox.resolve("m.probitas.ts"), "");
 
       const files = await discoverScenarioFiles([sbox.path], {});
 
       assertEquals(files.map((f) => relative(sbox.path, f)), [
-        "a.scenario.ts",
-        "m.scenario.ts",
-        "z.scenario.ts",
+        "a.probitas.ts",
+        "m.probitas.ts",
+        "z.probitas.ts",
       ]);
     });
   });

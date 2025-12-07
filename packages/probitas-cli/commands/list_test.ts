@@ -39,8 +39,8 @@ describe("list command", { sanitizeResources: false }, () => {
       await Deno.remove(configPath);
     });
 
-    const scenario1 = sbox.resolve("test1.scenario.ts");
-    const scenario2 = sbox.resolve("test2.scenario.ts");
+    const scenario1 = sbox.resolve("test1.probitas.ts");
+    const scenario2 = sbox.resolve("test2.probitas.ts");
     await Deno.writeTextFile(scenario1, createScenario("Test 1"));
     await Deno.writeTextFile(scenario2, createScenario("Test 2"));
 
@@ -84,7 +84,7 @@ describe("list command", { sanitizeResources: false }, () => {
       await Deno.remove(configPath);
     });
 
-    const scenarioPath = sbox.resolve("test.scenario.ts");
+    const scenarioPath = sbox.resolve("test.probitas.ts");
     await Deno.writeTextFile(
       scenarioPath,
       createScenario("JSON Test", ["api"]),
@@ -180,7 +180,7 @@ describe("list command", { sanitizeResources: false }, () => {
     it("forwards --reload to subprocess", async () => {
       await using sbox = await sandbox();
 
-      const scenarioPath = sbox.resolve("reload.scenario.ts");
+      const scenarioPath = sbox.resolve("reload.probitas.ts");
       await Deno.writeTextFile(
         scenarioPath,
         createScenario("Reload Test"),
@@ -217,8 +217,8 @@ describe("list command", { sanitizeResources: false }, () => {
         await Deno.remove(configPath);
       });
 
-      const apiScenario = sbox.resolve("api.scenario.ts");
-      const e2eScenario = sbox.resolve("e2e.scenario.ts");
+      const apiScenario = sbox.resolve("api.probitas.ts");
+      const e2eScenario = sbox.resolve("e2e.probitas.ts");
       await Deno.writeTextFile(
         apiScenario,
         createScenario("API Test", ["api"]),
@@ -267,8 +267,8 @@ describe("list command", { sanitizeResources: false }, () => {
         await Deno.remove(configPath);
       });
 
-      const smokeScenario = sbox.resolve("smoke.scenario.ts");
-      const slowScenario = sbox.resolve("slow.scenario.ts");
+      const smokeScenario = sbox.resolve("smoke.probitas.ts");
+      const slowScenario = sbox.resolve("slow.probitas.ts");
       await Deno.writeTextFile(
         smokeScenario,
         createScenario("Smoke Test", ["smoke"]),
