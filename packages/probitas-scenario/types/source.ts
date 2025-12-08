@@ -18,5 +18,8 @@ export interface Source {
   readonly file: string;
 
   /** Line number in the file (1-indexed) */
-  readonly line: number;
+  readonly line?: number;
+
+  /** Column number in the file (1-indexed) */
+  readonly column?: number;
 }

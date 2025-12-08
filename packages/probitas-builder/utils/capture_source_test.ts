@@ -69,11 +69,11 @@ describe("captureSource", () => {
     const source = captureSource(1);
     assertExists(source);
     assertEquals(
-      source.file.includes("capture_source_test.ts"),
+      source?.file.includes("capture_source_test.ts"),
       true,
     );
-    assertEquals(typeof source.line, "number");
-    assertEquals(source.line > 0, true);
+    assertEquals(typeof source?.line, "number");
+    assertEquals((source?.line ?? 0) > 0, true);
   });
 
   it("captures source with default depth=2", () => {

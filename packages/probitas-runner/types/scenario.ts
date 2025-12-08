@@ -54,7 +54,7 @@ export interface ScenarioContext {
  *
  * Contains the overall scenario status, timing, all step results,
  * and any error or skip reason. Passed to reporters and included
- * in the final {@linkcode RunSummary}.
+ * in the final {@linkcode RunResult}.
  *
  * @example Passed scenario
  * ```ts

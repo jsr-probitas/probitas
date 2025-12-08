@@ -3,7 +3,7 @@ import type { ScenarioDefinition } from "@probitas/scenario";
 import type {
   Reporter,
   RunOptions,
-  RunSummary,
+  RunResult,
   ScenarioResult,
 } from "./types.ts";
 import { ScenarioRunner } from "./scenario_runner.ts";
@@ -16,7 +16,7 @@ export class Runner {
   async run(
     scenarios: readonly ScenarioDefinition[],
     options?: RunOptions,
-  ): Promise<RunSummary> {
+  ): Promise<RunResult> {
     await this.reporter.onRunStart?.(scenarios);
 
     // Create abort controller for outer context
@@ -38,7 +38,7 @@ export class Runner {
     const passed = scenarioResults.filter((r) => r.status === "passed").length;
     const failed = scenarioResults.filter((r) => r.status === "failed").length;
     const skipped = total - passed - failed;
-    const summary: RunSummary = {
+    const runResult: RunResult = {
       total,
       passed,
       failed,
@@ -47,9 +47,9 @@ export class Runner {
       scenarios: scenarioResults,
     };
 
-    await this.reporter.onRunEnd?.(summary);
+    await this.reporter.onRunEnd?.(scenarios, runResult);
 
-    return summary;
+    return runResult;
   }
 
   async #run(

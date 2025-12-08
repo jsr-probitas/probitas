@@ -7,113 +7,68 @@
  * @module
  */
 
-import { BaseReporter } from "./base_reporter.ts";
-import type { ScenarioDefinition, StepDefinition } from "@probitas/scenario";
-import type { RunSummary, StepResult } from "@probitas/runner";
-import type { ReporterOptions } from "./types.ts";
+import type {
+  ScenarioDefinition,
+  Source,
+  StepDefinition,
+} from "@probitas/scenario";
+import type { Reporter, RunResult, StepResult } from "@probitas/runner";
+import { Writer, type WriterOptions } from "./writer.ts";
+import { defaultTheme, type Theme } from "./theme.ts";
+import { formatSource } from "./utils/source.ts";
 
-/**
- * List Reporter - outputs results in flat list format
- */
-export class ListReporter extends BaseReporter {
-  /**
-   * Initialize List reporter
-   *
-   * @param options Configuration options
-   */
-  constructor(options: ReporterOptions = {}) {
-    super(options);
+export interface ListReporterOptions extends WriterOptions {
+  theme?: Theme;
+}
+
+export class ListReporter implements Reporter {
+  #writer: Writer;
+  #theme: Theme;
+
+  constructor(options: ListReporterOptions = {}) {
+    this.#writer = new Writer(options);
+    this.#theme = options.theme ?? defaultTheme;
   }
 
-  /**
-   * Called when step completes - output result line
-   *
-   * @param _step The step definition
-   * @param result The step execution result
-   * @param scenario The scenario being executed
-   */
+  #writeln(...terms: string[]): Promise<void> {
+    const text = terms.join(" ");
+    return this.#writer.write(`${text}\n`);
+  }
+
+  #formatSource(source?: Source): string {
+    return this.#theme.dim(formatSource(source, {
+      prefix: "(",
+      suffix: ")",
+    }));
+  }
+
+  #formatTime(duration: number): string {
+    return `${this.#theme.info(`[${duration.toFixed(3)}ms]`)}`;
+  }
+
   async onStepEnd(
+    scenario: ScenarioDefinition,
     _step: StepDefinition,
     result: StepResult,
-    scenario: ScenarioDefinition,
   ): Promise<void> {
-    const icon = this.theme.success("✓");
-    const source = result.metadata.source
-      ? ` ${
-        this.theme.dim(
-          `(${result.metadata.source.file}:${result.metadata.source.line})`,
-        )
-      }`
+    const icon = result.status === "passed"
+      ? this.#theme.success("✓")
+      : result.status === "skipped"
+      ? this.#theme.skip("⊘")
+      : this.#theme.failure("✗");
+    const source = this.#formatSource(result.metadata.source);
+    const time = this.#formatTime(result.duration);
+    const skipReason = result.status === "skipped"
+      ? this.#theme.warning(getErrorMessage(result.error))
       : "";
-    const time = ` ${this.theme.info(`[${result.duration.toFixed(3)}ms]`)}`;
-
-    await this.write(
-      `${icon} ${scenario.name} ${this.theme.dim(">")} ` +
-        `${result.metadata.name}${source}${time}\n`,
-    );
-  }
-
-  /**
-   * Called when step fails - output error details
-   *
-   * @param step The step definition
-   * @param error The error that occurred
-   * @param duration Step execution duration in milliseconds
-   * @param scenario The scenario being executed
-   */
-  async onStepError(
-    step: StepDefinition,
-    error: Error,
-    duration: number,
-    scenario: ScenarioDefinition,
-  ): Promise<void> {
-    const icon = this.theme.failure("✗");
-    const source = step.source
-      ? ` ${this.theme.dim(`(${step.source.file}:${step.source.line})`)}`
-      : "";
-    const time = ` ${this.theme.info(`[${duration.toFixed(3)}ms]`)}`;
-
-    await this.write(
-      `${icon} ${scenario.name} ${this.theme.dim(">")} ` +
-        `${step.name}${source}${time}\n`,
-    );
-    await this.write(`  ${this.theme.failure(error.message)}\n`);
-
-    // Show first 3 lines of stack trace
-    if (error.stack) {
-      const sanitizedStack = this.sanitizeStack(error.stack);
-      const stackLines = sanitizedStack.split("\n").slice(1, 4);
-      for (const line of stackLines) {
-        await this.write(`  ${this.theme.dim(line.trim())}\n`);
-      }
-    }
-  }
-
-  /**
-   * Called when scenario is skipped
-   *
-   * @param scenario The scenario that was skipped
-   * @param reason Optional skip reason
-   * @param duration Scenario execution duration in milliseconds
-   */
-  async onScenarioSkip(
-    scenario: ScenarioDefinition,
-    reason: string | undefined,
-    duration: number,
-  ): Promise<void> {
-    const icon = this.theme.skip("⊘");
-    const source = scenario.source
-      ? ` ${
-        this.theme.dim(
-          `(${scenario.source.file}:${scenario.source.line})`,
-        )
-      }`
-      : "";
-    const reasonText = reason ? ` ${reason}` : "";
-    const time = ` ${this.theme.info(`[${duration.toFixed(3)}ms]`)}`;
-
-    await this.write(
-      `${icon} ${scenario.name}${source}${reasonText}${time}\n`,
+    await this.#writeln(
+      icon,
+      scenario.name,
+      this.#theme.dim(">"),
+      result.metadata.name,
+      source,
+      time,
+      skipReason,
     );
   }
 
@@ -122,53 +77,83 @@ export class ListReporter extends BaseReporter {
    *
    * @param summary The execution summary
    */
-  override async onRunEnd(summary: RunSummary): Promise<void> {
-    await this.write(`\n${this.theme.title("Summary")}\n`);
-    await this.write(
-      `  ${this.theme.success("✓")} ${summary.passed} scenarios passed\n`,
+  async onRunEnd(
+    _scenarios: readonly ScenarioDefinition[],
+    result: RunResult,
+  ): Promise<void> {
+    const { passed, skipped, failed, scenarios, total, duration } = result;
+    await this.#writeln(`\n${this.#theme.title("Summary")}`);
+    await this.#writeln(
+      `  ${this.#theme.success("✓")} ${passed} scenarios passed`,
     );
 
-    if (summary.skipped > 0) {
-      await this.write(
-        `  ${this.theme.skip("⊘")} ${summary.skipped} scenarios skipped\n`,
+    if (skipped > 0) {
+      await this.#writeln(
+        `  ${this.#theme.skip("⊘")} ${skipped} scenarios skipped`,
       );
     }
 
-    if (summary.failed > 0) {
-      await this.write(
-        `  ${this.theme.failure("✗")} ${summary.failed} scenarios failed\n`,
+    if (failed > 0) {
+      await this.#writeln(
+        `  ${this.#theme.failure("✗")} ${failed} scenarios failed`,
       );
-      await this.write("\n");
-      await this.write(`${this.theme.title("Failed Tests")}\n`);
+      await this.#writeln("");
+      await this.#writeln(`${this.#theme.title("Failed Tests")}`);
 
-      const failed = summary.scenarios.filter((s) => s.status === "failed");
-      for (const scenario of failed) {
+      const failedScenarios = scenarios.filter((s) => s.status === "failed");
+      for (const scenario of failedScenarios) {
         // Show failed steps
         const failedSteps = scenario.steps.filter((s) => s.status === "failed");
         for (const step of failedSteps) {
-          const source = step.metadata.source
-            ? ` ${
-              this.theme.dim(
-                `(${step.metadata.source.file}:${step.metadata.source.line})`,
-              )
-            }`
-            : "";
-          await this.write(
-            `  ${this.theme.failure("✗")} ` +
-              `${scenario.metadata.name} ${this.theme.dim(">")} ` +
-              `${step.metadata.name}` +
-              `${source}\n`,
+          const source = this.#formatSource(step.metadata.source);
+          const time = this.#formatTime(step.duration);
+          await this.#writeln(
+            `  ${this.#theme.failure("✗")}`,
+            scenario.metadata.name,
+            this.#theme.dim(">"),
+            step.metadata.name,
+            source,
+            time,
           );
+          // Show error details for failed steps
+          if (step.status === "failed" && "error" in step && step.error) {
+            await this.#writeln("");
+            const message = getErrorMessage(step.error);
+            await this.#writeln(`    ${this.#theme.failure(message)}`);
+            if (step.error instanceof Error && step.error.stack) {
+              const stack = step.error.stack.split("\n")
+                .slice(1) // Skip first line (already shown as message)
+                .join("\n")
+                .trim();
+              if (stack) {
+                await this.#writeln("");
+                for (const line of stack.split("\n")) {
+                  await this.#writeln(`    ${this.#theme.dim(line)}`);
+                }
+              }
+            }
+            await this.#writeln("");
+          }
         }
       }
     }
 
-    await this.write(
-      `  ${this.theme.dim(`  ${summary.total} scenarios total`)} ${
-        this.theme.info(`[${summary.duration.toFixed(3)}ms]`)
-      }\n`,
+    await this.#writeln(
+      `${total} scenarios total`,
+      this.#theme.info(`[${duration.toFixed(3)}ms]`),
     );
-
-    await super.onRunEnd(summary);
   }
+}
+
+function getErrorMessage(err: unknown): string {
+  if (err instanceof Error) {
+    if (err.message) {
+      return `${err.name}: ${err.message}`;
+    }
+    if (err.cause) {
+      return `${err.name}: ${getErrorMessage(err.cause)}`;
+    }
+    return err.name;
+  }
+  return String(err);
 }

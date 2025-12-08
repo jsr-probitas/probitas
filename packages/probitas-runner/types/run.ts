@@ -17,7 +17,7 @@ import type { ScenarioResult } from "./scenario.ts";
  *
  * @example
  * ```ts
- * const summary: RunSummary = {
+ * const summary: RunResult = {
  *   total: 10,
  *   passed: 8,
  *   failed: 1,
@@ -30,7 +30,7 @@ import type { ScenarioResult } from "./scenario.ts";
  * // → "8/10 passed"
  * ```
  */
-export interface RunSummary {
+export interface RunResult {
   /** Total number of scenarios in the run */
   readonly total: number;
 

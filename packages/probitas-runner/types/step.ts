@@ -48,8 +48,7 @@ export type StepResult = {
   /** Return value from step function (only if status is "passed") */
   readonly value: unknown;
 } | {
-  /** Execution outcome: "passed" or "failed" */
-  readonly status: "failed";
+  readonly status: "failed" | "skipped";
 
   /** Step metadata (serializable, without function) */
   readonly metadata: StepMetadata;

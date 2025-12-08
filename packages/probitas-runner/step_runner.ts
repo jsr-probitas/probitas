@@ -12,6 +12,7 @@ import { timeit } from "./utils/timeit.ts";
 import { retry } from "./utils/retry.ts";
 import { createStepContext } from "./context.ts";
 import { mergeSignals } from "./utils/signal.ts";
+import { Skip } from "./skip.ts";
 
 type ResourceStep<T> = StepDefinition<T> & { kind: "resource" };
 type SetupStep = StepDefinition<SetupCleanup> & { kind: "setup" };
@@ -41,7 +42,7 @@ export class StepRunner {
     stack: AsyncDisposableStack,
   ): Promise<StepResult> {
     const ctx = createStepContext(this.#scenarioCtx);
-    this.#reporter.onStepStart?.(step, this.#scenario);
+    this.#reporter.onStepStart?.(this.#scenario, step);
     const timeout = step.timeout;
     const signal = mergeSignals(
       ctx.signal,
@@ -56,11 +57,20 @@ export class StepRunner {
         },
       );
     });
-    const stepResult: StepResult = {
-      ...result,
-      metadata: this.#createStepMetadata(step),
-    };
-    this.#reporter.onStepEnd?.(step, stepResult, this.#scenario);
+    const stepResult: StepResult = result.status === "passed"
+      ? {
+        status: "passed",
+        value: result.value,
+        duration: result.duration,
+        metadata: this.#createStepMetadata(step),
+      }
+      : {
+        status: result.error instanceof Skip ? "skipped" : "failed",
+        error: result.error,
+        duration: result.duration,
+        metadata: this.#createStepMetadata(step),
+      };
+    this.#reporter.onStepEnd?.(this.#scenario, step, stepResult);
     return stepResult;
   }
 
