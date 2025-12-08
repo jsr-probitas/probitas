@@ -83,11 +83,11 @@ export class TAPReporter extends BaseReporter {
     if (result.status === "failed") {
       await this.write("  ---\n");
 
-      const location = result.metadata.location
-        ? `${result.metadata.location.file}:${result.metadata.location.line}`
+      const source = result.metadata.source
+        ? `${result.metadata.source.file}:${result.metadata.source.line}`
         : "unknown";
 
-      await this.write(`  location: ${location}\n`);
+      await this.write(`  source: ${source}\n`);
 
       if (result.error) {
         await this.write(`  message: ${result.error.message}\n`);

@@ -166,7 +166,7 @@ export class ScenarioRunner {
 
     logger.debug("Starting scenario", {
       name: scenario.name,
-      file: scenario.location?.file,
+      file: scenario.source?.file,
     });
 
     // Notify reporter of scenario start
@@ -508,7 +508,7 @@ export class ScenarioRunner {
         stepOptions: scenario.options.stepOptions,
       },
       entries: scenario.entries,
-      location: scenario.location,
+      source: scenario.source,
     };
   }
 
@@ -521,7 +521,7 @@ export class ScenarioRunner {
     return {
       name: step.name,
       options: step.options,
-      location: step.location,
+      source: step.source,
     };
   }
 }

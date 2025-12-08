@@ -35,7 +35,7 @@ const createScenario = (name: string, file: string, failing = false) =>
         }
       }
     ],
-    location: { file: "${file}" }
+    source: { file: "${file}" }
   };
 `;
 

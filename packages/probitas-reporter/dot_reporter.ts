@@ -70,10 +70,10 @@ export class DotReporter extends BaseReporter {
         // Show failed steps
         const failedSteps = scenario.steps.filter((s) => s.status === "failed");
         for (const step of failedSteps) {
-          const location = step.metadata.location
+          const source = step.metadata.source
             ? ` ${
               this.theme.dim(
-                `(${step.metadata.location.file}:${step.metadata.location.line})`,
+                `(${step.metadata.source.file}:${step.metadata.source.line})`,
               )
             }`
             : "";
@@ -81,7 +81,7 @@ export class DotReporter extends BaseReporter {
             `  ${this.theme.failure("✗")} ` +
               `${scenario.metadata.name} ${this.theme.dim(">")} ` +
               `${step.metadata.name}` +
-              `${location}\n`,
+              `${source}\n`,
           );
         }
       }

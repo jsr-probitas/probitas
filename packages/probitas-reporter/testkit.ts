@@ -10,11 +10,7 @@
 import { describe, it } from "@std/testing/bdd";
 import { assertSnapshot } from "@std/testing/snapshot";
 import { Buffer } from "@std/streams/buffer";
-import type {
-  ScenarioOptions,
-  SourceLocation,
-  StepOptions,
-} from "@probitas/runner";
+import type { ScenarioOptions, Source, StepOptions } from "@probitas/runner";
 import type {
   Reporter,
   ReporterOptions,
@@ -25,14 +21,14 @@ import type {
   StepResult,
 } from "./types.ts";
 
-// Source locations for testing
+// Source sources for testing
 export const sourceLocations = {
   scenario1: { file: "test.scenario.ts", line: 10 },
   scenario2: { file: "test.scenario.ts", line: 50 },
   step1: { file: "test.scenario.ts", line: 15 },
   step2: { file: "test.scenario.ts", line: 20 },
   step3: { file: "test.scenario.ts", line: 25 },
-} as const satisfies Record<string, SourceLocation>;
+} as const satisfies Record<string, Source>;
 
 // Default step options for testing
 const defaultStepOptions: StepOptions = {
@@ -57,7 +53,7 @@ export const scenarioOptions = {
 export const stepDefinitions = {
   passing: {
     name: "Step that passes",
-    location: sourceLocations.step1,
+    source: sourceLocations.step1,
     fn: () => {
       return Promise.resolve();
     },
@@ -66,7 +62,7 @@ export const stepDefinitions = {
 
   failing: {
     name: "Step that fails",
-    location: sourceLocations.step2,
+    source: sourceLocations.step2,
     fn: () => {
       throw new Error("Step failed");
     },
@@ -75,7 +71,7 @@ export const stepDefinitions = {
 
   slow: {
     name: "Slow step",
-    location: sourceLocations.step3,
+    source: sourceLocations.step3,
     fn: async () => {
       // Intentionally empty - just simulates a step that could be slow
     },
@@ -89,7 +85,7 @@ export const stepResults = {
     metadata: {
       name: "Step that passes",
       options: defaultStepOptions,
-      location: sourceLocations.step1,
+      source: sourceLocations.step1,
     },
     status: "passed" as const,
     duration: 10,
@@ -100,7 +96,7 @@ export const stepResults = {
     metadata: {
       name: "Step that passes",
       options: defaultStepOptions,
-      location: sourceLocations.step1,
+      source: sourceLocations.step1,
     },
     status: "passed" as const,
     duration: 15,
@@ -111,7 +107,7 @@ export const stepResults = {
     metadata: {
       name: "Step that fails",
       options: defaultStepOptions,
-      location: sourceLocations.step2,
+      source: sourceLocations.step2,
     },
     status: "failed" as const,
     duration: 5,
@@ -124,14 +120,14 @@ export const scenarioDefinitions = {
   simple: {
     name: "Simple passing scenario",
     options: scenarioOptions.default,
-    location: sourceLocations.scenario1,
+    source: sourceLocations.scenario1,
     entries: [{ kind: "step" as const, value: stepDefinitions.passing }],
   },
 
   withMultipleSteps: {
     name: "Scenario with multiple steps",
     options: scenarioOptions.default,
-    location: sourceLocations.scenario1,
+    source: sourceLocations.scenario1,
     entries: [
       { kind: "step" as const, value: stepDefinitions.passing },
       { kind: "step" as const, value: stepDefinitions.passing },
@@ -142,7 +138,7 @@ export const scenarioDefinitions = {
   withFailingStep: {
     name: "Scenario with failing step",
     options: scenarioOptions.default,
-    location: sourceLocations.scenario1,
+    source: sourceLocations.scenario1,
     entries: [
       { kind: "step" as const, value: stepDefinitions.passing },
       { kind: "step" as const, value: stepDefinitions.failing },
@@ -152,7 +148,7 @@ export const scenarioDefinitions = {
   withTags: {
     name: "Tagged scenario",
     options: scenarioOptions.withTags,
-    location: sourceLocations.scenario2,
+    source: sourceLocations.scenario2,
     entries: [{ kind: "step" as const, value: stepDefinitions.passing }],
   },
 } as const satisfies Record<string, ScenarioDefinition>;
@@ -162,7 +158,7 @@ export const scenarioResults = {
   passed: {
     metadata: {
       name: "Simple passing scenario",
-      location: sourceLocations.scenario1,
+      source: sourceLocations.scenario1,
       options: {
         tags: [],
         stepOptions: defaultStepOptions,
@@ -173,7 +169,7 @@ export const scenarioResults = {
           value: {
             name: "Step that passes",
             options: defaultStepOptions,
-            location: sourceLocations.step1,
+            source: sourceLocations.step1,
           },
         },
       ],
@@ -186,7 +182,7 @@ export const scenarioResults = {
   passedMultipleSteps: {
     metadata: {
       name: "Scenario with multiple steps",
-      location: sourceLocations.scenario1,
+      source: sourceLocations.scenario1,
       options: {
         tags: [],
         stepOptions: defaultStepOptions,
@@ -197,7 +193,7 @@ export const scenarioResults = {
           value: {
             name: "Step that passes",
             options: defaultStepOptions,
-            location: sourceLocations.step1,
+            source: sourceLocations.step1,
           },
         },
         {
@@ -205,7 +201,7 @@ export const scenarioResults = {
           value: {
             name: "Step that passes",
             options: defaultStepOptions,
-            location: sourceLocations.step1,
+            source: sourceLocations.step1,
           },
         },
         {
@@ -213,7 +209,7 @@ export const scenarioResults = {
           value: {
             name: "Step that passes",
             options: defaultStepOptions,
-            location: sourceLocations.step1,
+            source: sourceLocations.step1,
           },
         },
       ],
@@ -226,7 +222,7 @@ export const scenarioResults = {
   failed: {
     metadata: {
       name: "Scenario with failing step",
-      location: sourceLocations.scenario1,
+      source: sourceLocations.scenario1,
       options: {
         tags: [],
         stepOptions: defaultStepOptions,
@@ -237,7 +233,7 @@ export const scenarioResults = {
           value: {
             name: "Step that passes",
             options: defaultStepOptions,
-            location: sourceLocations.step1,
+            source: sourceLocations.step1,
           },
         },
         {
@@ -245,7 +241,7 @@ export const scenarioResults = {
           value: {
             name: "Step that fails",
             options: defaultStepOptions,
-            location: sourceLocations.step2,
+            source: sourceLocations.step2,
           },
         },
       ],
@@ -259,7 +255,7 @@ export const scenarioResults = {
   withTags: {
     metadata: {
       name: "Tagged scenario",
-      location: sourceLocations.scenario2,
+      source: sourceLocations.scenario2,
       options: {
         tags: ["@smoke", "@api"],
         stepOptions: defaultStepOptions,
@@ -270,7 +266,7 @@ export const scenarioResults = {
           value: {
             name: "Step that passes",
             options: defaultStepOptions,
-            location: sourceLocations.step1,
+            source: sourceLocations.step1,
           },
         },
       ],

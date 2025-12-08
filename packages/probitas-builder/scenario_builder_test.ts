@@ -48,12 +48,12 @@ describe("ScenarioBuilder", () => {
       assertEquals(definition.name, "My Scenario");
     });
 
-    it("captures scenario location at build time", () => {
+    it("captures scenario source at build time", () => {
       const definition = scenario("Test").build();
-      assertExists(definition.location);
+      assertExists(definition.source);
       // Location should point to the test file where build() was called
       assertEquals(
-        definition.location.file.includes("scenario_builder_test.ts"),
+        definition.source.file.includes("scenario_builder_test.ts"),
         true,
       );
     });

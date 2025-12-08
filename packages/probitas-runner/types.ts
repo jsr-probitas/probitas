@@ -468,7 +468,7 @@ export type {
   SetupDefinition,
   SetupFunction,
   SetupMetadata,
-  SourceLocation,
+  Source,
   StepContext,
   StepDefinition,
   StepFunction,

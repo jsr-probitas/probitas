@@ -9,21 +9,21 @@
  */
 
 /**
- * Source location in a file for error reporting and debugging.
+ * Source source in a file for error reporting and debugging.
  *
  * Captured automatically when defining scenarios, steps, and setups.
  * Used by reporters to show meaningful stack traces.
  *
  * @example
  * ```ts
- * // Example location object
- * const location: SourceLocation = {
+ * // Example source object
+ * const source: Source = {
  *   file: "/project/tests/auth.probitas.ts",
  *   line: 42
  * };
  * ```
  */
-export interface SourceLocation {
+export interface Source {
   /** Absolute file path where the element was defined */
   readonly file: string;
 
@@ -395,14 +395,14 @@ export interface StepDefinition<
   /** Step execution options (timeout, retry) with defaults applied */
   readonly options: StepOptions;
 
-  /** Source location where the step was defined (for error messages) */
-  readonly location?: SourceLocation;
+  /** Source source where the step was defined (for error messages) */
+  readonly source?: Source;
 }
 
 /**
  * Immutable definition of a setup hook.
  *
- * Setup definitions contain the setup function and its source location.
+ * Setup definitions contain the setup function and its source source.
  * Unlike steps, setups don't have names or configurable options.
  *
  * @typeParam Previous - Type of the previous step's result
@@ -417,15 +417,15 @@ export interface SetupDefinition<
   /** Setup function to execute (may return cleanup handler) */
   readonly fn: SetupFunction<Previous, Results, Resources>;
 
-  /** Source location where the setup was defined */
-  readonly location?: SourceLocation;
+  /** Source source where the setup was defined */
+  readonly source?: Source;
 }
 
 /**
  * Immutable definition of a named resource.
  *
  * Resource definitions contain everything needed to create and identify
- * a resource: its name, factory function, and source location.
+ * a resource: its name, factory function, and source source.
  *
  * @typeParam T - Type of the resource value
  * @typeParam Previous - Type of the previous step's result
@@ -444,8 +444,8 @@ export interface ResourceDefinition<
   /** Factory function that creates the resource */
   readonly factory: ResourceFactory<T, Previous, Results, Resources>;
 
-  /** Source location where the resource was defined */
-  readonly location?: SourceLocation;
+  /** Source source where the resource was defined */
+  readonly source?: Source;
 }
 
 /**
@@ -504,7 +504,7 @@ export type Entry =
  *     { kind: "step", value: { name: "Login", fn: ..., options: ... } },
  *     { kind: "step", value: { name: "Verify", fn: ..., options: ... } }
  *   ],
- *   location: { file: "/tests/auth.probitas.ts", line: 5 }
+ *   source: { file: "/tests/auth.probitas.ts", line: 5 }
  * };
  * ```
  */
@@ -518,8 +518,8 @@ export interface ScenarioDefinition {
   /** Ordered sequence of entries (resources → setups → steps) */
   readonly entries: readonly Entry[];
 
-  /** Source location where the scenario was defined */
-  readonly location?: SourceLocation;
+  /** Source source where the scenario was defined */
+  readonly source?: Source;
 }
 
 /**
@@ -532,14 +532,14 @@ export type StepMetadata = Omit<StepDefinition, "fn">;
 /**
  * Serializable setup metadata (without the function).
  *
- * Contains only the source location since setups have no name or options.
+ * Contains only the source source since setups have no name or options.
  */
 export type SetupMetadata = Omit<SetupDefinition, "fn">;
 
 /**
  * Serializable resource metadata (without the factory function).
  *
- * Contains the resource name and source location.
+ * Contains the resource name and source source.
  */
 export type ResourceMetadata = Omit<ResourceDefinition, "factory">;
 
@@ -568,7 +568,7 @@ export type EntryMetadata =
  *   "entries": [
  *     { "kind": "step", "value": { "name": "Login", "options": { ... } } }
  *   ],
- *   "location": { "file": "/tests/auth.probitas.ts", "line": 5 }
+ *   "source": { "file": "/tests/auth.probitas.ts", "line": 5 }
  * }
  * ```
  */
@@ -582,6 +582,6 @@ export interface ScenarioMetadata {
   /** Entry metadata (functions omitted for serialization) */
   readonly entries: readonly EntryMetadata[];
 
-  /** Source location where the scenario was defined */
-  readonly location?: SourceLocation;
+  /** Source source where the scenario was defined */
+  readonly source?: Source;
 }

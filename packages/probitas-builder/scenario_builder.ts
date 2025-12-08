@@ -21,7 +21,7 @@ import type {
 } from "@probitas/scenario";
 import type { BuilderScenarioOptions, BuilderStepOptions } from "./types.ts";
 import { DEFAULT_SCENARIO_OPTIONS, DEFAULT_STEP_OPTIONS } from "./defaults.ts";
-import { captureSourceLocation } from "./capture_source_location.ts";
+import { captureSource } from "./capture_source.ts";
 
 /**
  * Merge partial step options with scenario defaults
@@ -120,10 +120,10 @@ class ScenarioBuilderState<
   }
 
   addSetup(fn: SetupFunction): void {
-    const location = captureSourceLocation(3);
+    const source = captureSource(3);
     const setupDef: SetupDefinition = {
       fn,
-      location,
+      source,
     };
     this.#entries.push({
       kind: "setup",
@@ -152,14 +152,14 @@ class ScenarioBuilderState<
       options = fnOrOptions as BuilderStepOptions | undefined;
     }
 
-    const stepLocation = captureSourceLocation(3);
+    const stepLocation = captureSource(3);
     const mergedOptions = mergeStepOptions(this.#scenarioOptions, options);
 
     const stepDef: StepDefinition = {
       name: stepName,
       fn: stepFn as StepFunction,
       options: mergedOptions,
-      location: stepLocation,
+      source: stepLocation,
     };
 
     this.#entries.push({
@@ -183,15 +183,15 @@ class ScenarioBuilderState<
       },
     };
 
-    // Capture location at build time
-    // depth=3 to skip: captureSourceLocation -> State.build -> BuilderClass.build
-    const scenarioLocation = captureSourceLocation(3);
+    // Capture source at build time
+    // depth=3 to skip: captureSource -> State.build -> BuilderClass.build
+    const scenarioLocation = captureSource(3);
 
     const definition: ScenarioDefinition = {
       name: this.#name,
       options: mergedScenarioOptions,
       entries: Object.freeze([...this.#entries]) as readonly Entry[],
-      location: scenarioLocation,
+      source: scenarioLocation,
     };
 
     return definition;
@@ -444,7 +444,7 @@ class ScenarioBuilderInit<
    * that can be executed by the runner. The definition includes:
    * - All registered resources, setups, and steps in declaration order
    * - Merged options with defaults applied
-   * - Source location information for error reporting
+   * - Source source information for error reporting
    *
    * @returns Immutable scenario definition ready for execution
    *

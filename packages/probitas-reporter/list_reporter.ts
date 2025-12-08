@@ -42,10 +42,10 @@ export class ListReporter extends BaseReporter {
     scenario: ScenarioDefinition,
   ): Promise<void> {
     const icon = this.theme.success("✓");
-    const location = result.metadata.location
+    const source = result.metadata.source
       ? ` ${
         this.theme.dim(
-          `(${result.metadata.location.file}:${result.metadata.location.line})`,
+          `(${result.metadata.source.file}:${result.metadata.source.line})`,
         )
       }`
       : "";
@@ -53,7 +53,7 @@ export class ListReporter extends BaseReporter {
 
     await this.write(
       `${icon} ${scenario.name} ${this.theme.dim(">")} ` +
-        `${result.metadata.name}${location}${time}\n`,
+        `${result.metadata.name}${source}${time}\n`,
     );
   }
 
@@ -72,14 +72,14 @@ export class ListReporter extends BaseReporter {
     scenario: ScenarioDefinition,
   ): Promise<void> {
     const icon = this.theme.failure("✗");
-    const location = step.location
-      ? ` ${this.theme.dim(`(${step.location.file}:${step.location.line})`)}`
+    const source = step.source
+      ? ` ${this.theme.dim(`(${step.source.file}:${step.source.line})`)}`
       : "";
     const time = ` ${this.theme.info(`[${duration.toFixed(3)}ms]`)}`;
 
     await this.write(
       `${icon} ${scenario.name} ${this.theme.dim(">")} ` +
-        `${step.name}${location}${time}\n`,
+        `${step.name}${source}${time}\n`,
     );
     await this.write(`  ${this.theme.failure(error.message)}\n`);
 
@@ -106,10 +106,10 @@ export class ListReporter extends BaseReporter {
     duration: number,
   ): Promise<void> {
     const icon = this.theme.skip("⊘");
-    const location = scenario.location
+    const source = scenario.source
       ? ` ${
         this.theme.dim(
-          `(${scenario.location.file}:${scenario.location.line})`,
+          `(${scenario.source.file}:${scenario.source.line})`,
         )
       }`
       : "";
@@ -117,7 +117,7 @@ export class ListReporter extends BaseReporter {
     const time = ` ${this.theme.info(`[${duration.toFixed(3)}ms]`)}`;
 
     await this.write(
-      `${icon} ${scenario.name}${location}${reasonText}${time}\n`,
+      `${icon} ${scenario.name}${source}${reasonText}${time}\n`,
     );
   }
 
@@ -150,10 +150,10 @@ export class ListReporter extends BaseReporter {
         // Show failed steps
         const failedSteps = scenario.steps.filter((s) => s.status === "failed");
         for (const step of failedSteps) {
-          const location = step.metadata.location
+          const source = step.metadata.source
             ? ` ${
               this.theme.dim(
-                `(${step.metadata.location.file}:${step.metadata.location.line})`,
+                `(${step.metadata.source.file}:${step.metadata.source.line})`,
               )
             }`
             : "";
@@ -161,7 +161,7 @@ export class ListReporter extends BaseReporter {
             `  ${this.theme.failure("✗")} ` +
               `${scenario.metadata.name} ${this.theme.dim(">")} ` +
               `${step.metadata.name}` +
-              `${location}\n`,
+              `${source}\n`,
           );
         }
       }
