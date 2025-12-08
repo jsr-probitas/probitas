@@ -14,6 +14,9 @@ Options:
                             Supports ! prefix for negation
   --reporter <name>         Reporter to use (dot, list, json, tap)
                             Default: "list"
+  --timeout <duration>      Timeout for scenario execution (e.g., "30s", "10m", "1h")
+                            Default: "30s". Use "0" for no timeout.
+  --no-timeout              Disable timeout (alias for --timeout 0)
   --max-concurrency <n>     Maximum parallel scenarios (default: unlimited)
   -S, --sequential          Run scenarios sequentially (alias for --max-concurrency=1)
   --max-failures <n>        Stop after N failures
@@ -74,6 +77,10 @@ Examples:
   probitas run probitas/auth/ -s tag:smoke Run smoke tests in auth/ directory
 
   # Execution control
+  probitas run --timeout 30s                Set scenario execution timeout to 30 seconds (default)
+  probitas run --timeout 10m                Set scenario execution timeout to 10 minutes
+  probitas run --timeout 0                  Disable timeout (no time limit)
+  probitas run --no-timeout                 Disable timeout (alias for --timeout 0)
   probitas run --max-concurrency 5          Run up to 5 scenarios in parallel
   probitas run -S                           Run scenarios sequentially
   probitas run --sequential                 Run scenarios sequentially

@@ -21,6 +21,7 @@ const isProbitasConfig = is.PartialOf(is.ObjectOf({
   selectors: isStringArray,
   maxConcurrency: is.Number,
   maxFailures: is.Number,
+  timeout: is.String,
 }));
 
 /**

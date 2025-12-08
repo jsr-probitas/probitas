@@ -7,13 +7,14 @@
 import { parseArgs } from "@std/cli";
 import { resolve } from "@std/path";
 import { configureLogging, getLogger, type LogLevel } from "@probitas/logger";
-import { EXIT_CODE } from "../constants.ts";
+import { DEFAULT_TIMEOUT, EXIT_CODE } from "../constants.ts";
 import { loadConfig } from "../config.ts";
 import { discoverScenarioFiles } from "@probitas/discover";
 import {
   createTempSubprocessConfig,
   findDenoConfigFile,
   parsePositiveInteger,
+  parseTimeout,
   readAsset,
 } from "../utils.ts";
 
@@ -43,10 +44,12 @@ export async function runCommand(
         "include",
         "exclude",
         "selector",
+        "timeout",
       ],
       boolean: [
         "help",
         "no-color",
+        "no-timeout",
         "reload",
         "quiet",
         "verbose",
@@ -153,6 +156,14 @@ export async function runCommand(
       ? parsePositiveInteger(parsed["max-failures"], "max-failures")
       : config?.maxFailures;
 
+    // Parse timeout: CLI > config > default
+    // --no-timeout or --timeout 0 disables timeout
+    // Note: CLI accepts string format, config has string format, but we convert to seconds here
+    const timeoutString = parsed["no-timeout"]
+      ? "0"
+      : (parsed.timeout ?? config?.timeout ?? DEFAULT_TIMEOUT);
+    const timeout = parseTimeout(timeoutString);
+
     const subprocessInput = {
       files: scenarioFiles,
       selectors,
@@ -161,6 +172,7 @@ export async function runCommand(
       logLevel,
       maxConcurrency,
       maxFailures,
+      timeout,
     };
 
     // Prepare config file for subprocess with scopes

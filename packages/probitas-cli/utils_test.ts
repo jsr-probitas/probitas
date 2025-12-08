@@ -18,6 +18,7 @@ import {
   findDenoConfigFile,
   getVersion,
   parsePositiveInteger,
+  parseTimeout,
   readAsset,
   readTemplate,
   resolveReporter,
@@ -104,6 +105,73 @@ describe("utils", () => {
         () => parsePositiveInteger("-1", "test"),
         Error,
         "test must be a positive integer",
+      );
+    });
+  });
+
+  describe("parseTimeout", () => {
+    it("parses seconds format", () => {
+      assertEquals(parseTimeout("30s"), 30);
+      assertEquals(parseTimeout("1s"), 1);
+      assertEquals(parseTimeout("120s"), 120);
+    });
+
+    it("parses minutes format", () => {
+      assertEquals(parseTimeout("10m"), 600);
+      assertEquals(parseTimeout("1m"), 60);
+      assertEquals(parseTimeout("2.5m"), 150);
+    });
+
+    it("parses hours format", () => {
+      assertEquals(parseTimeout("1h"), 3600);
+      assertEquals(parseTimeout("2h"), 7200);
+      assertEquals(parseTimeout("0.5h"), 1800);
+    });
+
+    it("parses string numbers without unit as seconds", () => {
+      assertEquals(parseTimeout("30"), 30);
+      assertEquals(parseTimeout("120"), 120);
+    });
+
+    it("handles decimal values", () => {
+      assertEquals(parseTimeout("1.5s"), 1.5);
+      assertEquals(parseTimeout("2.5m"), 150);
+    });
+
+    it("is case insensitive", () => {
+      assertEquals(parseTimeout("30S"), 30);
+      assertEquals(parseTimeout("10M"), 600);
+      assertEquals(parseTimeout("1H"), 3600);
+    });
+
+    it("returns undefined for zero timeout (no timeout)", () => {
+      assertEquals(parseTimeout("0"), undefined);
+      assertEquals(parseTimeout("0s"), undefined);
+      assertEquals(parseTimeout("0m"), undefined);
+      assertEquals(parseTimeout("0h"), undefined);
+    });
+
+    it("throws error for invalid format", () => {
+      assertThrows(
+        () => parseTimeout("abc"),
+        Error,
+        'Invalid timeout format: "abc"',
+      );
+    });
+
+    it("throws error for invalid unit", () => {
+      assertThrows(
+        () => parseTimeout("30x"),
+        Error,
+        "Invalid timeout format",
+      );
+    });
+
+    it("throws error for negative timeout", () => {
+      assertThrows(
+        () => parseTimeout("-10s"),
+        Error,
+        "Invalid timeout format",
       );
     });
   });
