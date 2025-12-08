@@ -15,6 +15,7 @@ import type {
   ScenarioDefinition,
   ScenarioMetadata,
   ScenarioResult,
+  SetupCleanup,
   StepDefinition,
   StepMetadata,
   StepResult,
@@ -208,7 +209,7 @@ export class ScenarioRunner {
 
       // Execute entries in order
       // Log resource initialization phase
-      const resourceCount = scenario.entries.filter((e) =>
+      const resourceCount = scenario.steps.filter((e) =>
         e.kind === "resource"
       ).length;
       if (resourceCount > 0) {
@@ -219,7 +220,7 @@ export class ScenarioRunner {
       }
 
       // Log setup functions phase
-      const setupCount = scenario.entries.filter((e) => e.kind === "setup")
+      const setupCount = scenario.steps.filter((e) => e.kind === "setup")
         .length;
       if (setupCount > 0) {
         logger.debug("Running setup functions", {
@@ -229,7 +230,7 @@ export class ScenarioRunner {
       }
 
       // Log steps execution phase
-      const stepCount = scenario.entries.filter((e) => e.kind === "step")
+      const stepCount = scenario.steps.filter((e) => e.kind === "step")
         .length;
       if (stepCount > 0) {
         logger.debug("Executing steps", {
@@ -238,23 +239,20 @@ export class ScenarioRunner {
         });
       }
 
-      for (const entry of scenario.entries) {
+      for (const step of scenario.steps) {
         try {
-          switch (entry.kind) {
+          switch (step.kind) {
             case "resource": {
-              // Notify reporter of resource start
-              if (reporter?.onResourceStart) {
-                await reporter.onResourceStart(entry.value, scenario);
-              }
+              await reporter?.onStepStart?.(step, scenario);
 
               try {
                 // Initialize resource
                 const resourceCtx = createEntryContext();
-                const resource = await entry.value.fn(resourceCtx);
-                resources[entry.value.name] = resource;
+                const resource = await step.fn(resourceCtx);
+                resources[step.name] = resource;
 
                 logger.debug("Resource initialized", {
-                  resource: entry.value.name,
+                  resource: step.name,
                   scenario: scenario.name,
                   resourceValue: resource,
                 });
@@ -270,9 +268,12 @@ export class ScenarioRunner {
                 }
 
                 // Notify reporter of resource end
-                if (reporter?.onResourceEnd) {
-                  await reporter.onResourceEnd(entry.value, scenario);
-                }
+                await reporter?.onStepEnd?.(step, {
+                  status: "passed",
+                  value: undefined,
+                  duration: 0,
+                  metadata: this.#stepToMetadata(step),
+                }, scenario);
               } catch (e) {
                 // Skip should propagate without error reporting
                 if (e instanceof Skip) {
@@ -280,13 +281,11 @@ export class ScenarioRunner {
                 }
                 const error = e instanceof Error ? e : new Error(String(e));
                 logger.error("Resource initialization failed", {
-                  name: entry.value.name,
+                  name: step.name,
                   scenario: scenario.name,
                   error: error.message,
                 });
-                if (reporter?.onResourceError) {
-                  await reporter.onResourceError(entry.value, error, scenario);
-                }
+                await reporter?.onStepError?.(step, error, 0, scenario);
                 throw error;
               }
               break;
@@ -294,14 +293,12 @@ export class ScenarioRunner {
 
             case "setup": {
               // Notify reporter of setup start
-              if (reporter?.onSetupStart) {
-                await reporter.onSetupStart(entry.value, scenario);
-              }
+              await reporter?.onStepStart?.(step, scenario);
 
               try {
                 // Execute setup function
                 const setupCtx = createEntryContext();
-                const result = await entry.value.fn(setupCtx);
+                const result = await step.fn(setupCtx) as SetupCleanup;
 
                 logger.debug("Setup function completed", {
                   scenario: scenario.name,
@@ -319,10 +316,12 @@ export class ScenarioRunner {
                   }
                 }
 
-                // Notify reporter of setup end
-                if (reporter?.onSetupEnd) {
-                  await reporter.onSetupEnd(entry.value, scenario);
-                }
+                await reporter?.onStepEnd?.(step, {
+                  status: "passed",
+                  value: undefined,
+                  duration: 0,
+                  metadata: this.#stepToMetadata(step),
+                }, scenario);
               } catch (e) {
                 // Skip should propagate without error reporting
                 if (e instanceof Skip) {
@@ -333,9 +332,7 @@ export class ScenarioRunner {
                   scenario: scenario.name,
                   error: error.message,
                 });
-                if (reporter?.onSetupError) {
-                  await reporter.onSetupError(entry.value, error, scenario);
-                }
+                await reporter?.onStepError?.(step, error, 0, scenario);
                 throw error;
               }
               break;
@@ -343,7 +340,7 @@ export class ScenarioRunner {
 
             case "step": {
               // Execute step
-              const stepDef = entry.value;
+              const stepDef = step;
               const stepResults = resultsContainer.data;
 
               const stepCtx = createEntryContext();
@@ -504,7 +501,7 @@ export class ScenarioRunner {
     return {
       name: scenario.name,
       tags: scenario.tags,
-      entries: scenario.entries,
+      steps: scenario.steps,
       source: scenario.source,
     };
   }
@@ -516,6 +513,7 @@ export class ScenarioRunner {
     step: StepDefinition,
   ): StepMetadata {
     return {
+      kind: step.kind,
       name: step.name,
       timeout: step.timeout,
       retry: step.retry,

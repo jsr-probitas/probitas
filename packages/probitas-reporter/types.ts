@@ -136,11 +136,9 @@ export interface ReporterOptions {
 // Re-export types needed by reporter implementations and consumers
 export type {
   Reporter,
-  ResourceDefinition,
   RunSummary,
   ScenarioDefinition,
   ScenarioResult,
-  SetupDefinition,
   StepDefinition,
   StepResult,
 } from "@probitas/runner";

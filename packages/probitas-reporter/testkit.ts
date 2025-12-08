@@ -52,6 +52,7 @@ export const scenarioOptions = {
 // Step definitions
 export const stepDefinitions = {
   passing: {
+    kind: "step",
     name: "Step that passes",
     source: sourceLocations.step1,
     fn: () => {
@@ -62,6 +63,7 @@ export const stepDefinitions = {
   },
 
   failing: {
+    kind: "step",
     name: "Step that fails",
     source: sourceLocations.step2,
     fn: () => {
@@ -72,6 +74,7 @@ export const stepDefinitions = {
   },
 
   slow: {
+    kind: "step",
     name: "Slow step",
     source: sourceLocations.step3,
     fn: async () => {
@@ -86,6 +89,7 @@ export const stepDefinitions = {
 export const stepResults = {
   passed: {
     metadata: {
+      kind: "step",
       name: "Step that passes",
       timeout: 5000,
       retry: { maxAttempts: 1, backoff: "linear" as const },
@@ -98,6 +102,7 @@ export const stepResults = {
 
   passedWithOutput: {
     metadata: {
+      kind: "step",
       name: "Step that passes",
       timeout: 5000,
       retry: { maxAttempts: 1, backoff: "linear" as const },
@@ -110,6 +115,7 @@ export const stepResults = {
 
   failed: {
     metadata: {
+      kind: "step",
       name: "Step that fails",
       timeout: 5000,
       retry: { maxAttempts: 1, backoff: "linear" as const },
@@ -127,17 +133,17 @@ export const scenarioDefinitions = {
     name: "Simple passing scenario",
     tags: [],
     source: sourceLocations.scenario1,
-    entries: [{ kind: "step" as const, value: stepDefinitions.passing }],
+    steps: [stepDefinitions.passing],
   },
 
   withMultipleSteps: {
     name: "Scenario with multiple steps",
     tags: [],
     source: sourceLocations.scenario1,
-    entries: [
-      { kind: "step" as const, value: stepDefinitions.passing },
-      { kind: "step" as const, value: stepDefinitions.passing },
-      { kind: "step" as const, value: stepDefinitions.passing },
+    steps: [
+      stepDefinitions.passing,
+      stepDefinitions.passing,
+      stepDefinitions.passing,
     ],
   },
 
@@ -145,9 +151,9 @@ export const scenarioDefinitions = {
     name: "Scenario with failing step",
     tags: [],
     source: sourceLocations.scenario1,
-    entries: [
-      { kind: "step" as const, value: stepDefinitions.passing },
-      { kind: "step" as const, value: stepDefinitions.failing },
+    steps: [
+      stepDefinitions.passing,
+      stepDefinitions.failing,
     ],
   },
 
@@ -155,7 +161,7 @@ export const scenarioDefinitions = {
     name: "Tagged scenario",
     tags: ["@smoke", "@api"],
     source: sourceLocations.scenario2,
-    entries: [{ kind: "step" as const, value: stepDefinitions.passing }],
+    steps: [stepDefinitions.passing],
   },
 } as const satisfies Record<string, ScenarioDefinition>;
 
@@ -166,15 +172,13 @@ export const scenarioResults = {
       name: "Simple passing scenario",
       source: sourceLocations.scenario1,
       tags: [],
-      entries: [
+      steps: [
         {
           kind: "step" as const,
-          value: {
-            name: "Step that passes",
-            timeout: 5000,
-            retry: { maxAttempts: 1, backoff: "linear" as const },
-            source: sourceLocations.step1,
-          },
+          name: "Step that passes",
+          timeout: 5000,
+          retry: { maxAttempts: 1, backoff: "linear" as const },
+          source: sourceLocations.step1,
         },
       ],
     },
@@ -188,33 +192,27 @@ export const scenarioResults = {
       name: "Scenario with multiple steps",
       source: sourceLocations.scenario1,
       tags: [],
-      entries: [
+      steps: [
         {
           kind: "step" as const,
-          value: {
-            name: "Step that passes",
-            timeout: 5000,
-            retry: { maxAttempts: 1, backoff: "linear" as const },
-            source: sourceLocations.step1,
-          },
+          name: "Step that passes",
+          timeout: 5000,
+          retry: { maxAttempts: 1, backoff: "linear" as const },
+          source: sourceLocations.step1,
         },
         {
           kind: "step" as const,
-          value: {
-            name: "Step that passes",
-            timeout: 5000,
-            retry: { maxAttempts: 1, backoff: "linear" as const },
-            source: sourceLocations.step1,
-          },
+          name: "Step that passes",
+          timeout: 5000,
+          retry: { maxAttempts: 1, backoff: "linear" as const },
+          source: sourceLocations.step1,
         },
         {
           kind: "step" as const,
-          value: {
-            name: "Step that passes",
-            timeout: 5000,
-            retry: { maxAttempts: 1, backoff: "linear" as const },
-            source: sourceLocations.step1,
-          },
+          name: "Step that passes",
+          timeout: 5000,
+          retry: { maxAttempts: 1, backoff: "linear" as const },
+          source: sourceLocations.step1,
         },
       ],
     },
@@ -228,24 +226,20 @@ export const scenarioResults = {
       name: "Scenario with failing step",
       source: sourceLocations.scenario1,
       tags: [],
-      entries: [
+      steps: [
         {
           kind: "step" as const,
-          value: {
-            name: "Step that passes",
-            timeout: 5000,
-            retry: { maxAttempts: 1, backoff: "linear" as const },
-            source: sourceLocations.step1,
-          },
+          name: "Step that passes",
+          timeout: 5000,
+          retry: { maxAttempts: 1, backoff: "linear" as const },
+          source: sourceLocations.step1,
         },
         {
           kind: "step" as const,
-          value: {
-            name: "Step that fails",
-            timeout: 5000,
-            retry: { maxAttempts: 1, backoff: "linear" as const },
-            source: sourceLocations.step2,
-          },
+          name: "Step that fails",
+          timeout: 5000,
+          retry: { maxAttempts: 1, backoff: "linear" as const },
+          source: sourceLocations.step2,
         },
       ],
     },
@@ -260,15 +254,13 @@ export const scenarioResults = {
       name: "Tagged scenario",
       source: sourceLocations.scenario2,
       tags: ["@smoke", "@api"],
-      entries: [
+      steps: [
         {
-          kind: "step" as const,
-          value: {
-            name: "Step that passes",
-            timeout: 5000,
-            retry: { maxAttempts: 1, backoff: "linear" as const },
-            source: sourceLocations.step1,
-          },
+          kind: "step",
+          name: "Step that passes",
+          timeout: 5000,
+          retry: { maxAttempts: 1, backoff: "linear" as const },
+          source: sourceLocations.step1,
         },
       ],
     },

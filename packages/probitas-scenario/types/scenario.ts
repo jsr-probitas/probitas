@@ -1,13 +1,5 @@
 import type { Source } from "./source.ts";
-import type {
-  ResourceDefinition,
-  ResourceMetadata,
-  SetupDefinition,
-  SetupMetadata,
-  StepDefinition,
-  StepMetadata,
-  StepOptions,
-} from "./step.ts";
+import type { StepDefinition, StepMetadata, StepOptions } from "./step.ts";
 
 /**
  * Configuration options for scenario execution.
@@ -97,40 +89,11 @@ export interface ScenarioDefinition {
   readonly tags: readonly string[];
 
   /** Ordered sequence of entries (resources → setups → steps) */
-  readonly entries: readonly Entry[];
+  readonly steps: readonly StepDefinition[];
 
   /** Source source where the scenario was defined */
   readonly source?: Source;
 }
-
-/**
- * Discriminated union representing an entry in a scenario.
- *
- * A scenario consists of an ordered sequence of entries, where each entry
- * is either a step, resource, or setup. The `kind` field serves as the
- * discriminant for type narrowing.
- *
- * @example Type narrowing with kind
- * ```ts
- * function processEntry(entry: Entry) {
- *   switch (entry.kind) {
- *     case "step":
- *       console.log(`Step: ${entry.value.name}`);
- *       break;
- *     case "resource":
- *       console.log(`Resource: ${entry.value.name}`);
- *       break;
- *     case "setup":
- *       console.log("Setup hook");
- *       break;
- *   }
- * }
- * ```
- */
-export type Entry =
-  | { readonly kind: "step"; readonly value: StepDefinition }
-  | { readonly kind: "resource"; readonly value: ResourceDefinition }
-  | { readonly kind: "setup"; readonly value: SetupDefinition };
 
 /**
  * Serializable scenario metadata (without executable functions).
@@ -167,19 +130,8 @@ export interface ScenarioMetadata {
   readonly tags: readonly string[];
 
   /** Entry metadata (functions omitted for serialization) */
-  readonly entries: readonly EntryMetadata[];
+  readonly steps: readonly StepMetadata[];
 
   /** Source source where the scenario was defined */
   readonly source?: Source;
 }
-
-/**
- * Serializable entry metadata for JSON output and tooling.
- *
- * Same discriminated union structure as {@linkcode Entry}, but with
- * functions omitted for serialization.
- */
-export type EntryMetadata =
-  | { readonly kind: "step"; readonly value: StepMetadata }
-  | { readonly kind: "resource"; readonly value: ResourceMetadata }
-  | { readonly kind: "setup"; readonly value: SetupMetadata };

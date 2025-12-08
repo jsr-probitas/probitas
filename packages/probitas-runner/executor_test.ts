@@ -14,6 +14,7 @@ import type { StepContext, StepDefinition } from "./types.ts";
 const createTestStep = (
   overrides?: Partial<StepDefinition>,
 ): StepDefinition => ({
+  kind: "step",
   name: "Test Step",
   fn: () => "result",
   timeout: 5000,

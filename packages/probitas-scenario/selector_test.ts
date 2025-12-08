@@ -17,7 +17,7 @@ describe("selector", () => {
   ): ScenarioDefinition => ({
     name,
     tags,
-    entries: [],
+    steps: [],
   });
 
   describe("parseSelector", () => {

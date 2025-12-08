@@ -45,15 +45,13 @@ export class TAPReporter extends BaseReporter {
 
     // Store step counts per scenario for skip handling
     for (const scenario of scenarios) {
-      const stepCount = scenario.entries.filter((e) =>
-        e.kind === "step"
-      ).length;
+      const stepCount = scenario.steps.filter((e) => e.kind === "step").length;
       this.#skippedScenarioSteps.set(scenario.name, stepCount);
     }
 
     // Calculate total number of steps
     this.#totalSteps = scenarios.reduce(
-      (sum, s) => sum + s.entries.filter((e) => e.kind === "step").length,
+      (sum, s) => sum + s.steps.filter((e) => e.kind === "step").length,
       0,
     );
 

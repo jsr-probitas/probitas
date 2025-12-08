@@ -218,6 +218,8 @@ export type StepFunction<T = unknown> = (ctx: StepContext) => T | Promise<T>;
  * They are immutable and should not be modified after creation.
  */
 export interface StepDefinition<T = unknown> {
+  readonly kind: "step" | "resource" | "setup";
+
   /** Human-readable step name (displayed in reports) */
   readonly name: string;
 
@@ -266,109 +268,3 @@ export interface StepDefinition<T = unknown> {
  * Used for JSON output, tooling, and inspection without executing code.
  */
 export type StepMetadata = Omit<StepDefinition, "fn">;
-
-/**
- * Function signature for setup hooks.
- *
- * Setup functions run before steps and can return a cleanup handler
- * that executes after the scenario completes (success or failure).
- *
- * @example Setup with cleanup function
- * ```ts
- * const setup: SetupFunction = (ctx) => {
- *   const server = startTestServer();
- *   ctx.store.set("serverUrl", server.url);
- *   return () => server.close();  // Cleanup after scenario
- * };
- * ```
- *
- * @example Async setup returning Disposable
- * ```ts
- * const setup: SetupFunction = async (ctx) => {
- *   const db = await Database.connect();
- *   await db.migrate();
- *   return db;  // db[Symbol.asyncDispose]() called on cleanup
- * };
- * ```
- *
- * @see {@linkcode SetupCleanup} for supported cleanup return types
- */
-export type SetupFunction = (
-  ctx: StepContext,
-) => SetupCleanup | Promise<SetupCleanup>;
-
-/**
- * Immutable definition of a setup hook.
- *
- * Setup definitions contain the setup function and its source source.
- * Unlike steps, setups don't have names or configurable options.
- */
-export interface SetupDefinition {
-  /** Setup function to execute (may return cleanup handler) */
-  readonly fn: SetupFunction;
-
-  /** Source source where the setup was defined */
-  readonly source?: Source;
-}
-
-/**
- * Serializable setup metadata (without the function).
- *
- * Contains only the source source since setups have no name or options.
- */
-export type SetupMetadata = Omit<SetupDefinition, "fn">;
-
-/**
- * Function signature for resource fn functions.
- *
- * Resource factories create named dependencies that are:
- * - Initialized before any steps run
- * - Available to all steps via `ctx.resources[name]`
- * - Automatically disposed after the scenario (if Disposable)
- *
- * @typeParam T - Type of resource to create
- *
- * @example Database connection resource
- * ```ts
- * const dbFactory: ResourceFunction<Database> = async (ctx) => {
- *   const conn = await Database.connect(process.env.DATABASE_URL);
- *   return conn;  // Disposed automatically if implements AsyncDisposable
- * };
- * ```
- *
- * @example Resource depending on another resource
- * ```ts
- * // Second resource can access the first
- * const apiFactory: ResourceFunction<ApiClient, unknown, [], { config: Config }> =
- *   (ctx) => new ApiClient(ctx.resources.config.apiUrl);
- * ```
- */
-export type ResourceFunction<T = unknown> = (
-  ctx: StepContext,
-) => T | Promise<T>;
-
-/**
- * Immutable definition of a named resource.
- *
- * Resource definitions contain everything needed to create and identify
- * a resource: its name, fn function, and source source.
- *
- * @typeParam T - Type of the resource value
- */
-export interface ResourceDefinition<T = unknown> {
-  /** Unique resource name (used as key in `ctx.resources`) */
-  readonly name: string;
-
-  /** Factory function that creates the resource */
-  readonly fn: ResourceFunction<T>;
-
-  /** Source source where the resource was defined */
-  readonly source?: Source;
-}
-
-/**
- * Serializable resource metadata (without the fn function).
- *
- * Contains the resource name and source source.
- */
-export type ResourceMetadata = Omit<ResourceDefinition, "fn">;

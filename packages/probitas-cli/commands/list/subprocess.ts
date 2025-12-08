@@ -164,7 +164,7 @@ function outputJson(scenarios: ScenarioDefinition[]): void {
   const output = scenarios.map((scenario) => ({
     name: scenario.name,
     tags: scenario.tags,
-    steps: scenario.entries.filter((e) => e.kind === "step").length,
+    steps: scenario.steps.filter((e) => e.kind === "step").length,
     file: scenario.source?.file || "unknown",
   }));
 

@@ -23,17 +23,15 @@ const createScenario = (name: string, file: string, failing = false) =>
   export default {
     name: "${name}",
     tags: [],
-    entries: [
+    steps: [
       {
         kind: "step",
-        value: {
-          name: "Step 1",
-          fn: () => ${
+        name: "Step 1",
+        fn: () => ${
     failing ? '{ throw new Error("Failed"); }' : '({ result: "success" })'
   },
-          timeout: 5000,
-          retry: { maxAttempts: 1, backoff: "linear" }
-        }
+        timeout: 5000,
+        retry: { maxAttempts: 1, backoff: "linear" }
       }
     ],
     source: { file: "${file}" }

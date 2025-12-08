@@ -8,62 +8,30 @@ import { assertEquals, assertExists } from "@std/assert";
 import { describe, it } from "@std/testing/bdd";
 import { ScenarioRunner } from "./scenario_runner.ts";
 import type {
-  Entry,
   ScenarioDefinition,
   ScenarioOptions,
-  StepContext,
   StepDefinition,
 } from "./types.ts";
-
-// Local type for test helper
-type ResourceDefinition = {
-  name: string;
-  fn: (
-    ctx: StepContext,
-  ) => unknown;
-};
 
 const createTestScenario = (
   params?: {
     name?: string;
     options?: ScenarioOptions;
-    entries?: Entry[];
     steps?: StepDefinition[];
-    resources?: ResourceDefinition[];
   },
 ): ScenarioDefinition => {
-  const entries: Entry[] = [];
-
-  // Add resources first
-  if (params?.resources) {
-    for (const resource of params.resources) {
-      entries.push({ kind: "resource", value: resource });
-    }
-  }
-
-  // Then add steps
-  if (params?.steps) {
-    for (const step of params.steps) {
-      entries.push({ kind: "step", value: step });
-    }
-  }
-
-  // Use provided entries if no steps/resources were provided
-  if (params?.entries && !params.steps && !params.resources) {
-    entries.push(...params.entries);
-  }
-
   return {
     name: params?.name ?? "Test Scenario",
     tags: params?.options?.tags ?? [],
-    entries,
+    steps: params?.steps ?? [],
   };
 };
 
 const createTestStep = (
   overrides?: Partial<StepDefinition>,
 ): StepDefinition => ({
-  name: "Test Step",
+  kind: "step",
+  name: "Test Exec Step",
   fn: () => "result",
   timeout: 5000,
   retry: {
@@ -107,26 +75,21 @@ describe("ScenarioRunner", () => {
 
       const scenarios = [
         createTestScenario({
-          entries: [
-            {
+          steps: [
+            createTestStep({
               kind: "setup",
-              value: {
-                fn: () => {
-                  // Return cleanup function
-                  return () => {
-                    cleanupExecuted.push(true);
-                  };
-                },
+              fn: () => {
+                // Return cleanup function
+                return () => {
+                  cleanupExecuted.push(true);
+                };
               },
-            },
-            {
-              kind: "step",
-              value: createTestStep({
-                fn: () => {
-                  throw new Error("Step failed");
-                },
-              }),
-            },
+            }),
+            createTestStep({
+              fn: () => {
+                throw new Error("Step failed");
+              },
+            }),
           ],
         }),
       ];
@@ -152,51 +115,41 @@ describe("ScenarioRunner", () => {
         readonly results: readonly unknown[];
       }> = [];
 
-      const entries: Entry[] = [
-        {
-          kind: "step",
-          value: createTestStep({
-            name: "Step 1",
-            fn: () => "first",
-          }),
-        },
-        {
+      const steps: StepDefinition[] = [
+        createTestStep({
+          name: "Step 1",
+          fn: () => "first",
+        }),
+        createTestStep({
           kind: "resource",
-          value: {
-            name: "lateResource",
-            fn: (ctx) => {
-              resourceSnapshots.push({
-                index: ctx.index,
-                previous: ctx.previous,
-                results: [...ctx.results],
-              });
-              return { ready: true };
-            },
+          name: "lateResource",
+          fn: (ctx) => {
+            resourceSnapshots.push({
+              index: ctx.index,
+              previous: ctx.previous,
+              results: [...ctx.results],
+            });
+            return { ready: true };
           },
-        },
-        {
+        }),
+        createTestStep({
           kind: "setup",
-          value: {
-            fn: (ctx) => {
-              setupSnapshots.push({
-                index: ctx.index,
-                previous: ctx.previous,
-                results: [...ctx.results],
-              });
-            },
+          fn: (ctx) => {
+            setupSnapshots.push({
+              index: ctx.index,
+              previous: ctx.previous,
+              results: [...ctx.results],
+            });
           },
-        },
-        {
-          kind: "step",
-          value: createTestStep({
-            name: "Step 2",
-            fn: (ctx) => ctx.previous,
-          }),
-        },
+        }),
+        createTestStep({
+          name: "Step 2",
+          fn: (ctx) => ctx.previous,
+        }),
       ];
 
       const summary = await runner.run([
-        createTestScenario({ entries }),
+        createTestScenario({ steps }),
       ]);
 
       assertEquals(summary.scenarios[0].status, "passed");
@@ -438,33 +391,26 @@ describe("ScenarioRunner", () => {
 
       const scenarios = [
         createTestScenario({
-          entries: [
-            {
+          steps: [
+            createTestStep({
               kind: "resource",
-              value: {
-                name: "api",
-                fn: () => {
-                  order.push("resource-init");
-                  return { [Symbol.dispose]() {} };
-                },
+              name: "api",
+              fn: () => {
+                order.push("resource-init");
+                return { [Symbol.dispose]() {} };
               },
-            },
-            {
+            }),
+            createTestStep({
               kind: "setup",
-              value: {
-                fn: () => {
-                  order.push("setup");
-                },
+              fn: () => {
+                order.push("setup");
               },
-            },
-            {
-              kind: "step",
-              value: createTestStep({
-                fn: () => {
-                  order.push("step");
-                },
-              }),
-            },
+            }),
+            createTestStep({
+              fn: () => {
+                order.push("step");
+              },
+            }),
           ],
         }),
       ];
@@ -482,37 +428,30 @@ describe("ScenarioRunner", () => {
 
       const scenarios = [
         createTestScenario({
-          entries: [
-            {
+          steps: [
+            createTestStep({
               kind: "resource",
-              value: {
-                name: "api",
-                fn: () => ({
-                  [Symbol.dispose]() {
-                    order.push("resource-dispose");
-                  },
-                }),
-              },
-            },
-            {
-              kind: "setup",
-              value: {
-                fn: () => {
-                  // Return cleanup function
-                  return () => {
-                    order.push("cleanup");
-                  };
-                },
-              },
-            },
-            {
-              kind: "step",
-              value: createTestStep({
-                fn: () => {
-                  order.push("step");
+              name: "api",
+              fn: () => ({
+                [Symbol.dispose]() {
+                  order.push("resource-dispose");
                 },
               }),
-            },
+            }),
+            createTestStep({
+              kind: "setup",
+              fn: () => {
+                // Return cleanup function
+                return () => {
+                  order.push("cleanup");
+                };
+              },
+            }),
+            createTestStep({
+              fn: () => {
+                order.push("step");
+              },
+            }),
           ],
         }),
       ];
@@ -528,41 +467,34 @@ describe("ScenarioRunner", () => {
 
       const scenarios = [
         createTestScenario({
-          entries: [
-            {
+          steps: [
+            createTestStep({
               kind: "resource",
-              value: {
-                name: "api",
-                fn: () => {
-                  order.push("resource-init");
-                  return {
-                    [Symbol.dispose]() {
-                      order.push("resource-dispose");
-                    },
-                  };
-                },
+              name: "api",
+              fn: () => {
+                order.push("resource-init");
+                return {
+                  [Symbol.dispose]() {
+                    order.push("resource-dispose");
+                  },
+                };
               },
-            },
-            {
+            }),
+            createTestStep({
               kind: "setup",
-              value: {
-                fn: () => {
-                  order.push("setup");
-                  // Return cleanup function
-                  return () => {
-                    order.push("cleanup");
-                  };
-                },
+              fn: () => {
+                order.push("setup");
+                // Return cleanup function
+                return () => {
+                  order.push("cleanup");
+                };
               },
-            },
-            {
-              kind: "step",
-              value: createTestStep({
-                fn: () => {
-                  order.push("step");
-                },
-              }),
-            },
+            }),
+            createTestStep({
+              fn: () => {
+                order.push("step");
+              },
+            }),
           ],
         }),
       ];
@@ -584,33 +516,34 @@ describe("ScenarioRunner", () => {
 
       const scenarios = [
         createTestScenario({
-          resources: [
-            {
+          steps: [
+            createTestStep({
+              kind: "resource",
               name: "first",
               fn: () => ({
                 [Symbol.dispose]() {
                   disposeOrder.push("first");
                 },
               }),
-            },
-            {
+            }),
+            createTestStep({
+              kind: "resource",
               name: "second",
               fn: () => ({
                 [Symbol.dispose]() {
                   disposeOrder.push("second");
                 },
               }),
-            },
-            {
+            }),
+            createTestStep({
+              kind: "resource",
               name: "third",
               fn: () => ({
                 [Symbol.dispose]() {
                   disposeOrder.push("third");
                 },
               }),
-            },
-          ],
-          steps: [
+            }),
             createTestStep({
               fn: () => {},
             }),
@@ -629,17 +562,16 @@ describe("ScenarioRunner", () => {
 
       const scenarios = [
         createTestScenario({
-          resources: [
-            {
+          steps: [
+            createTestStep({
+              kind: "resource",
               name: "api",
               fn: () => ({
                 [Symbol.dispose]() {
                   disposed = true;
                 },
               }),
-            },
-          ],
-          steps: [
+            }),
             createTestStep({
               fn: () => {
                 throw new Error("Test error");
@@ -662,8 +594,9 @@ describe("ScenarioRunner", () => {
 
       const scenarios = [
         createTestScenario({
-          resources: [
-            {
+          steps: [
+            createTestStep({
+              kind: "resource",
               name: "pool",
               fn: () => ({
                 type: "pool",
@@ -671,8 +604,9 @@ describe("ScenarioRunner", () => {
                   poolDisposed = true;
                 },
               }),
-            },
-            {
+            }),
+            createTestStep({
+              kind: "resource",
               name: "api",
               fn: (ctx) => {
                 const resources = ctx.resources as { pool: { type: string } };
@@ -686,9 +620,7 @@ describe("ScenarioRunner", () => {
                   },
                 };
               },
-            },
-          ],
-          steps: [
+            }),
             createTestStep({
               fn: (ctx) => {
                 const resources = ctx.resources as {
@@ -714,46 +646,39 @@ describe("ScenarioRunner", () => {
 
       const scenarios = [
         createTestScenario({
-          entries: [
-            {
+          steps: [
+            createTestStep({
               kind: "resource",
-              value: {
-                name: "api",
-                fn: () => {
-                  lifecycleLog.push("resource-init");
-                  return {
-                    type: "api",
-                    [Symbol.dispose]() {
-                      lifecycleLog.push("resource-dispose");
-                    },
-                  };
-                },
+              name: "api",
+              fn: () => {
+                lifecycleLog.push("resource-init");
+                return {
+                  type: "api",
+                  [Symbol.dispose]() {
+                    lifecycleLog.push("resource-dispose");
+                  },
+                };
               },
-            },
-            {
+            }),
+            createTestStep({
               kind: "setup",
-              value: {
-                fn: (ctx) => {
-                  lifecycleLog.push("setup");
-                  const apiResource = ctx.resources.api as { type: string };
-                  assertEquals(apiResource.type, "api");
-                  // Return cleanup that also uses resources
-                  return () => {
-                    lifecycleLog.push("cleanup");
-                    const cleanupApi = ctx.resources.api as { type: string };
-                    assertEquals(cleanupApi.type, "api");
-                  };
-                },
+              fn: (ctx) => {
+                lifecycleLog.push("setup");
+                const apiResource = ctx.resources.api as { type: string };
+                assertEquals(apiResource.type, "api");
+                // Return cleanup that also uses resources
+                return () => {
+                  lifecycleLog.push("cleanup");
+                  const cleanupApi = ctx.resources.api as { type: string };
+                  assertEquals(cleanupApi.type, "api");
+                };
               },
-            },
-            {
-              kind: "step",
-              value: createTestStep({
-                fn: () => {
-                  lifecycleLog.push("step");
-                },
-              }),
-            },
+            }),
+            createTestStep({
+              fn: () => {
+                lifecycleLog.push("step");
+              },
+            }),
           ],
         }),
       ];
