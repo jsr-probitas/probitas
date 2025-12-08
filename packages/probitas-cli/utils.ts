@@ -106,55 +106,58 @@ export function parsePositiveInteger(
  * Parse timeout string to seconds
  *
  * Supports formats: "30s", "10m", "1h", or plain numbers (treated as seconds)
+ * Special case: "0", "0s", "0m", "0h" returns undefined (no timeout)
  *
- * @param value - Timeout value to parse (e.g., "30s", "10m", "1h", or number)
- * @returns Timeout in seconds
- * @throws Error if format is invalid or value is not positive
+ * @param value - Timeout value to parse (e.g., "30s", "10m", "1h")
+ * @returns Timeout in seconds, or undefined if value is "0" or equivalent
+ * @throws Error if format is invalid
  *
  * @example
  * ```ts
  * parseTimeout("30s")  // 30
  * parseTimeout("10m")  // 600
  * parseTimeout("1h")   // 3600
- * parseTimeout(30)     // 30
+ * parseTimeout("0")    // undefined (no timeout)
+ * parseTimeout("0s")   // undefined (no timeout)
  * ```
  */
 export function parseTimeout(
-  value: string | number | undefined,
+  value: string,
 ): number | undefined {
-  if (value === undefined) {
-    return undefined;
+  const match = value.match(/^(\d+(?:\.\d+)?)(s|m|h)?$/i);
+  if (!match) {
+    throw new Error(
+      `Invalid timeout format: "${value}". Expected format: "30s", "10m", "1h", or a number`,
+    );
   }
+
+  const num = parseFloat(match[1]);
+  const unit = (match[2] || "s").toLowerCase();
 
   let seconds: number;
 
-  if (typeof value === "number") {
-    seconds = value;
-  } else {
-    const match = value.match(/^(\d+(?:\.\d+)?)(s|m|h)?$/i);
-    if (!match) {
-      throw new Error(
-        `Invalid timeout format: "${value}". Expected format: "30s", "10m", "1h", or a number`,
-      );
-    }
-
-    const num = parseFloat(match[1]);
-    const unit = (match[2] || "s").toLowerCase();
-
-    if (unit === "s") {
+  switch (unit) {
+    case "s":
       seconds = num;
-    } else if (unit === "m") {
+      break;
+    case "m":
       seconds = num * 60;
-    } else if (unit === "h") {
+      break;
+    case "h":
       seconds = num * 3600;
-    } else {
+      break;
+    default:
       // This should never happen due to regex validation
       throw new Error(`Invalid timeout unit: "${unit}"`);
-    }
   }
 
-  if (seconds <= 0 || !Number.isFinite(seconds)) {
-    throw new Error(`Timeout must be a positive number`);
+  // Return undefined for zero timeout (means no timeout)
+  if (seconds === 0) {
+    return undefined;
+  }
+
+  if (seconds < 0 || !Number.isFinite(seconds)) {
+    throw new Error(`Timeout must be a non-negative number`);
   }
 
   return seconds;

@@ -22,3 +22,8 @@ export const EXIT_CODE = {
 } as const;
 
 export type ExitCode = typeof EXIT_CODE[keyof typeof EXIT_CODE];
+
+/**
+ * Default timeout for scenario execution
+ */
+export const DEFAULT_TIMEOUT = "30s";

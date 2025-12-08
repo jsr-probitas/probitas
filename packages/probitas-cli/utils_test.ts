@@ -128,11 +128,6 @@ describe("utils", () => {
       assertEquals(parseTimeout("0.5h"), 1800);
     });
 
-    it("parses plain numbers as seconds", () => {
-      assertEquals(parseTimeout(30), 30);
-      assertEquals(parseTimeout(120), 120);
-    });
-
     it("parses string numbers without unit as seconds", () => {
       assertEquals(parseTimeout("30"), 30);
       assertEquals(parseTimeout("120"), 120);
@@ -149,8 +144,11 @@ describe("utils", () => {
       assertEquals(parseTimeout("1H"), 3600);
     });
 
-    it("returns undefined for undefined input", () => {
-      assertEquals(parseTimeout(undefined), undefined);
+    it("returns undefined for zero timeout (no timeout)", () => {
+      assertEquals(parseTimeout("0"), undefined);
+      assertEquals(parseTimeout("0s"), undefined);
+      assertEquals(parseTimeout("0m"), undefined);
+      assertEquals(parseTimeout("0h"), undefined);
     });
 
     it("throws error for invalid format", () => {
@@ -169,27 +167,11 @@ describe("utils", () => {
       );
     });
 
-    it("throws error for zero timeout", () => {
-      assertThrows(
-        () => parseTimeout("0s"),
-        Error,
-        "Timeout must be a positive number",
-      );
-    });
-
     it("throws error for negative timeout", () => {
       assertThrows(
         () => parseTimeout("-10s"),
         Error,
         "Invalid timeout format",
-      );
-    });
-
-    it("throws error for negative number", () => {
-      assertThrows(
-        () => parseTimeout(-10),
-        Error,
-        "Timeout must be a positive number",
       );
     });
   });
