@@ -10,7 +10,7 @@
  */
 
 import outdent from "@cspotcode/outdent";
-import { assertEquals } from "@std/assert";
+import { assert, assertEquals } from "@std/assert";
 import { describe, it } from "@std/testing/bdd";
 import { stub } from "@std/testing/mock";
 import { sandbox } from "@lambdalisue/sandbox";
@@ -247,8 +247,8 @@ describe("run command", () => {
 
           export default scenario("Timeout Test")
             .step("Hang forever", async () => {
-              // This step will hang indefinitely
-              await new Promise(() => {});
+              // This step will hang indefinitely (intentionally never resolves)
+              await new Promise(() => { /* intentionally never resolves */ });
             })
             .build();
         `,
@@ -266,7 +266,10 @@ describe("run command", () => {
       // Should fail due to timeout
       assertEquals(exitCode, EXIT_CODE.FAILURE);
       // Should complete within reasonable time after timeout (2s + buffer for subprocess cleanup)
-      assertEquals(duration < 5000, true);
+      assert(
+        duration < 5000,
+        `Expected duration to be less than 5000ms, got ${duration}ms`,
+      );
     });
 
     it("completes successfully when scenarios finish before timeout", async () => {

@@ -224,7 +224,7 @@ export async function runCommand(
     let result: Deno.CommandStatus;
     if (timeout && timeout > 0) {
       // Create a timeout promise that will kill the subprocess
-      let timerId: number;
+      let timerId: number | undefined;
       const timeoutPromise = new Promise<never>((_, reject) => {
         timerId = setTimeout(() => {
           child.kill("SIGTERM");
@@ -237,7 +237,9 @@ export async function runCommand(
       try {
         result = await Promise.race([child.status, timeoutPromise]);
         // Clear the timeout if subprocess completed successfully
-        clearTimeout(timerId);
+        if (timerId !== undefined) {
+          clearTimeout(timerId);
+        }
       } catch (err: unknown) {
         logger.error("Subprocess timeout", {
           timeout,
