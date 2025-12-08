@@ -19,7 +19,11 @@ import type {
   StepFunction,
   StepOptions,
 } from "@probitas/scenario";
-import type { BuilderScenarioOptions, BuilderStepOptions } from "./types.ts";
+import type {
+  BuilderResourceFactory,
+  BuilderSetupFunction,
+  BuilderStepFunction,
+} from "./types.ts";
 import { DEFAULT_SCENARIO_OPTIONS, DEFAULT_STEP_OPTIONS } from "./defaults.ts";
 import { captureSource } from "./utils/capture_source.ts";
 
@@ -31,8 +35,8 @@ import { captureSource } from "./utils/capture_source.ts";
  * @returns Merged complete step options
  */
 function mergeStepOptions(
-  scenarioOptions: BuilderScenarioOptions,
-  partialOptions?: BuilderStepOptions,
+  scenarioOptions: ScenarioOptions,
+  partialOptions?: StepOptions,
 ): StepOptions {
   const scenarioStepOptions = scenarioOptions.stepOptions ||
     DEFAULT_STEP_OPTIONS;
@@ -63,10 +67,10 @@ class ScenarioBuilderState<
   Resources extends Record<string, unknown> = Record<string, never>,
 > {
   #name: string;
-  #scenarioOptions: BuilderScenarioOptions;
+  #scenarioOptions: ScenarioOptions;
   #entries: Entry[] = [];
 
-  constructor(name: string, options?: BuilderScenarioOptions) {
+  constructor(name: string, options?: ScenarioOptions) {
     this.#name = name;
     this.#scenarioOptions = options || {};
   }
@@ -80,7 +84,7 @@ class ScenarioBuilderState<
     NewResources extends Record<string, unknown> = Resources,
   >(): ScenarioBuilderState<NewResources> {
     // Deep clone scenarioOptions
-    const clonedOptions: BuilderScenarioOptions = {
+    const clonedOptions: ScenarioOptions = {
       ...this.#scenarioOptions,
       tags: this.#scenarioOptions.tags
         ? [...this.#scenarioOptions.tags]
@@ -133,12 +137,12 @@ class ScenarioBuilderState<
 
   addStep(
     nameOrFn: string | StepFunction,
-    fnOrOptions?: StepFunction | BuilderStepOptions,
-    stepOptions?: BuilderStepOptions,
+    fnOrOptions?: StepFunction | StepOptions,
+    stepOptions?: StepOptions,
   ): void {
     let stepName: string;
     let stepFn: StepFunction;
-    let options: BuilderStepOptions | undefined;
+    let options: StepOptions | undefined;
 
     if (typeof nameOrFn === "string") {
       stepName = nameOrFn;
@@ -149,7 +153,7 @@ class ScenarioBuilderState<
       const stepCount = this.#entries.filter((e) => e.kind === "step").length;
       stepName = `Step ${stepCount + 1}`;
       stepFn = nameOrFn;
-      options = fnOrOptions as BuilderStepOptions | undefined;
+      options = fnOrOptions as StepOptions | undefined;
     }
 
     const stepLocation = captureSource(3);
@@ -210,9 +214,9 @@ class ScenarioBuilderState<
  * The builder is immutable - each method returns a new builder instance with
  * updated type parameters, preserving the original builder.
  *
- * @typeParam Previous - Type of the previous step's return value, accessible via `ctx.previous`
- * @typeParam Results - Tuple type of all accumulated step results, accessible via `ctx.results`
- * @typeParam Resources - Record of named resources, accessible via `ctx.resources`
+ * @typeParam P - Type of the previous step's return value, accessible via `ctx.previous`
+ * @typeParam A - Tuple type of all accumulated step results, accessible via `ctx.results`
+ * @typeParam R - Record of named resources, accessible via `ctx.resources`
  *
  * @example Basic step chaining with type inference
  * ```ts
@@ -249,14 +253,14 @@ class ScenarioBuilderState<
  * @see {@linkcode StepContext} - Context object passed to each step
  */
 class ScenarioBuilderInit<
-  Previous = unknown,
-  Results extends readonly unknown[] = readonly [],
-  Resources extends Record<string, unknown> = Record<string, never>,
+  P = unknown,
+  A extends readonly unknown[] = readonly [],
+  R extends Record<string, unknown> = Record<string, never>,
 > {
-  #state: ScenarioBuilderState<Resources>;
+  #state: ScenarioBuilderState<R>;
 
   /** @internal */
-  constructor(state: ScenarioBuilderState<Resources>) {
+  constructor(state: ScenarioBuilderState<R>) {
     this.#state = state;
   }
 
@@ -303,9 +307,9 @@ class ScenarioBuilderInit<
    */
   resource<K extends string, T>(
     name: K,
-    factory: ResourceFactory<T, Previous, Results, Resources>,
-  ): ScenarioBuilderInit<Previous, Results, Resources & Record<K, T>> {
-    const clonedState = this.#state.clone<Resources & Record<K, T>>();
+    factory: BuilderResourceFactory<T, P, A, R>,
+  ): ScenarioBuilderInit<P, A, R & Record<K, T>> {
+    const clonedState = this.#state.clone<R & Record<K, T>>();
     clonedState.addResource(name, factory as ResourceFactory);
     return new ScenarioBuilderInit(clonedState);
   }
@@ -355,8 +359,8 @@ class ScenarioBuilderInit<
    * ```
    */
   setup(
-    fn: SetupFunction<Previous, Results, Resources>,
-  ): ScenarioBuilderInit<Previous, Results, Resources> {
+    fn: BuilderSetupFunction<P, A, R>,
+  ): ScenarioBuilderInit<P, A, R> {
     const clonedState = this.#state.clone();
     clonedState.addSetup(fn as SetupFunction);
     return new ScenarioBuilderInit(clonedState);
@@ -393,9 +397,9 @@ class ScenarioBuilderInit<
    */
   step<T>(
     name: string,
-    fn: StepFunction<T, Previous, Results, Resources>,
-    options?: BuilderStepOptions,
-  ): ScenarioBuilderInit<T, readonly [...Results, T], Resources>;
+    fn: BuilderStepFunction<T, P, A, R>,
+    options?: StepOptions,
+  ): ScenarioBuilderInit<T, readonly [...A, T], R>;
 
   /**
    * Add an unnamed step to the scenario (auto-named as "Step N").
@@ -417,21 +421,21 @@ class ScenarioBuilderInit<
    * ```
    */
   step<T>(
-    fn: StepFunction<T, Previous, Results, Resources>,
-    options?: BuilderStepOptions,
-  ): ScenarioBuilderInit<T, readonly [...Results, T], Resources>;
+    fn: BuilderStepFunction<T, P, A, R>,
+    options?: StepOptions,
+  ): ScenarioBuilderInit<T, readonly [...A, T], R>;
 
   step<T>(
-    nameOrFn: string | StepFunction<T, Previous, Results, Resources>,
+    nameOrFn: string | BuilderStepFunction<T, P, A, R>,
     fnOrOptions?:
-      | StepFunction<T, Previous, Results, Resources>
-      | BuilderStepOptions,
-    stepOptions?: BuilderStepOptions,
-  ): ScenarioBuilderInit<T, readonly [...Results, T], Resources> {
+      | BuilderStepFunction<T, P, A, R>
+      | StepOptions,
+    stepOptions?: StepOptions,
+  ): ScenarioBuilderInit<T, readonly [...A, T], R> {
     const clonedState = this.#state.clone();
     clonedState.addStep(
       nameOrFn as (string | StepFunction),
-      fnOrOptions as (StepFunction | BuilderStepOptions),
+      fnOrOptions as (StepFunction | StepOptions),
       stepOptions,
     );
     return new ScenarioBuilderInit(clonedState);
@@ -531,7 +535,7 @@ class ScenarioBuilderInit<
  */
 export function scenario(
   name: string,
-  options?: BuilderScenarioOptions,
+  options?: ScenarioOptions,
 ): ScenarioBuilderInit {
   const state = new ScenarioBuilderState(name, options);
   return new ScenarioBuilderInit(state);

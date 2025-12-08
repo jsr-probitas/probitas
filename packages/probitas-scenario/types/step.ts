@@ -102,10 +102,6 @@ export type SetupCleanup =
  * - Shared storage for cross-step communication
  * - Abort signal for timeout and cancellation handling
  *
- * @typeParam Previous - Type of the previous step's return value
- * @typeParam Results - Tuple type of all accumulated results from previous steps
- * @typeParam Resources - Record type mapping resource names to their types
- *
  * @example Accessing previous result
  * ```ts
  * scenario("Chained Steps")
@@ -129,11 +125,7 @@ export type SetupCleanup =
  *   .build();
  * ```
  */
-export interface StepContext<
-  Previous = unknown,
-  Results extends readonly unknown[] = readonly unknown[],
-  Resources extends Record<string, unknown> = Record<string, unknown>,
-> {
+export interface StepContext {
   /**
    * Current step index (0-based).
    *
@@ -147,7 +139,7 @@ export interface StepContext<
    * Fully typed based on what the previous step returned.
    * For the first step, this is `unknown`.
    */
-  readonly previous: Previous;
+  readonly previous: unknown;
 
   /**
    * All accumulated results as a typed tuple.
@@ -158,7 +150,7 @@ export interface StepContext<
    * ctx.results[1]  // Second step's result
    * ```
    */
-  readonly results: Results;
+  readonly results: readonly unknown[];
 
   /**
    * Shared key-value storage for cross-step communication.
@@ -169,14 +161,6 @@ export interface StepContext<
   readonly store: Map<string, unknown>;
 
   /**
-   * Abort signal that fires on timeout or manual cancellation.
-   *
-   * Pass this to fetch() or other APIs that support AbortSignal
-   * for proper timeout handling.
-   */
-  readonly signal: AbortSignal;
-
-  /**
    * Named resources registered with `.resource()`.
    *
    * Resources are typed based on their registration:
@@ -185,7 +169,15 @@ export interface StepContext<
    * .step((ctx) => ctx.resources.db.query(...))
    * ```
    */
-  readonly resources: Resources;
+  readonly resources: Record<string, unknown>;
+
+  /**
+   * Abort signal that fires on timeout or manual cancellation.
+   *
+   * Pass this to fetch() or other APIs that support AbortSignal
+   * for proper timeout handling.
+   */
+  readonly signal: AbortSignal;
 }
 
 /**
@@ -195,9 +187,6 @@ export interface StepContext<
  * (sync or async) that becomes available to subsequent steps.
  *
  * @typeParam T - Type of this step's return value
- * @typeParam Previous - Type of the previous step's result (from `ctx.previous`)
- * @typeParam Results - Tuple type of all accumulated results
- * @typeParam Resources - Record of available resources
  *
  * @example Sync step returning data
  * ```ts
@@ -214,12 +203,7 @@ export interface StepContext<
  * };
  * ```
  */
-export type StepFunction<
-  T = unknown,
-  Previous = unknown,
-  Results extends readonly unknown[] = readonly unknown[],
-  Resources extends Record<string, unknown> = Record<string, unknown>,
-> = (ctx: StepContext<Previous, Results, Resources>) => T | Promise<T>;
+export type StepFunction<T = unknown> = (ctx: StepContext) => T | Promise<T>;
 
 /**
  * Immutable definition of a scenario step.
@@ -228,25 +212,17 @@ export type StepFunction<
  * the step function, its options, and debugging metadata.
  *
  * @typeParam T - Type of this step's return value
- * @typeParam Previous - Type of the previous step's result
- * @typeParam Results - Tuple type of accumulated results
- * @typeParam Resources - Record of available resources
  *
  * @remarks
  * Step definitions are created by the builder and consumed by the runner.
  * They are immutable and should not be modified after creation.
  */
-export interface StepDefinition<
-  T = unknown,
-  Previous = unknown,
-  Results extends readonly unknown[] = readonly unknown[],
-  Resources extends Record<string, unknown> = Record<string, unknown>,
-> {
+export interface StepDefinition<T = unknown> {
   /** Human-readable step name (displayed in reports) */
   readonly name: string;
 
   /** Step function to execute */
-  readonly fn: StepFunction<T, Previous, Results, Resources>;
+  readonly fn: StepFunction<T>;
 
   /** Step execution options (timeout, retry) with defaults applied */
   readonly options?: StepOptions;
@@ -268,10 +244,6 @@ export type StepMetadata = Omit<StepDefinition, "fn">;
  * Setup functions run before steps and can return a cleanup handler
  * that executes after the scenario completes (success or failure).
  *
- * @typeParam Previous - Type of the previous step's result
- * @typeParam Results - Tuple type of accumulated results
- * @typeParam Resources - Record of available resources
- *
  * @example Setup with cleanup function
  * ```ts
  * const setup: SetupFunction = (ctx) => {
@@ -292,12 +264,8 @@ export type StepMetadata = Omit<StepDefinition, "fn">;
  *
  * @see {@linkcode SetupCleanup} for supported cleanup return types
  */
-export type SetupFunction<
-  Previous = unknown,
-  Results extends readonly unknown[] = readonly unknown[],
-  Resources extends Record<string, unknown> = Record<string, unknown>,
-> = (
-  ctx: StepContext<Previous, Results, Resources>,
+export type SetupFunction = (
+  ctx: StepContext,
 ) => SetupCleanup | Promise<SetupCleanup>;
 
 /**
@@ -305,18 +273,10 @@ export type SetupFunction<
  *
  * Setup definitions contain the setup function and its source source.
  * Unlike steps, setups don't have names or configurable options.
- *
- * @typeParam Previous - Type of the previous step's result
- * @typeParam Results - Tuple type of accumulated results
- * @typeParam Resources - Record of available resources
  */
-export interface SetupDefinition<
-  Previous = unknown,
-  Results extends readonly unknown[] = readonly unknown[],
-  Resources extends Record<string, unknown> = Record<string, unknown>,
-> {
+export interface SetupDefinition {
   /** Setup function to execute (may return cleanup handler) */
-  readonly fn: SetupFunction<Previous, Results, Resources>;
+  readonly fn: SetupFunction;
 
   /** Source source where the setup was defined */
   readonly source?: Source;
@@ -338,9 +298,6 @@ export type SetupMetadata = Omit<SetupDefinition, "fn">;
  * - Automatically disposed after the scenario (if Disposable)
  *
  * @typeParam T - Type of resource to create
- * @typeParam Previous - Type of the previous step's result
- * @typeParam Results - Tuple type of accumulated results
- * @typeParam Resources - Previously registered resources available to this factory
  *
  * @example Database connection resource
  * ```ts
@@ -357,12 +314,7 @@ export type SetupMetadata = Omit<SetupDefinition, "fn">;
  *   (ctx) => new ApiClient(ctx.resources.config.apiUrl);
  * ```
  */
-export type ResourceFactory<
-  T = unknown,
-  Previous = unknown,
-  Results extends readonly unknown[] = readonly unknown[],
-  Resources extends Record<string, unknown> = Record<string, unknown>,
-> = (ctx: StepContext<Previous, Results, Resources>) => T | Promise<T>;
+export type ResourceFactory<T = unknown> = (ctx: StepContext) => T | Promise<T>;
 
 /**
  * Immutable definition of a named resource.
@@ -371,21 +323,13 @@ export type ResourceFactory<
  * a resource: its name, factory function, and source source.
  *
  * @typeParam T - Type of the resource value
- * @typeParam Previous - Type of the previous step's result
- * @typeParam Results - Tuple type of accumulated results
- * @typeParam Resources - Previously registered resources available to this factory
  */
-export interface ResourceDefinition<
-  T = unknown,
-  Previous = unknown,
-  Results extends readonly unknown[] = readonly unknown[],
-  Resources extends Record<string, unknown> = Record<string, unknown>,
-> {
+export interface ResourceDefinition<T = unknown> {
   /** Unique resource name (used as key in `ctx.resources`) */
   readonly name: string;
 
   /** Factory function that creates the resource */
-  readonly factory: ResourceFactory<T, Previous, Results, Resources>;
+  readonly factory: ResourceFactory<T>;
 
   /** Source source where the resource was defined */
   readonly source?: Source;
