@@ -2,9 +2,22 @@
  * List Reporter
  *
  * Outputs test results in a flat list format with detailed information
- * for each step.
+ * for each step. Shows:
+ * - One line per step with status icon, scenario name, step name, source location, and duration
+ * - Skip reasons for skipped steps
+ * - Error details with stack traces for failed steps
+ * - Summary statistics at the end
  *
  * @module
+ *
+ * @example
+ * ```ts
+ * const reporter = new ListReporter({
+ *   theme: colorTheme,  // Optional: customize colors
+ * });
+ * const runner = new Runner(reporter);
+ * await runner.run(scenarios);
+ * ```
  */
 
 import type {
@@ -17,14 +30,57 @@ import { Writer, type WriterOptions } from "./writer.ts";
 import { defaultTheme, type Theme } from "./theme.ts";
 import { formatSource } from "./utils/source.ts";
 
+/**
+ * Options for ListReporter initialization.
+ */
 export interface ListReporterOptions extends WriterOptions {
+  /**
+   * Custom theme for styling output.
+   * If not provided, uses defaultTheme (or noColorTheme if Deno.noColor is set).
+   */
   theme?: Theme;
 }
 
+/**
+ * Reporter that outputs test results in a flat list format.
+ *
+ * Features:
+ * - Real-time per-step output as tests execute
+ * - Status indicators (✓ passed, ✗ failed, ⊘ skipped)
+ * - Source location information
+ * - Execution timing for each step
+ * - Skip reasons for conditional skips
+ * - Error messages and stack traces for failures
+ * - Summary statistics
+ * - Semantic coloring via Theme
+ *
+ * @example
+ * ```ts
+ * const reporter = new ListReporter();
+ * const runner = new Runner(reporter);
+ * const result = await runner.run(scenarios);
+ *
+ * // Output:
+ * // ✓ Login scenario > Step that passes  (test.ts:15) [10.000ms]
+ * // ✓ Login scenario > Another step  (test.ts:20) [5.000ms]
+ * // ✗ Payment scenario > Process payment  (test.ts:50) [25.000ms]
+ * //   Error: Insufficient funds
+ * //   at checkout (test.ts:52)
+ * //
+ * // Summary
+ * //   ✓ 1 scenarios passed
+ * //   ✗ 1 scenarios failed
+ * ```
+ */
 export class ListReporter implements Reporter {
   #writer: Writer;
   #theme: Theme;
 
+  /**
+   * Create a new ListReporter.
+   *
+   * @param options - Configuration (output stream, theme)
+   */
   constructor(options: ListReporterOptions = {}) {
     this.#writer = new Writer(options);
     this.#theme = options.theme ?? defaultTheme;

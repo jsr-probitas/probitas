@@ -39,7 +39,11 @@ export interface Reporter {
   ): void | Promise<void>;
 
   /**
-   * Called when step completes successfully
+   * Called when step completes (passed, failed, or skipped).
+   *
+   * The result contains status-specific information:
+   * - If status is "passed": contains `value` from step execution
+   * - If status is "failed" or "skipped": contains `error` information
    */
   onStepEnd?(
     scenario: ScenarioDefinition,

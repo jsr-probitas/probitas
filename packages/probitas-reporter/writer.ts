@@ -3,13 +3,36 @@ import { getLogger } from "@probitas/logger";
 const logger = getLogger("probitas", "reporter", "writer");
 
 export interface WriterOptions {
+  /**
+   * Output stream for writing results.
+   *
+   * @default Deno.stderr.writable
+   */
   readonly output?: WritableStream;
 }
 
+/**
+ * Handles serialized, buffered output writing.
+ *
+ * Writer ensures that all output operations are serialized to prevent
+ * "stream is already locked" errors when multiple scenarios run concurrently.
+ * Each write is queued and executed in order, maintaining output consistency.
+ *
+ * @example
+ * ```ts
+ * const writer = new Writer({ output: Deno.stdout.writable });
+ * await writer.write("Test output\n");
+ * ```
+ */
 export class Writer {
   #output: WritableStream;
   #writeQueue: Promise<void> = Promise.resolve();
 
+  /**
+   * Create a new Writer.
+   *
+   * @param options - Configuration options (output stream)
+   */
   constructor(options: WriterOptions = {}) {
     this.#output = options.output ?? Deno.stderr.writable;
   }

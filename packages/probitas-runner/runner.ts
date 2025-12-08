@@ -10,9 +10,48 @@ import { ScenarioRunner } from "./scenario_runner.ts";
 
 import { timeit } from "./utils/timeit.ts";
 
+/**
+ * Top-level test runner that orchestrates execution of multiple scenarios.
+ *
+ * The Runner manages:
+ * - Parallel execution with concurrency control (`maxConcurrency`)
+ * - Early stopping on failures (`maxFailures`)
+ * - Test lifecycle events through the Reporter interface
+ * - Aggregated results in RunResult
+ *
+ * @example
+ * ```ts
+ * const reporter = new ListReporter();
+ * const runner = new Runner(reporter);
+ *
+ * const result = await runner.run(scenarios, {
+ *   maxConcurrency: 4,
+ *   maxFailures: 1,
+ * });
+ * ```
+ */
 export class Runner {
+  /**
+   * Create a new Runner with the given reporter.
+   *
+   * @param reporter - Reporter instance for lifecycle events
+   */
   constructor(readonly reporter: Reporter) {}
 
+  /**
+   * Execute all scenarios and return aggregated results.
+   *
+   * Emits events through the Reporter:
+   * 1. `onRunStart` - Before execution starts
+   * 2. For each scenario (concurrently):
+   *    - Delegates to ScenarioRunner for scenario-level execution
+   *    - ScenarioRunner emits scenario and step level events
+   * 3. `onRunEnd` - After all scenarios complete with RunResult
+   *
+   * @param scenarios - Scenarios to execute
+   * @param options - Execution options (maxConcurrency, maxFailures, signal)
+   * @returns Aggregated results with pass/fail/skip counts
+   */
   async run(
     scenarios: readonly ScenarioDefinition[],
     options?: RunOptions,
