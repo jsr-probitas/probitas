@@ -236,10 +236,10 @@ export async function runCommand(
           );
         }, timeout * 1000);
 
-        // Cancel timeout if abort signal is triggered
+        // Cancel timeout if abort signal is triggered (once is sufficient)
         signal.addEventListener("abort", () => {
           clearTimeout(timeoutId);
-        });
+        }, { once: true });
       });
 
       try {
