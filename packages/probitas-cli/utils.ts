@@ -141,16 +141,15 @@ export function parseTimeout(
     const num = parseFloat(match[1]);
     const unit = (match[2] || "s").toLowerCase();
 
-    switch (unit) {
-      case "s":
-        seconds = num;
-        break;
-      case "m":
-        seconds = num * 60;
-        break;
-      case "h":
-        seconds = num * 3600;
-        break;
+    if (unit === "s") {
+      seconds = num;
+    } else if (unit === "m") {
+      seconds = num * 60;
+    } else if (unit === "h") {
+      seconds = num * 3600;
+    } else {
+      // This should never happen due to regex validation
+      throw new Error(`Invalid timeout unit: "${unit}"`);
     }
   }
 
