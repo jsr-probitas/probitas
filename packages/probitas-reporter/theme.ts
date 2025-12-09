@@ -9,6 +9,12 @@
 import { bold, cyan, gray, green, red, yellow } from "@std/fmt/colors";
 
 /**
+ * Apply light gray color (ANSI 256-color mode).
+ * Used for resource and setup step titles as subtle secondary information.
+ */
+const lightGray = (text: string): string => `\x1b[38;5;243m${text}\x1b[0m`;
+
+/**
  * Function type for theme color/styling transformations.
  *
  * Takes a string and returns a styled version (typically with ANSI codes).
@@ -65,6 +71,9 @@ export interface Theme {
 
   /** Style for warnings */
   readonly warning: ThemeFunction;
+
+  /** Style for light gray text (used for resource/setup step titles) */
+  readonly lightGray: ThemeFunction;
 }
 
 /**
@@ -78,6 +87,7 @@ export const colorTheme: Theme = {
   title: bold,
   info: cyan,
   warning: yellow,
+  lightGray: lightGray,
 };
 
 /**
@@ -91,6 +101,7 @@ export const noColorTheme: Theme = {
   title: (text) => text,
   info: (text) => text,
   warning: (text) => text,
+  lightGray: (text) => text,
 };
 
 export const defaultTheme = Deno.noColor ? noColorTheme : colorTheme;

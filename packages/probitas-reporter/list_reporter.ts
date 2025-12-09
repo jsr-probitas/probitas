@@ -27,7 +27,7 @@ import type {
 } from "@probitas/scenario";
 import type { Reporter, RunResult, StepResult } from "@probitas/runner";
 import { Writer, type WriterOptions } from "./writer.ts";
-import { defaultTheme, type Theme } from "./theme.ts";
+import { defaultTheme, type Theme, type ThemeFunction } from "./theme.ts";
 import { formatSource } from "./utils/source.ts";
 
 /**
@@ -102,11 +102,35 @@ export class ListReporter implements Reporter {
     return `${this.#theme.info(`[${duration.toFixed(3)}ms]`)}`;
   }
 
+  #getKindChar(kind: "resource" | "setup" | "step"): string {
+    switch (kind) {
+      case "resource":
+        return "r";
+      case "setup":
+        return "s";
+      case "step":
+        return "T";
+      default:
+        return "T";
+    }
+  }
+
+  #formatKindPrefix(kind: "resource" | "setup" | "step"): string {
+    const kindChar = this.#getKindChar(kind);
+    return `${this.#theme.dim(kindChar + "┆")}`;
+  }
+
+  #formatErrorLine(message: string, color: ThemeFunction): string {
+    return `${this.#theme.dim(" ┆")}${color(" └ " + message)}`;
+  }
+
   async onStepEnd(
     scenario: ScenarioDefinition,
-    _step: StepDefinition,
+    step: StepDefinition,
     result: StepResult,
   ): Promise<void> {
+    const kind = step.kind as "resource" | "setup" | "step";
+    const kindPrefix = this.#formatKindPrefix(kind);
     const icon = result.status === "passed"
       ? this.#theme.success("✓")
       : result.status === "skipped"
@@ -114,18 +138,36 @@ export class ListReporter implements Reporter {
       : this.#theme.failure("✗");
     const source = this.#formatSource(result.metadata.source);
     const time = this.#formatTime(result.duration);
-    const skipReason = result.status === "skipped"
-      ? this.#theme.warning(getErrorMessage(result.error))
-      : "";
-    await this.#writeln(
-      icon,
-      scenario.name,
-      this.#theme.dim(">"),
-      result.metadata.name,
-      source,
-      time,
-      skipReason,
+
+    // Format scenario and step names based on kind
+    const scenarioName = kind === "step"
+      ? scenario.name
+      : `${this.#theme.title(this.#theme.lightGray(scenario.name))}`;
+    const stepName = kind === "step"
+      ? result.metadata.name
+      : `${this.#theme.title(this.#theme.lightGray(result.metadata.name))}`;
+
+    // Build all output lines atomically
+    const lines: string[] = [];
+    lines.push(
+      `${kindPrefix} ${icon} ${scenarioName} ${
+        this.#theme.dim(">")
+      } ${stepName} ${source} ${time}`,
     );
+
+    // Add error or skip message on next line if needed
+    if (result.status === "failed" && "error" in result && result.error) {
+      const errorMessage = getErrorMessage(result.error);
+      lines.push(this.#formatErrorLine(errorMessage, this.#theme.failure));
+    } else if (
+      result.status === "skipped" && "error" in result && result.error
+    ) {
+      const skipMessage = getErrorMessage(result.error);
+      lines.push(this.#formatErrorLine(skipMessage, this.#theme.skip));
+    }
+
+    // Write all lines at once (atomic)
+    await this.#writeln(lines.join("\n"));
   }
 
   /**
@@ -134,10 +176,17 @@ export class ListReporter implements Reporter {
    * @param summary The execution summary
    */
   async onRunEnd(
-    _scenarios: readonly ScenarioDefinition[],
+    scenarios: readonly ScenarioDefinition[],
     result: RunResult,
   ): Promise<void> {
-    const { passed, skipped, failed, scenarios, total, duration } = result;
+    const {
+      passed,
+      skipped,
+      failed,
+      scenarios: resultScenarios,
+      total,
+      duration,
+    } = result;
     await this.#writeln(`\n${this.#theme.title("Summary")}`);
     await this.#writeln(
       `  ${this.#theme.success("✓")} ${passed} scenarios passed`,
@@ -156,41 +205,67 @@ export class ListReporter implements Reporter {
       await this.#writeln("");
       await this.#writeln(`${this.#theme.title("Failed Tests")}`);
 
-      const failedScenarios = scenarios.filter((s) => s.status === "failed");
+      const failedScenarios = resultScenarios.filter((s) =>
+        s.status === "failed"
+      );
+      const failedTestsLines: string[] = [];
+
       for (const scenario of failedScenarios) {
         // Show failed steps
         const failedSteps = scenario.steps.filter((s) => s.status === "failed");
         for (const step of failedSteps) {
+          // Find the step definition to get the kind
+          const scenarioDefinition = scenarios.find((s) =>
+            s.name === scenario.metadata.name
+          );
+          const stepDefinition = scenarioDefinition?.steps.find((s) =>
+            s.name === step.metadata.name
+          );
+          const kind = stepDefinition?.kind ?? "step";
+          const kindPrefix = this.#formatKindPrefix(
+            kind as "resource" | "setup" | "step",
+          );
+
           const source = this.#formatSource(step.metadata.source);
           const time = this.#formatTime(step.duration);
-          await this.#writeln(
-            `  ${this.#theme.failure("✗")}`,
-            scenario.metadata.name,
-            this.#theme.dim(">"),
-            step.metadata.name,
-            source,
-            time,
+          const icon = this.#theme.failure("✗");
+
+          failedTestsLines.push(
+            `${kindPrefix} ${icon} ${scenario.metadata.name} ${
+              this.#theme.dim(">")
+            } ${step.metadata.name} ${source} ${time}`,
           );
+
           // Show error details for failed steps
           if (step.status === "failed" && "error" in step && step.error) {
-            await this.#writeln("");
+            failedTestsLines.push(`${this.#theme.dim(" ┆")}`);
             const message = getErrorMessage(step.error);
-            await this.#writeln(`    ${this.#theme.failure(message)}`);
+            failedTestsLines.push(
+              `${this.#theme.dim(" ┆")}${this.#theme.failure(`   ${message}`)}`,
+            );
             if (step.error instanceof Error && step.error.stack) {
               const stack = step.error.stack.split("\n")
                 .slice(1) // Skip first line (already shown as message)
                 .join("\n")
                 .trim();
               if (stack) {
-                await this.#writeln("");
+                failedTestsLines.push(`${this.#theme.dim(" ┆")}`);
                 for (const line of stack.split("\n")) {
-                  await this.#writeln(`    ${this.#theme.dim(line)}`);
+                  failedTestsLines.push(
+                    `${this.#theme.dim(" ┆")}   ${this.#theme.dim(line)}`,
+                  );
                 }
               }
             }
-            await this.#writeln("");
+            // Add empty line after each failed step in Failed Tests section
+            failedTestsLines.push("");
           }
         }
+      }
+
+      // Write all failed tests at once (atomic)
+      if (failedTestsLines.length > 0) {
+        await this.#writeln(failedTestsLines.join("\n"));
       }
     }
 
