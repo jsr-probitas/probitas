@@ -31,33 +31,33 @@ version management.
 
 ### Version Bump Rules
 
-| Commit Type                                              | Version Bump  | Example                                   |
-| -------------------------------------------------------- | ------------- | ----------------------------------------- |
-| `feat:`                                                  | minor (0.x.0) | `feat(builder): add retry option`         |
-| `fix:`, `perf:`, `docs:`, `refactor:`, `test:`, `chore:` | patch (0.0.x) | `fix(runner): handle timeout errors`      |
-| `BREAKING:` or `!` suffix                                | major (x.0.0) | `feat(runner)!: change API signature`     |
-| Any type with `/unstable` scope                          | patch (0.0.x) | `feat(runner/unstable): experimental API` |
+| Commit Type                                              | Version Bump  | Example                                              |
+| -------------------------------------------------------- | ------------- | ---------------------------------------------------- |
+| `feat:`                                                  | minor (0.x.0) | `feat(@probitas/builder): add retry option`          |
+| `fix:`, `perf:`, `docs:`, `refactor:`, `test:`, `chore:` | patch (0.0.x) | `fix(@probitas/runner): handle timeout errors`       |
+| `BREAKING:` or `!` suffix                                | major (x.0.0) | `feat(@probitas/runner)!: change API signature`      |
+| Any type with `/unstable` scope                          | patch (0.0.x) | `feat(@probitas/runner/unstable): experimental API`  |
 
 ### Scope Convention
 
-Use package name (without `@probitas/` or `probitas-` prefix) as scope. **Scopes
-are required** for `BREAKING`, `feat`, `fix`, `perf`, and `deprecation`.
+Use full package name with `@probitas/` prefix as scope (e.g., `@probitas/expect`).
+**Scopes are required** for `BREAKING`, `feat`, `fix`, `perf`, and `deprecation`.
 
 ```bash
 # Single package
-feat(builder): add retry option to step execution
-fix(runner): handle timeout errors correctly
+feat(@probitas/builder): add retry option to step execution
+fix(@probitas/runner): handle timeout errors correctly
 
 # Multiple packages (comma-separated)
-fix(runner,scenario): fix shared type definitions
+fix(@probitas/runner,@probitas/scenario): fix shared type definitions
 
 # All packages (wildcard)
 docs(*): update copyright headers
 refactor(*): apply new linting rules
 
 # Unstable API (always patch, even for BREAKING)
-feat(runner/unstable): experimental parallel execution
-BREAKING(runner/unstable): change unstable API signature  # Still patch!
+feat(@probitas/runner/unstable): experimental parallel execution
+BREAKING(@probitas/runner/unstable): change unstable API signature  # Still patch!
 ```
 
 ### Important Notes
