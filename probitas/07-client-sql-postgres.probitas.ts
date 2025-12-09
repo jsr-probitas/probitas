@@ -38,7 +38,7 @@ export default scenario("PostgreSQL Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .count(1);
   })
   .step("Insert multiple rows", async (ctx) => {
@@ -49,7 +49,7 @@ export default scenario("PostgreSQL Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .count(2);
   })
   .step("Select with WHERE clause", async (ctx) => {
@@ -60,9 +60,9 @@ export default scenario("PostgreSQL Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .count(1)
-      .dataContains({ name: "Alice" });
+      .toMatchObject({ name: "Alice" });
   })
   .step("Select all rows", async (ctx) => {
     const { pg } = ctx.resources;
@@ -71,7 +71,7 @@ export default scenario("PostgreSQL Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .countAtLeast(3);
   })
   .step("Update row", async (ctx) => {
@@ -82,7 +82,7 @@ export default scenario("PostgreSQL Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .count(1);
   })
   .step("Transaction - commit", async (ctx) => {
@@ -100,9 +100,9 @@ export default scenario("PostgreSQL Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .count(1)
-      .dataContains({ name: "TxUser" });
+      .toMatchObject({ name: "TxUser" });
   })
   .step("Transaction - rollback on error", async (ctx) => {
     const { pg } = ctx.resources;
@@ -124,7 +124,7 @@ export default scenario("PostgreSQL Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .count(0);
   })
   .step("Delete row", async (ctx) => {
@@ -135,7 +135,7 @@ export default scenario("PostgreSQL Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .count(1);
   })
   .build();

@@ -8,11 +8,11 @@ import type {
  * Fluent API for GraphQL response validation.
  */
 export interface GraphqlResponseExpectation {
-  /** Assert that response has no errors */
-  ok(): this;
+  /** Invert all assertions */
+  readonly not: this;
 
-  /** Assert that response has errors */
-  notOk(): this;
+  /** Assert that response has no errors */
+  toBeSuccessful(): this;
 
   /** Assert exact number of errors */
   errorCount(n: number): this;
@@ -27,18 +27,15 @@ export interface GraphqlResponseExpectation {
   errorMatch(matcher: (errors: readonly GraphqlErrorItem[]) => void): this;
 
   /** Assert that data is not null */
-  hasContent(): this;
-
-  /** Assert that data is null */
-  noContent(): this;
+  toHaveContent(): this;
 
   /** Assert that data contains expected subset (deep partial match) */
   // deno-lint-ignore no-explicit-any
-  dataContains<T = any>(subset: Partial<T>): this;
+  toMatchObject<T = any>(subset: Partial<T>): this;
 
   /** Assert data using custom matcher */
   // deno-lint-ignore no-explicit-any
-  dataMatch<T = any>(matcher: (data: T) => void): this;
+  toSatisfy<T = any>(matcher: (data: T) => void): this;
 
   /** Assert that an extension key exists */
   extensionExists(key: string): this;
@@ -55,11 +52,8 @@ export interface GraphqlResponseExpectation {
   /** Assert that HTTP status code is one of the given codes */
   statusIn(...statuses: number[]): this;
 
-  /** Assert that HTTP status code is not one of the given codes */
-  statusNotIn(...statuses: number[]): this;
-
   /** Assert that response duration is less than threshold (ms) */
-  durationLessThan(ms: number): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 /**
@@ -67,24 +61,31 @@ export interface GraphqlResponseExpectation {
  */
 class GraphqlResponseExpectationImpl implements GraphqlResponseExpectation {
   readonly #response: GraphqlResponse;
+  readonly #negate: boolean;
 
-  constructor(response: GraphqlResponse) {
+  constructor(response: GraphqlResponse, negate = false) {
     this.#response = response;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#response.ok) {
+  get not(): this {
+    return new GraphqlResponseExpectationImpl(
+      this.#response,
+      !this.#negate,
+    ) as this;
+  }
+
+  toBeSuccessful(): this {
+    const isSuccess = this.#response.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
       const errorMessages = this.#response.errors
         ?.map((e) => e.message)
         .join("; ");
-      throw new Error(`Expected ok response, got errors: ${errorMessages}`);
-    }
-    return this;
-  }
-
-  notOk(): this {
-    if (this.#response.ok) {
-      throw new Error("Expected response with errors, but got ok response");
+      throw new Error(
+        this.#negate
+          ? "Expected response with errors, but got successful response"
+          : `Expected successful response, got errors: ${errorMessages}`,
+      );
     }
     return this;
   }
@@ -142,22 +143,15 @@ class GraphqlResponseExpectationImpl implements GraphqlResponseExpectation {
     return this;
   }
 
-  hasContent(): this {
+  toHaveContent(): this {
     if (this.#response.data() === null) {
       throw new Error("Expected content, but data is null");
     }
     return this;
   }
 
-  noContent(): this {
-    if (this.#response.data() !== null) {
-      throw new Error("Expected no content, but data exists");
-    }
-    return this;
-  }
-
   // deno-lint-ignore no-explicit-any
-  dataContains<T = any>(subset: Partial<T>): this {
+  toMatchObject<T = any>(subset: Partial<T>): this {
     const data = this.#response.data();
     if (data === null) {
       throw new Error("Expected data to contain subset, but data is null");
@@ -173,7 +167,7 @@ class GraphqlResponseExpectationImpl implements GraphqlResponseExpectation {
   }
 
   // deno-lint-ignore no-explicit-any
-  dataMatch<T = any>(matcher: (data: T) => void): this {
+  toSatisfy<T = any>(matcher: (data: T) => void): this {
     const data = this.#response.data();
     if (data === null) {
       throw new Error("Cannot match data: data is null");
@@ -227,18 +221,7 @@ class GraphqlResponseExpectationImpl implements GraphqlResponseExpectation {
     return this;
   }
 
-  statusNotIn(...statuses: number[]): this {
-    if (statuses.includes(this.#response.status)) {
-      throw new Error(
-        `Expected status not in [${
-          statuses.join(", ")
-        }], got ${this.#response.status}`,
-      );
-    }
-    return this;
-  }
-
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#response.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#response.duration));
     }

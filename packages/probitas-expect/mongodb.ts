@@ -21,111 +21,112 @@ import type {
  * Fluent API for MongoDB find result validation.
  */
 export interface MongoFindResultExpectation<T> {
-  ok(): this;
-  notOk(): this;
-  noContent(): this;
-  hasContent(): this;
+  readonly not: this;
+  toBeSuccessful(): this;
+  toHaveContent(): this;
   count(expected: number): this;
   countAtLeast(min: number): this;
   countAtMost(max: number): this;
-  dataContains(subset: Partial<T>): this;
-  dataMatch(matcher: (docs: MongoDocs<T>) => void): this;
-  durationLessThan(ms: number): this;
+  toMatchObject(subset: Partial<T>): this;
+  toSatisfy(matcher: (docs: MongoDocs<T>) => void): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 /**
  * Fluent API for MongoDB insert result validation.
  */
 export interface MongoInsertResultExpectation {
-  ok(): this;
-  notOk(): this;
+  readonly not: this;
+  toBeSuccessful(): this;
   insertedCount(count: number): this;
   hasInsertedId(): this;
-  durationLessThan(ms: number): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 /**
  * Fluent API for MongoDB update result validation.
  */
 export interface MongoUpdateResultExpectation {
-  ok(): this;
-  notOk(): this;
+  readonly not: this;
+  toBeSuccessful(): this;
   matchedCount(count: number): this;
   modifiedCount(count: number): this;
   hasUpsertedId(): this;
-  durationLessThan(ms: number): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 /**
  * Fluent API for MongoDB delete result validation.
  */
 export interface MongoDeleteResultExpectation {
-  ok(): this;
-  notOk(): this;
+  readonly not: this;
+  toBeSuccessful(): this;
   deletedCount(count: number): this;
   deletedAtLeast(count: number): this;
-  durationLessThan(ms: number): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 /**
  * Fluent API for MongoDB findOne result validation.
  */
 export interface MongoFindOneResultExpectation<T> {
-  ok(): this;
-  notOk(): this;
-  hasContent(): this;
-  noContent(): this;
-  dataContains(subset: Partial<T>): this;
-  dataMatch(matcher: (doc: T) => void): this;
-  durationLessThan(ms: number): this;
+  readonly not: this;
+  toBeSuccessful(): this;
+  toHaveContent(): this;
+  toMatchObject(subset: Partial<T>): this;
+  toSatisfy(matcher: (doc: T) => void): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 /**
  * Fluent API for MongoDB count result validation.
  */
 export interface MongoCountResultExpectation {
-  ok(): this;
-  notOk(): this;
+  readonly not: this;
+  toBeSuccessful(): this;
   count(expected: number): this;
   countAtLeast(min: number): this;
   countAtMost(max: number): this;
-  durationLessThan(ms: number): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 class MongoFindResultExpectationImpl<T>
   implements MongoFindResultExpectation<T> {
   readonly #result: MongoFindResult<T>;
+  readonly #negate: boolean;
 
-  constructor(result: MongoFindResult<T>) {
+  constructor(result: MongoFindResult<T>, negate = false) {
     this.#result = result;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#result.ok) {
-      throw new Error("Expected ok result, but ok is false");
-    }
-    return this;
+  get not(): this {
+    return new MongoFindResultExpectationImpl(
+      this.#result,
+      !this.#negate,
+    ) as this;
   }
 
-  notOk(): this {
-    if (this.#result.ok) {
-      throw new Error("Expected not ok result, but ok is true");
-    }
-    return this;
-  }
-
-  noContent(): this {
-    if (this.#result.docs.length !== 0) {
+  toBeSuccessful(): this {
+    const isSuccess = this.#result.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
       throw new Error(
-        `Expected no documents, got ${this.#result.docs.length}`,
+        this.#negate
+          ? "Expected not ok result, but ok is true"
+          : "Expected ok result, but ok is false",
       );
     }
     return this;
   }
 
-  hasContent(): this {
-    if (this.#result.docs.length === 0) {
-      throw new Error("Expected documents, but got none");
+  toHaveContent(): this {
+    const hasContent = this.#result.docs.length > 0;
+    if (this.#negate ? hasContent : !hasContent) {
+      throw new Error(
+        this.#negate
+          ? `Expected no documents, got ${this.#result.docs.length}`
+          : "Expected documents, but got none",
+      );
     }
     return this;
   }
@@ -157,7 +158,7 @@ class MongoFindResultExpectationImpl<T>
     return this;
   }
 
-  dataContains(subset: Partial<T>): this {
+  toMatchObject(subset: Partial<T>): this {
     const found = this.#result.docs.some((doc) => containsSubset(doc, subset));
     if (!found) {
       throw new Error(
@@ -167,12 +168,12 @@ class MongoFindResultExpectationImpl<T>
     return this;
   }
 
-  dataMatch(matcher: (docs: MongoDocs<T>) => void): this {
+  toSatisfy(matcher: (docs: MongoDocs<T>) => void): this {
     matcher(this.#result.docs);
     return this;
   }
 
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#result.duration));
     }
@@ -182,21 +183,31 @@ class MongoFindResultExpectationImpl<T>
 
 class MongoInsertResultExpectationImpl implements MongoInsertResultExpectation {
   readonly #result: MongoInsertOneResult | MongoInsertManyResult;
+  readonly #negate: boolean;
 
-  constructor(result: MongoInsertOneResult | MongoInsertManyResult) {
+  constructor(
+    result: MongoInsertOneResult | MongoInsertManyResult,
+    negate = false,
+  ) {
     this.#result = result;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#result.ok) {
-      throw new Error("Expected ok result, but ok is false");
-    }
-    return this;
+  get not(): this {
+    return new MongoInsertResultExpectationImpl(
+      this.#result,
+      !this.#negate,
+    ) as this;
   }
 
-  notOk(): this {
-    if (this.#result.ok) {
-      throw new Error("Expected not ok result, but ok is true");
+  toBeSuccessful(): this {
+    const isSuccess = this.#result.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
+      throw new Error(
+        this.#negate
+          ? "Expected not ok result, but ok is true"
+          : "Expected ok result, but ok is false",
+      );
     }
     return this;
   }
@@ -226,7 +237,7 @@ class MongoInsertResultExpectationImpl implements MongoInsertResultExpectation {
     return this;
   }
 
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#result.duration));
     }
@@ -236,21 +247,28 @@ class MongoInsertResultExpectationImpl implements MongoInsertResultExpectation {
 
 class MongoUpdateResultExpectationImpl implements MongoUpdateResultExpectation {
   readonly #result: MongoUpdateResult;
+  readonly #negate: boolean;
 
-  constructor(result: MongoUpdateResult) {
+  constructor(result: MongoUpdateResult, negate = false) {
     this.#result = result;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#result.ok) {
-      throw new Error("Expected ok result, but ok is false");
-    }
-    return this;
+  get not(): this {
+    return new MongoUpdateResultExpectationImpl(
+      this.#result,
+      !this.#negate,
+    ) as this;
   }
 
-  notOk(): this {
-    if (this.#result.ok) {
-      throw new Error("Expected not ok result, but ok is true");
+  toBeSuccessful(): this {
+    const isSuccess = this.#result.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
+      throw new Error(
+        this.#negate
+          ? "Expected not ok result, but ok is true"
+          : "Expected ok result, but ok is false",
+      );
     }
     return this;
   }
@@ -280,7 +298,7 @@ class MongoUpdateResultExpectationImpl implements MongoUpdateResultExpectation {
     return this;
   }
 
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#result.duration));
     }
@@ -290,21 +308,28 @@ class MongoUpdateResultExpectationImpl implements MongoUpdateResultExpectation {
 
 class MongoDeleteResultExpectationImpl implements MongoDeleteResultExpectation {
   readonly #result: MongoDeleteResult;
+  readonly #negate: boolean;
 
-  constructor(result: MongoDeleteResult) {
+  constructor(result: MongoDeleteResult, negate = false) {
     this.#result = result;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#result.ok) {
-      throw new Error("Expected ok result, but ok is false");
-    }
-    return this;
+  get not(): this {
+    return new MongoDeleteResultExpectationImpl(
+      this.#result,
+      !this.#negate,
+    ) as this;
   }
 
-  notOk(): this {
-    if (this.#result.ok) {
-      throw new Error("Expected not ok result, but ok is true");
+  toBeSuccessful(): this {
+    const isSuccess = this.#result.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
+      throw new Error(
+        this.#negate
+          ? "Expected not ok result, but ok is true"
+          : "Expected ok result, but ok is false",
+      );
     }
     return this;
   }
@@ -327,7 +352,7 @@ class MongoDeleteResultExpectationImpl implements MongoDeleteResultExpectation {
     return this;
   }
 
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#result.duration));
     }
@@ -338,40 +363,45 @@ class MongoDeleteResultExpectationImpl implements MongoDeleteResultExpectation {
 class MongoFindOneResultExpectationImpl<T>
   implements MongoFindOneResultExpectation<T> {
   readonly #result: MongoFindOneResult<T>;
+  readonly #negate: boolean;
 
-  constructor(result: MongoFindOneResult<T>) {
+  constructor(result: MongoFindOneResult<T>, negate = false) {
     this.#result = result;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#result.ok) {
-      throw new Error("Expected ok result, but ok is false");
+  get not(): this {
+    return new MongoFindOneResultExpectationImpl(
+      this.#result,
+      !this.#negate,
+    ) as this;
+  }
+
+  toBeSuccessful(): this {
+    const isSuccess = this.#result.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
+      throw new Error(
+        this.#negate
+          ? "Expected not ok result, but ok is true"
+          : "Expected ok result, but ok is false",
+      );
     }
     return this;
   }
 
-  notOk(): this {
-    if (this.#result.ok) {
-      throw new Error("Expected not ok result, but ok is true");
+  toHaveContent(): this {
+    const hasContent = this.#result.doc !== undefined;
+    if (this.#negate ? hasContent : !hasContent) {
+      throw new Error(
+        this.#negate
+          ? "Expected document not to be found, but got a document"
+          : "Expected document to be found, but got undefined",
+      );
     }
     return this;
   }
 
-  hasContent(): this {
-    if (this.#result.doc === undefined) {
-      throw new Error("Expected document to be found, but got undefined");
-    }
-    return this;
-  }
-
-  noContent(): this {
-    if (this.#result.doc !== undefined) {
-      throw new Error("Expected document not to be found, but got a document");
-    }
-    return this;
-  }
-
-  dataContains(subset: Partial<T>): this {
+  toMatchObject(subset: Partial<T>): this {
     if (this.#result.doc === undefined) {
       throw new Error(
         "Expected document to contain subset, but doc is undefined",
@@ -385,7 +415,7 @@ class MongoFindOneResultExpectationImpl<T>
     return this;
   }
 
-  dataMatch(matcher: (doc: T) => void): this {
+  toSatisfy(matcher: (doc: T) => void): this {
     if (this.#result.doc === undefined) {
       throw new Error("Expected document for matching, but doc is undefined");
     }
@@ -393,7 +423,7 @@ class MongoFindOneResultExpectationImpl<T>
     return this;
   }
 
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#result.duration));
     }
@@ -403,21 +433,28 @@ class MongoFindOneResultExpectationImpl<T>
 
 class MongoCountResultExpectationImpl implements MongoCountResultExpectation {
   readonly #result: MongoCountResult;
+  readonly #negate: boolean;
 
-  constructor(result: MongoCountResult) {
+  constructor(result: MongoCountResult, negate = false) {
     this.#result = result;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#result.ok) {
-      throw new Error("Expected ok result, but ok is false");
-    }
-    return this;
+  get not(): this {
+    return new MongoCountResultExpectationImpl(
+      this.#result,
+      !this.#negate,
+    ) as this;
   }
 
-  notOk(): this {
-    if (this.#result.ok) {
-      throw new Error("Expected not ok result, but ok is true");
+  toBeSuccessful(): this {
+    const isSuccess = this.#result.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
+      throw new Error(
+        this.#negate
+          ? "Expected not ok result, but ok is true"
+          : "Expected ok result, but ok is false",
+      );
     }
     return this;
   }
@@ -449,7 +486,7 @@ class MongoCountResultExpectationImpl implements MongoCountResultExpectation {
     return this;
   }
 
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#result.duration));
     }
@@ -480,27 +517,27 @@ export type MongoExpectation<R extends MongoResult> = R extends
  * ```ts
  * // For find result - returns MongoFindResultExpectation
  * const findResult = await users.find({ age: { $gte: 30 } });
- * expectMongoResult(findResult).ok().hasContent().count(2);
+ * expectMongoResult(findResult).toBeSuccessful().toHaveContent().count(2);
  *
  * // For insert result - returns MongoInsertResultExpectation
  * const insertResult = await users.insertOne({ name: "Alice", age: 30 });
- * expectMongoResult(insertResult).ok().hasInsertedId();
+ * expectMongoResult(insertResult).toBeSuccessful().hasInsertedId();
  *
  * // For update result - returns MongoUpdateResultExpectation
  * const updateResult = await users.updateOne({ name: "Alice" }, { $set: { age: 31 } });
- * expectMongoResult(updateResult).ok().matchedCount(1).modifiedCount(1);
+ * expectMongoResult(updateResult).toBeSuccessful().matchedCount(1).modifiedCount(1);
  *
  * // For delete result - returns MongoDeleteResultExpectation
  * const deleteResult = await users.deleteOne({ name: "Alice" });
- * expectMongoResult(deleteResult).ok().deletedCount(1);
+ * expectMongoResult(deleteResult).toBeSuccessful().deletedCount(1);
  *
  * // For findOne result - returns MongoFindOneResultExpectation
  * const findOneResult = await users.findOne({ name: "Alice" });
- * expectMongoResult(findOneResult).ok().hasContent().dataContains({ name: "Alice" });
+ * expectMongoResult(findOneResult).toBeSuccessful().toHaveContent().toMatchObject({ name: "Alice" });
  *
  * // For count result - returns MongoCountResultExpectation
  * const countResult = await users.countDocuments();
- * expectMongoResult(countResult).ok().count(10);
+ * expectMongoResult(countResult).toBeSuccessful().count(10);
  * ```
  */
 // deno-lint-ignore no-explicit-any

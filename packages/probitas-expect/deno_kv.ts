@@ -19,49 +19,43 @@ import type {
  * Fluent API for validating DenoKvGetResult.
  */
 export interface DenoKvGetResultExpectation<T> {
+  /** Invert all assertions */
+  readonly not: this;
+
   /** Assert that operation succeeded */
-  ok(): this;
+  toBeSuccessful(): this;
 
-  /** Assert that operation did not succeed */
-  notOk(): this;
-
-  /** Assert that no value was found (value is null) */
-  noContent(): this;
-
-  /** Assert that a value was found (value is not null) */
-  hasContent(): this;
+  /** Assert that content exists */
+  toHaveContent(): this;
 
   /** Assert that value equals expected */
   value(expected: T): this;
 
   /** Assert that data contains expected properties */
-  dataContains(subset: Partial<T>): this;
+  toMatchObject(subset: Partial<T>): this;
 
   /** Assert data using custom matcher function */
-  dataMatch(matcher: (value: T) => void): this;
+  toSatisfy(matcher: (value: T) => void): this;
 
   /** Assert that versionstamp exists */
   hasVersionstamp(): this;
 
   /** Assert that duration is less than threshold (ms) */
-  durationLessThan(ms: number): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 /**
  * Fluent API for validating DenoKvListResult.
  */
 export interface DenoKvListResultExpectation<T> {
+  /** Invert all assertions */
+  readonly not: this;
+
   /** Assert that operation succeeded */
-  ok(): this;
+  toBeSuccessful(): this;
 
-  /** Assert that operation did not succeed */
-  notOk(): this;
-
-  /** Assert that no entries were found */
-  noContent(): this;
-
-  /** Assert that at least one entry was found */
-  hasContent(): this;
+  /** Assert that content exists */
+  toHaveContent(): this;
 
   /** Assert that entry count equals expected */
   count(expected: number): this;
@@ -76,58 +70,58 @@ export interface DenoKvListResultExpectation<T> {
   entryContains(subset: { key?: Deno.KvKey; value?: Partial<T> }): this;
 
   /** Assert entries using custom matcher function */
-  entriesMatch(matcher: (entries: DenoKvEntries<T>) => void): this;
+  toSatisfy(matcher: (entries: DenoKvEntries<T>) => void): this;
 
   /** Assert that duration is less than threshold (ms) */
-  durationLessThan(ms: number): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 /**
  * Fluent API for validating DenoKvSetResult.
  */
 export interface DenoKvSetResultExpectation {
-  /** Assert that operation succeeded */
-  ok(): this;
+  /** Invert all assertions */
+  readonly not: this;
 
-  /** Assert that operation did not succeed */
-  notOk(): this;
+  /** Assert that operation succeeded */
+  toBeSuccessful(): this;
 
   /** Assert that versionstamp exists */
   hasVersionstamp(): this;
 
   /** Assert that duration is less than threshold (ms) */
-  durationLessThan(ms: number): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 /**
  * Fluent API for validating DenoKvDeleteResult.
  */
 export interface DenoKvDeleteResultExpectation {
-  /** Assert that operation succeeded */
-  ok(): this;
+  /** Invert all assertions */
+  readonly not: this;
 
-  /** Assert that operation did not succeed */
-  notOk(): this;
+  /** Assert that operation succeeded */
+  toBeSuccessful(): this;
 
   /** Assert that duration is less than threshold (ms) */
-  durationLessThan(ms: number): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 /**
  * Fluent API for validating DenoKvAtomicResult.
  */
 export interface DenoKvAtomicResultExpectation {
-  /** Assert that operation succeeded */
-  ok(): this;
+  /** Invert all assertions */
+  readonly not: this;
 
-  /** Assert that operation did not succeed */
-  notOk(): this;
+  /** Assert that operation succeeded */
+  toBeSuccessful(): this;
 
   /** Assert that versionstamp exists (only present on successful atomic commits) */
   hasVersionstamp(): this;
 
   /** Assert that duration is less than threshold (ms) */
-  durationLessThan(ms: number): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 /**
@@ -147,35 +141,38 @@ function keysEqual(a: Deno.KvKey, b: Deno.KvKey): boolean {
 class DenoKvGetResultExpectationImpl<T>
   implements DenoKvGetResultExpectation<T> {
   readonly #result: DenoKvGetResult<T>;
+  readonly #negate: boolean;
 
-  constructor(result: DenoKvGetResult<T>) {
+  constructor(result: DenoKvGetResult<T>, negate = false) {
     this.#result = result;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#result.ok) {
-      throw new Error("Expected ok result");
+  get not(): this {
+    return new DenoKvGetResultExpectationImpl(
+      this.#result,
+      !this.#negate,
+    ) as this;
+  }
+
+  toBeSuccessful(): this {
+    const isSuccess = this.#result.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
+      throw new Error(
+        this.#negate ? "Expected not ok result" : "Expected ok result",
+      );
     }
     return this;
   }
 
-  notOk(): this {
-    if (this.#result.ok) {
-      throw new Error("Expected not ok result");
-    }
-    return this;
-  }
-
-  noContent(): this {
-    if (this.#result.value !== null) {
-      throw new Error("Expected no content, but value exists");
-    }
-    return this;
-  }
-
-  hasContent(): this {
-    if (this.#result.value === null) {
-      throw new Error("Expected content, but value is null");
+  toHaveContent(): this {
+    const hasContent = this.#result.value !== null;
+    if (this.#negate ? hasContent : !hasContent) {
+      throw new Error(
+        this.#negate
+          ? "Expected no content, but value exists"
+          : "Expected content, but value is null",
+      );
     }
     return this;
   }
@@ -194,7 +191,7 @@ class DenoKvGetResultExpectationImpl<T>
     return this;
   }
 
-  dataContains(subset: Partial<T>): this {
+  toMatchObject(subset: Partial<T>): this {
     if (this.#result.value === null) {
       throw new Error(
         "Expected data to contain properties, but value is null",
@@ -206,7 +203,7 @@ class DenoKvGetResultExpectationImpl<T>
     return this;
   }
 
-  dataMatch(matcher: (value: T) => void): this {
+  toSatisfy(matcher: (value: T) => void): this {
     if (this.#result.value === null) {
       throw new Error("Expected data for matching, but value is null");
     }
@@ -221,7 +218,7 @@ class DenoKvGetResultExpectationImpl<T>
     return this;
   }
 
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#result.duration));
     }
@@ -235,37 +232,38 @@ class DenoKvGetResultExpectationImpl<T>
 class DenoKvListResultExpectationImpl<T>
   implements DenoKvListResultExpectation<T> {
   readonly #result: DenoKvListResult<T>;
+  readonly #negate: boolean;
 
-  constructor(result: DenoKvListResult<T>) {
+  constructor(result: DenoKvListResult<T>, negate = false) {
     this.#result = result;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#result.ok) {
-      throw new Error("Expected ok result");
-    }
-    return this;
+  get not(): this {
+    return new DenoKvListResultExpectationImpl(
+      this.#result,
+      !this.#negate,
+    ) as this;
   }
 
-  notOk(): this {
-    if (this.#result.ok) {
-      throw new Error("Expected not ok result");
-    }
-    return this;
-  }
-
-  noContent(): this {
-    if (this.#result.entries.length !== 0) {
+  toBeSuccessful(): this {
+    const isSuccess = this.#result.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
       throw new Error(
-        `Expected no entries, but found ${this.#result.entries.length}`,
+        this.#negate ? "Expected not ok result" : "Expected ok result",
       );
     }
     return this;
   }
 
-  hasContent(): this {
-    if (this.#result.entries.length === 0) {
-      throw new Error("Expected entries, but none found");
+  toHaveContent(): this {
+    const hasContent = this.#result.entries.length > 0;
+    if (this.#negate ? hasContent : !hasContent) {
+      throw new Error(
+        this.#negate
+          ? `Expected no entries, but found ${this.#result.entries.length}`
+          : "Expected entries, but none found",
+      );
     }
     return this;
   }
@@ -317,12 +315,12 @@ class DenoKvListResultExpectationImpl<T>
     return this;
   }
 
-  entriesMatch(matcher: (entries: DenoKvEntries<T>) => void): this {
+  toSatisfy(matcher: (entries: DenoKvEntries<T>) => void): this {
     matcher(this.#result.entries);
     return this;
   }
 
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#result.duration));
     }
@@ -335,21 +333,26 @@ class DenoKvListResultExpectationImpl<T>
  */
 class DenoKvSetResultExpectationImpl implements DenoKvSetResultExpectation {
   readonly #result: DenoKvSetResult;
+  readonly #negate: boolean;
 
-  constructor(result: DenoKvSetResult) {
+  constructor(result: DenoKvSetResult, negate = false) {
     this.#result = result;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#result.ok) {
-      throw new Error("Expected ok result");
-    }
-    return this;
+  get not(): this {
+    return new DenoKvSetResultExpectationImpl(
+      this.#result,
+      !this.#negate,
+    ) as this;
   }
 
-  notOk(): this {
-    if (this.#result.ok) {
-      throw new Error("Expected not ok result");
+  toBeSuccessful(): this {
+    const isSuccess = this.#result.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
+      throw new Error(
+        this.#negate ? "Expected not ok result" : "Expected ok result",
+      );
     }
     return this;
   }
@@ -361,7 +364,7 @@ class DenoKvSetResultExpectationImpl implements DenoKvSetResultExpectation {
     return this;
   }
 
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#result.duration));
     }
@@ -375,26 +378,31 @@ class DenoKvSetResultExpectationImpl implements DenoKvSetResultExpectation {
 class DenoKvDeleteResultExpectationImpl
   implements DenoKvDeleteResultExpectation {
   readonly #result: DenoKvDeleteResult;
+  readonly #negate: boolean;
 
-  constructor(result: DenoKvDeleteResult) {
+  constructor(result: DenoKvDeleteResult, negate = false) {
     this.#result = result;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#result.ok) {
-      throw new Error("Expected ok result");
+  get not(): this {
+    return new DenoKvDeleteResultExpectationImpl(
+      this.#result,
+      !this.#negate,
+    ) as this;
+  }
+
+  toBeSuccessful(): this {
+    const isSuccess = this.#result.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
+      throw new Error(
+        this.#negate ? "Expected not ok result" : "Expected ok result",
+      );
     }
     return this;
   }
 
-  notOk(): this {
-    if (this.#result.ok) {
-      throw new Error("Expected not ok result");
-    }
-    return this;
-  }
-
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#result.duration));
     }
@@ -408,21 +416,26 @@ class DenoKvDeleteResultExpectationImpl
 class DenoKvAtomicResultExpectationImpl
   implements DenoKvAtomicResultExpectation {
   readonly #result: DenoKvAtomicResult;
+  readonly #negate: boolean;
 
-  constructor(result: DenoKvAtomicResult) {
+  constructor(result: DenoKvAtomicResult, negate = false) {
     this.#result = result;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#result.ok) {
-      throw new Error("Expected ok result");
-    }
-    return this;
+  get not(): this {
+    return new DenoKvAtomicResultExpectationImpl(
+      this.#result,
+      !this.#negate,
+    ) as this;
   }
 
-  notOk(): this {
-    if (this.#result.ok) {
-      throw new Error("Expected not ok result");
+  toBeSuccessful(): this {
+    const isSuccess = this.#result.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
+      throw new Error(
+        this.#negate ? "Expected not ok result" : "Expected ok result",
+      );
     }
     return this;
   }
@@ -434,7 +447,7 @@ class DenoKvAtomicResultExpectationImpl
     return this;
   }
 
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#result.duration));
     }
@@ -463,7 +476,7 @@ export type DenoKvExpectation<R extends DenoKvResult> = R extends
  * ```ts
  * // For GET result - returns DenoKvGetResultExpectation<T>
  * const getResult = await kv.get(["users", "1"]);
- * expectDenoKvResult(getResult).ok().hasContent().dataContains({ name: "Alice" });
+ * expectDenoKvResult(getResult).ok().hasContent().toMatchObject({ name: "Alice" });
  *
  * // For SET result - returns DenoKvSetResultExpectation
  * const setResult = await kv.set(["users", "1"], { name: "Alice" });

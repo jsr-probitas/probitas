@@ -23,94 +23,49 @@ import type {
  * Fluent API for SQS send result validation.
  */
 export interface SqsSendResultExpectation {
-  /** Assert that result ok is true */
-  ok(): this;
-
-  /** Assert that result ok is false */
-  notOk(): this;
-
-  /** Assert that messageId exists */
+  readonly not: this;
+  toBeSuccessful(): this;
   hasMessageId(): this;
-
-  /** Assert that duration is less than threshold (ms) */
-  durationLessThan(ms: number): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 /**
  * Fluent API for SQS send batch result validation.
  */
 export interface SqsSendBatchResultExpectation {
-  /** Assert that result ok is true */
-  ok(): this;
-
-  /** Assert that result ok is false */
-  notOk(): this;
-
-  /** Assert that all messages were sent successfully */
+  readonly not: this;
+  toBeSuccessful(): this;
   allSuccessful(): this;
-
-  /** Assert that successful count matches expected */
   successfulCount(count: number): this;
-
-  /** Assert that failed count matches expected */
   failedCount(count: number): this;
-
-  /** Assert that there are no failures */
   noFailures(): this;
-
-  /** Assert that duration is less than threshold (ms) */
-  durationLessThan(ms: number): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 /**
  * Fluent API for SQS receive result validation.
  */
 export interface SqsReceiveResultExpectation {
-  /** Assert that result ok is true */
-  ok(): this;
-
-  /** Assert that result ok is false */
-  notOk(): this;
-
-  /** Assert that messages array is empty */
-  noContent(): this;
-
-  /** Assert that messages array has at least one message */
-  hasContent(): this;
-
-  /** Assert that messages array has exactly count messages */
+  readonly not: this;
+  toBeSuccessful(): this;
+  toHaveContent(): this;
   count(expected: number): this;
-
-  /** Assert that messages array has at least min messages */
   countAtLeast(min: number): this;
-
-  /** Assert that messages array has at most max messages */
   countAtMost(max: number): this;
-
-  /** Assert that at least one message contains the given subset */
-  dataContains(
+  toMatchObject(
     subset: { body?: string; attributes?: Record<string, string> },
   ): this;
-
-  /** Assert messages using custom matcher function */
-  dataMatch(matcher: (messages: SqsMessages) => void): this;
-
-  /** Assert that duration is less than threshold (ms) */
-  durationLessThan(ms: number): this;
+  toSatisfy(matcher: (messages: SqsMessages) => void): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 /**
  * Fluent API for SQS delete result validation.
  */
 export interface SqsDeleteResultExpectation {
-  /** Assert that result ok is true */
-  ok(): this;
-
-  /** Assert that result ok is false */
-  notOk(): this;
-
-  /** Assert that duration is less than threshold (ms) */
-  durationLessThan(ms: number): this;
+  readonly not: this;
+  toBeSuccessful(): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 /**
@@ -146,21 +101,28 @@ export interface SqsMessageExpectation {
  */
 class SqsSendResultExpectationImpl implements SqsSendResultExpectation {
   readonly #result: SqsSendResult;
+  readonly #negate: boolean;
 
-  constructor(result: SqsSendResult) {
+  constructor(result: SqsSendResult, negate = false) {
     this.#result = result;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#result.ok) {
-      throw new Error("Expected ok result, but ok is false");
-    }
-    return this;
+  get not(): this {
+    return new SqsSendResultExpectationImpl(
+      this.#result,
+      !this.#negate,
+    ) as this;
   }
 
-  notOk(): this {
-    if (this.#result.ok) {
-      throw new Error("Expected not ok result, but ok is true");
+  toBeSuccessful(): this {
+    const isSuccess = this.#result.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
+      throw new Error(
+        this.#negate
+          ? "Expected not ok result, but ok is true"
+          : "Expected ok result, but ok is false",
+      );
     }
     return this;
   }
@@ -172,7 +134,7 @@ class SqsSendResultExpectationImpl implements SqsSendResultExpectation {
     return this;
   }
 
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#result.duration));
     }
@@ -186,21 +148,28 @@ class SqsSendResultExpectationImpl implements SqsSendResultExpectation {
 class SqsSendBatchResultExpectationImpl
   implements SqsSendBatchResultExpectation {
   readonly #result: SqsSendBatchResult;
+  readonly #negate: boolean;
 
-  constructor(result: SqsSendBatchResult) {
+  constructor(result: SqsSendBatchResult, negate = false) {
     this.#result = result;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#result.ok) {
-      throw new Error("Expected ok result, but ok is false");
-    }
-    return this;
+  get not(): this {
+    return new SqsSendBatchResultExpectationImpl(
+      this.#result,
+      !this.#negate,
+    ) as this;
   }
 
-  notOk(): this {
-    if (this.#result.ok) {
-      throw new Error("Expected not ok result, but ok is true");
+  toBeSuccessful(): this {
+    const isSuccess = this.#result.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
+      throw new Error(
+        this.#negate
+          ? "Expected not ok result, but ok is true"
+          : "Expected ok result, but ok is false",
+      );
     }
     return this;
   }
@@ -241,7 +210,7 @@ class SqsSendBatchResultExpectationImpl
     return this;
   }
 
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#result.duration));
     }
@@ -254,37 +223,40 @@ class SqsSendBatchResultExpectationImpl
  */
 class SqsReceiveResultExpectationImpl implements SqsReceiveResultExpectation {
   readonly #result: SqsReceiveResult;
+  readonly #negate: boolean;
 
-  constructor(result: SqsReceiveResult) {
+  constructor(result: SqsReceiveResult, negate = false) {
     this.#result = result;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#result.ok) {
-      throw new Error("Expected ok result, but ok is false");
-    }
-    return this;
+  get not(): this {
+    return new SqsReceiveResultExpectationImpl(
+      this.#result,
+      !this.#negate,
+    ) as this;
   }
 
-  notOk(): this {
-    if (this.#result.ok) {
-      throw new Error("Expected not ok result, but ok is true");
-    }
-    return this;
-  }
-
-  noContent(): this {
-    if (this.#result.messages.length !== 0) {
+  toBeSuccessful(): this {
+    const isSuccess = this.#result.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
       throw new Error(
-        `Expected no messages, but got ${this.#result.messages.length} messages`,
+        this.#negate
+          ? "Expected not ok result, but ok is true"
+          : "Expected ok result, but ok is false",
       );
     }
     return this;
   }
 
-  hasContent(): this {
-    if (this.#result.messages.length === 0) {
-      throw new Error("Expected messages, but messages array is empty");
+  toHaveContent(): this {
+    const hasContent = this.#result.messages.length > 0;
+    if (this.#negate ? hasContent : !hasContent) {
+      throw new Error(
+        this.#negate
+          ? `Expected no messages, but got ${this.#result.messages.length} messages`
+          : "Expected messages, but messages array is empty",
+      );
     }
     return this;
   }
@@ -316,7 +288,7 @@ class SqsReceiveResultExpectationImpl implements SqsReceiveResultExpectation {
     return this;
   }
 
-  dataContains(
+  toMatchObject(
     subset: { body?: string; attributes?: Record<string, string> },
   ): this {
     const found = this.#result.messages.some((msg) => {
@@ -341,12 +313,12 @@ class SqsReceiveResultExpectationImpl implements SqsReceiveResultExpectation {
     return this;
   }
 
-  dataMatch(matcher: (messages: SqsMessages) => void): this {
+  toSatisfy(matcher: (messages: SqsMessages) => void): this {
     matcher(this.#result.messages);
     return this;
   }
 
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#result.duration));
     }
@@ -359,26 +331,33 @@ class SqsReceiveResultExpectationImpl implements SqsReceiveResultExpectation {
  */
 class SqsDeleteResultExpectationImpl implements SqsDeleteResultExpectation {
   readonly #result: SqsDeleteResult;
+  readonly #negate: boolean;
 
-  constructor(result: SqsDeleteResult) {
+  constructor(result: SqsDeleteResult, negate = false) {
     this.#result = result;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#result.ok) {
-      throw new Error("Expected ok result, but ok is false");
+  get not(): this {
+    return new SqsDeleteResultExpectationImpl(
+      this.#result,
+      !this.#negate,
+    ) as this;
+  }
+
+  toBeSuccessful(): this {
+    const isSuccess = this.#result.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
+      throw new Error(
+        this.#negate
+          ? "Expected not ok result, but ok is true"
+          : "Expected ok result, but ok is false",
+      );
     }
     return this;
   }
 
-  notOk(): this {
-    if (this.#result.ok) {
-      throw new Error("Expected not ok result, but ok is true");
-    }
-    return this;
-  }
-
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#result.duration));
     }
@@ -393,21 +372,28 @@ class SqsDeleteResultExpectationImpl implements SqsDeleteResultExpectation {
 class SqsDeleteBatchResultExpectationImpl
   implements SqsSendBatchResultExpectation {
   readonly #result: SqsDeleteBatchResult;
+  readonly #negate: boolean;
 
-  constructor(result: SqsDeleteBatchResult) {
+  constructor(result: SqsDeleteBatchResult, negate = false) {
     this.#result = result;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#result.ok) {
-      throw new Error("Expected ok result, but ok is false");
-    }
-    return this;
+  get not(): this {
+    return new SqsDeleteBatchResultExpectationImpl(
+      this.#result,
+      !this.#negate,
+    ) as this;
   }
 
-  notOk(): this {
-    if (this.#result.ok) {
-      throw new Error("Expected not ok result, but ok is true");
+  toBeSuccessful(): this {
+    const isSuccess = this.#result.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
+      throw new Error(
+        this.#negate
+          ? "Expected not ok result, but ok is true"
+          : "Expected ok result, but ok is false",
+      );
     }
     return this;
   }
@@ -448,7 +434,7 @@ class SqsDeleteBatchResultExpectationImpl
     return this;
   }
 
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#result.duration));
     }
@@ -556,37 +542,21 @@ export function expectSqsMessage(
  * Fluent API for SQS ensure queue result validation.
  */
 export interface SqsEnsureQueueResultExpectation {
-  /** Assert that result ok is true */
-  ok(): this;
-
-  /** Assert that result ok is false */
-  notOk(): this;
-
-  /** Assert that queueUrl exists */
+  readonly not: this;
+  toBeSuccessful(): this;
   hasQueueUrl(): this;
-
-  /** Assert that queueUrl matches expected */
   queueUrl(expected: string): this;
-
-  /** Assert that queueUrl contains substring */
   queueUrlContains(substring: string): this;
-
-  /** Assert that duration is less than threshold (ms) */
-  durationLessThan(ms: number): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 /**
  * Fluent API for SQS delete queue result validation.
  */
 export interface SqsDeleteQueueResultExpectation {
-  /** Assert that result ok is true */
-  ok(): this;
-
-  /** Assert that result ok is false */
-  notOk(): this;
-
-  /** Assert that duration is less than threshold (ms) */
-  durationLessThan(ms: number): this;
+  readonly not: this;
+  toBeSuccessful(): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 /**
@@ -595,21 +565,28 @@ export interface SqsDeleteQueueResultExpectation {
 class SqsEnsureQueueResultExpectationImpl
   implements SqsEnsureQueueResultExpectation {
   readonly #result: SqsEnsureQueueResult;
+  readonly #negate: boolean;
 
-  constructor(result: SqsEnsureQueueResult) {
+  constructor(result: SqsEnsureQueueResult, negate = false) {
     this.#result = result;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#result.ok) {
-      throw new Error("Expected ok result, but ok is false");
-    }
-    return this;
+  get not(): this {
+    return new SqsEnsureQueueResultExpectationImpl(
+      this.#result,
+      !this.#negate,
+    ) as this;
   }
 
-  notOk(): this {
-    if (this.#result.ok) {
-      throw new Error("Expected not ok result, but ok is true");
+  toBeSuccessful(): this {
+    const isSuccess = this.#result.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
+      throw new Error(
+        this.#negate
+          ? "Expected not ok result, but ok is true"
+          : "Expected ok result, but ok is false",
+      );
     }
     return this;
   }
@@ -639,7 +616,7 @@ class SqsEnsureQueueResultExpectationImpl
     return this;
   }
 
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#result.duration));
     }
@@ -653,26 +630,33 @@ class SqsEnsureQueueResultExpectationImpl
 class SqsDeleteQueueResultExpectationImpl
   implements SqsDeleteQueueResultExpectation {
   readonly #result: SqsDeleteQueueResult;
+  readonly #negate: boolean;
 
-  constructor(result: SqsDeleteQueueResult) {
+  constructor(result: SqsDeleteQueueResult, negate = false) {
     this.#result = result;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#result.ok) {
-      throw new Error("Expected ok result, but ok is false");
+  get not(): this {
+    return new SqsDeleteQueueResultExpectationImpl(
+      this.#result,
+      !this.#negate,
+    ) as this;
+  }
+
+  toBeSuccessful(): this {
+    const isSuccess = this.#result.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
+      throw new Error(
+        this.#negate
+          ? "Expected not ok result, but ok is true"
+          : "Expected ok result, but ok is false",
+      );
     }
     return this;
   }
 
-  notOk(): this {
-    if (this.#result.ok) {
-      throw new Error("Expected not ok result, but ok is true");
-    }
-    return this;
-  }
-
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#result.duration));
     }
@@ -707,19 +691,19 @@ export type SqsExpectation<R extends SqsResult> = R extends SqsSendResult
  * ```ts
  * const sendResult = await sqs.send(JSON.stringify({ orderId: "123" }));
  * expectSqsResult(sendResult)
- *   .ok()
+ *   .toBeSuccessful()
  *   .hasMessageId()
- *   .durationLessThan(1000);
+ *   .toHaveDurationLessThan(1000);
  * ```
  *
  * @example Receive result validation
  * ```ts
  * const receiveResult = await sqs.receive({ maxMessages: 10 });
  * expectSqsResult(receiveResult)
- *   .ok()
- *   .hasContent()
+ *   .toBeSuccessful()
+ *   .toHaveContent()
  *   .countAtLeast(1)
- *   .dataContains({ body: "orderId" });
+ *   .toMatchObject({ body: "orderId" });
  * ```
  *
  * @example Batch operations
@@ -730,14 +714,14 @@ export type SqsExpectation<R extends SqsResult> = R extends SqsSendResult
  *   { id: "2", body: "msg2" },
  * ]);
  * expectSqsResult(batchResult)
- *   .ok()
+ *   .toBeSuccessful()
  *   .allSuccessful()
  *   .noFailures();
  *
  * // Delete batch
  * const deleteResult = await sqs.deleteBatch(receiptHandles);
  * expectSqsResult(deleteResult)
- *   .ok()
+ *   .toBeSuccessful()
  *   .successfulCount(2);
  * ```
  *
@@ -746,13 +730,13 @@ export type SqsExpectation<R extends SqsResult> = R extends SqsSendResult
  * // Ensure queue exists
  * const ensureResult = await sqs.ensureQueue("test-queue");
  * expectSqsResult(ensureResult)
- *   .ok()
+ *   .toBeSuccessful()
  *   .hasQueueUrl()
  *   .queueUrlContains("test-queue");
  *
  * // Delete queue
  * const deleteResult = await sqs.deleteQueue(queueUrl);
- * expectSqsResult(deleteResult).ok();
+ * expectSqsResult(deleteResult).toBeSuccessful();
  * ```
  *
  * @example Individual message validation

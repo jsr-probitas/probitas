@@ -18,37 +18,34 @@ import type {
  * Fluent API for RabbitMQ publish result validation.
  */
 export interface RabbitMqPublishResultExpectation {
-  /** Assert that result ok is true */
-  ok(): this;
+  /** Negates the next assertion */
+  readonly not: this;
 
-  /** Assert that result ok is false */
-  notOk(): this;
+  /** Assert that result ok is true */
+  toBeSuccessful(): this;
 
   /** Assert that duration is less than threshold (ms) */
-  durationLessThan(ms: number): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 /**
  * Fluent API for RabbitMQ consume result validation.
  */
 export interface RabbitMqConsumeResultExpectation {
+  /** Negates the next assertion */
+  readonly not: this;
+
   /** Assert that result ok is true */
-  ok(): this;
-
-  /** Assert that result ok is false */
-  notOk(): this;
-
-  /** Assert that message is null (empty queue) */
-  noContent(): this;
+  toBeSuccessful(): this;
 
   /** Assert that message is not null */
-  hasContent(): this;
+  toHaveContent(): this;
 
   /** Assert that data contains the given subbody */
   dataContains(subbody: Uint8Array): this;
 
   /** Assert data using custom matcher function */
-  dataMatch(matcher: (content: Uint8Array) => void): this;
+  toSatisfy(matcher: (content: Uint8Array) => void): this;
 
   /** Assert that properties contain the given subset */
   propertyContains(subset: Partial<RabbitMqMessageProperties>): this;
@@ -60,7 +57,7 @@ export interface RabbitMqConsumeResultExpectation {
   exchange(expected: string): this;
 
   /** Assert that duration is less than threshold (ms) */
-  durationLessThan(ms: number): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 /**
@@ -80,11 +77,11 @@ export type RabbitMqAckResultExpectation = RabbitMqPublishResultExpectation;
  * Fluent API for RabbitMQ queue result validation.
  */
 export interface RabbitMqQueueResultExpectation {
-  /** Assert that result ok is true */
-  ok(): this;
+  /** Negates the next assertion */
+  readonly not: this;
 
-  /** Assert that result ok is false */
-  notOk(): this;
+  /** Assert that result ok is true */
+  toBeSuccessful(): this;
 
   /** Assert that message count equals expected */
   messageCount(count: number): this;
@@ -96,7 +93,7 @@ export interface RabbitMqQueueResultExpectation {
   consumerCount(count: number): this;
 
   /** Assert that duration is less than threshold (ms) */
-  durationLessThan(ms: number): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 /**
@@ -113,26 +110,33 @@ interface SimpleResult {
 class RabbitMqPublishResultExpectationImpl<T extends SimpleResult>
   implements RabbitMqPublishResultExpectation {
   readonly #result: T;
+  readonly #negate: boolean;
 
-  constructor(result: T) {
+  constructor(result: T, negate = false) {
     this.#result = result;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#result.ok) {
-      throw new Error("Expected ok result, but ok is false");
+  get not(): this {
+    return new RabbitMqPublishResultExpectationImpl(
+      this.#result,
+      !this.#negate,
+    ) as this;
+  }
+
+  toBeSuccessful(): this {
+    const isSuccess = this.#result.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
+      throw new Error(
+        this.#negate
+          ? "Expected not ok result, but ok is true"
+          : "Expected ok result, but ok is false",
+      );
     }
     return this;
   }
 
-  notOk(): this {
-    if (this.#result.ok) {
-      throw new Error("Expected not ok result, but ok is true");
-    }
-    return this;
-  }
-
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#result.duration));
     }
@@ -146,35 +150,40 @@ class RabbitMqPublishResultExpectationImpl<T extends SimpleResult>
 class RabbitMqConsumeResultExpectationImpl
   implements RabbitMqConsumeResultExpectation {
   readonly #result: RabbitMqConsumeResult;
+  readonly #negate: boolean;
 
-  constructor(result: RabbitMqConsumeResult) {
+  constructor(result: RabbitMqConsumeResult, negate = false) {
     this.#result = result;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#result.ok) {
-      throw new Error("Expected ok result, but ok is false");
+  get not(): this {
+    return new RabbitMqConsumeResultExpectationImpl(
+      this.#result,
+      !this.#negate,
+    ) as this;
+  }
+
+  toBeSuccessful(): this {
+    const isSuccess = this.#result.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
+      throw new Error(
+        this.#negate
+          ? "Expected not ok result, but ok is true"
+          : "Expected ok result, but ok is false",
+      );
     }
     return this;
   }
 
-  notOk(): this {
-    if (this.#result.ok) {
-      throw new Error("Expected not ok result, but ok is true");
-    }
-    return this;
-  }
-
-  noContent(): this {
-    if (this.#result.message !== null) {
-      throw new Error("Expected no message, but message exists");
-    }
-    return this;
-  }
-
-  hasContent(): this {
-    if (this.#result.message === null) {
-      throw new Error("Expected message, but message is null");
+  toHaveContent(): this {
+    const hasContent = this.#result.message !== null;
+    if (this.#negate ? hasContent : !hasContent) {
+      throw new Error(
+        this.#negate
+          ? "Expected no message, but message exists"
+          : "Expected message, but message is null",
+      );
     }
     return this;
   }
@@ -196,7 +205,7 @@ class RabbitMqConsumeResultExpectationImpl
     return this;
   }
 
-  dataMatch(matcher: (content: Uint8Array) => void): this {
+  toSatisfy(matcher: (content: Uint8Array) => void): this {
     if (this.#result.message === null) {
       throw new Error("Expected message, but message is null");
     }
@@ -246,7 +255,7 @@ class RabbitMqConsumeResultExpectationImpl
     return this;
   }
 
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#result.duration));
     }
@@ -260,21 +269,28 @@ class RabbitMqConsumeResultExpectationImpl
 class RabbitMqQueueResultExpectationImpl
   implements RabbitMqQueueResultExpectation {
   readonly #result: RabbitMqQueueResult;
+  readonly #negate: boolean;
 
-  constructor(result: RabbitMqQueueResult) {
+  constructor(result: RabbitMqQueueResult, negate = false) {
     this.#result = result;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#result.ok) {
-      throw new Error("Expected ok result, but ok is false");
-    }
-    return this;
+  get not(): this {
+    return new RabbitMqQueueResultExpectationImpl(
+      this.#result,
+      !this.#negate,
+    ) as this;
   }
 
-  notOk(): this {
-    if (this.#result.ok) {
-      throw new Error("Expected not ok result, but ok is true");
+  toBeSuccessful(): this {
+    const isSuccess = this.#result.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
+      throw new Error(
+        this.#negate
+          ? "Expected not ok result, but ok is true"
+          : "Expected ok result, but ok is false",
+      );
     }
     return this;
   }
@@ -306,7 +322,7 @@ class RabbitMqQueueResultExpectationImpl
     return this;
   }
 
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#result.duration));
     }
@@ -335,23 +351,23 @@ export type RabbitMqExpectation<R extends RabbitMqResult> = R extends
  * ```ts
  * // For publish result - returns RabbitMqPublishResultExpectation
  * const publishResult = await channel.sendToQueue(queue, content);
- * expectRabbitMqResult(publishResult).ok();
+ * expectRabbitMqResult(publishResult).toBeSuccessful();
  *
  * // For consume result - returns RabbitMqConsumeResultExpectation
  * const consumeResult = await channel.get(queue);
- * expectRabbitMqResult(consumeResult).ok().hasContent().routingKey("key");
+ * expectRabbitMqResult(consumeResult).toBeSuccessful().toHaveContent().routingKey("key");
  *
  * // For queue result - returns RabbitMqQueueResultExpectation
  * const queueResult = await channel.assertQueue("my-queue");
- * expectRabbitMqResult(queueResult).ok().messageCount(0);
+ * expectRabbitMqResult(queueResult).toBeSuccessful().messageCount(0);
  *
  * // For exchange result - returns RabbitMqExchangeResultExpectation
  * const exchangeResult = await channel.assertExchange("my-exchange", "direct");
- * expectRabbitMqResult(exchangeResult).ok();
+ * expectRabbitMqResult(exchangeResult).toBeSuccessful();
  *
  * // For ack result - returns RabbitMqAckResultExpectation
  * const ackResult = await channel.ack(message);
- * expectRabbitMqResult(ackResult).ok();
+ * expectRabbitMqResult(ackResult).toBeSuccessful();
  * ```
  */
 export function expectRabbitMqResult<R extends RabbitMqResult>(

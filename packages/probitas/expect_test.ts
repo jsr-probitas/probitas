@@ -28,10 +28,10 @@ describe("expect", () => {
       };
 
       const result = expect(httpResponse);
-      // HttpResponseExpectation has ok() method that returns this
-      assertEquals(typeof result.ok, "function");
+      // HttpResponseExpectation has toBeSuccessful() method that returns this
+      assertEquals(typeof result.toBeSuccessful, "function");
       assertEquals(typeof result.status, "function");
-      assertEquals(typeof result.dataContains, "function");
+      assertEquals(typeof result.toMatchObject, "function");
     });
 
     it("dispatches ConnectRpcResponse to expectConnectRpcResponse", () => {
@@ -47,8 +47,9 @@ describe("expect", () => {
       };
 
       const result = expect(connectRpcResponse);
-      assertEquals(typeof result.ok, "function");
+      assertEquals(typeof result.toBeSuccessful, "function");
       assertEquals(typeof result.code, "function");
+      assertEquals(typeof result.toMatchObject, "function");
     });
 
     it("dispatches GraphqlResponse to expectGraphqlResponse", () => {
@@ -64,9 +65,9 @@ describe("expect", () => {
       };
 
       const result = expect(graphqlResponse);
-      assertEquals(typeof result.ok, "function");
-      assertEquals(typeof result.hasContent, "function");
-      assertEquals(typeof result.dataContains, "function");
+      assertEquals(typeof result.toBeSuccessful, "function");
+      assertEquals(typeof result.toHaveContent, "function");
+      assertEquals(typeof result.toMatchObject, "function");
     });
 
     it("dispatches SqlQueryResult to expectSqlQueryResult", () => {
@@ -82,7 +83,8 @@ describe("expect", () => {
       };
 
       const result = expect(sqlResult);
-      assertEquals(typeof result.ok, "function");
+      assertEquals(typeof result.toBeSuccessful, "function");
+      assertEquals(typeof result.toMatchObject, "function");
       assertEquals(typeof result.rowCount, "function");
     });
 
@@ -97,7 +99,8 @@ describe("expect", () => {
       };
 
       const result = expect(denoKvResult);
-      assertEquals(typeof result.ok, "function");
+      assertEquals(typeof result.toBeSuccessful, "function");
+      assertEquals(typeof result.toHaveContent, "function");
     });
 
     it("dispatches DenoKvResult (deno-kv:set) to expectDenoKvResult", () => {
@@ -109,7 +112,7 @@ describe("expect", () => {
       };
 
       const result = expect(denoKvResult);
-      assertEquals(typeof result.ok, "function");
+      assertEquals(typeof result.toBeSuccessful, "function");
     });
 
     it("dispatches RedisResult (redis:get) to expectRedisResult", () => {
@@ -121,7 +124,7 @@ describe("expect", () => {
       };
 
       const result = expect(redisResult);
-      assertEquals(typeof result.ok, "function");
+      assertEquals(typeof result.toBeSuccessful, "function");
     });
 
     it("dispatches RedisResult (redis:set) to expectRedisResult", () => {
@@ -133,7 +136,7 @@ describe("expect", () => {
       };
 
       const result = expect(redisResult);
-      assertEquals(typeof result.ok, "function");
+      assertEquals(typeof result.toBeSuccessful, "function");
     });
 
     it("dispatches MongoResult (mongo:find) to expectMongoResult", () => {
@@ -145,7 +148,7 @@ describe("expect", () => {
       };
 
       const result = expect(mongoResult);
-      assertEquals(typeof result.ok, "function");
+      assertEquals(typeof result.toBeSuccessful, "function");
     });
 
     it("dispatches MongoResult (mongo:insert) to expectMongoResult", () => {
@@ -157,7 +160,7 @@ describe("expect", () => {
       };
 
       const result = expect(mongoResult);
-      assertEquals(typeof result.ok, "function");
+      assertEquals(typeof result.toBeSuccessful, "function");
     });
 
     it("dispatches RabbitMqResult (rabbitmq:publish) to expectRabbitMqResult", () => {
@@ -168,7 +171,7 @@ describe("expect", () => {
       };
 
       const result = expect(rabbitmqResult);
-      assertEquals(typeof result.ok, "function");
+      assertEquals(typeof result.toBeSuccessful, "function");
     });
 
     it("dispatches RabbitMqResult (rabbitmq:consume) to expectRabbitMqResult", () => {
@@ -180,7 +183,7 @@ describe("expect", () => {
       };
 
       const result = expect(rabbitmqResult);
-      assertEquals(typeof result.ok, "function");
+      assertEquals(typeof result.toBeSuccessful, "function");
     });
 
     it("dispatches SqsResult (sqs:send) to expectSqsResult", () => {
@@ -192,7 +195,7 @@ describe("expect", () => {
       };
 
       const result = expect(sqsResult);
-      assertEquals(typeof result.ok, "function");
+      assertEquals(typeof result.toBeSuccessful, "function");
     });
 
     it("dispatches SqsResult (sqs:receive) to expectSqsResult", () => {
@@ -204,7 +207,7 @@ describe("expect", () => {
       };
 
       const result = expect(sqsResult);
-      assertEquals(typeof result.ok, "function");
+      assertEquals(typeof result.toBeSuccessful, "function");
     });
   });
 
@@ -278,7 +281,7 @@ describe("expect", () => {
       // This should compile and have HttpResponseExpectation methods
       const expectation = expect(httpResponse);
       // Chain should return same type (fluent API)
-      const chained = expectation.ok();
+      const chained = expectation.toBeSuccessful();
       assertEquals(typeof chained.status, "function");
     });
 

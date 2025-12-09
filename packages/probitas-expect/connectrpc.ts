@@ -14,20 +14,17 @@ import type {
  * Fluent assertion interface for ConnectRpcResponse.
  */
 export interface ConnectRpcResponseExpectation {
-  /** Verify that status is OK (code === 0). */
-  ok(): this;
+  /** Invert all assertions */
+  readonly not: this;
 
-  /** Verify that status is not OK. */
-  notOk(): this;
+  /** Verify that status is OK (code === 0). */
+  toBeSuccessful(): this;
 
   /** Verify the exact status code. */
   code(expected: ConnectRpcStatusCode): this;
 
   /** Verify the status code is one of the specified values. */
   codeIn(...codes: ConnectRpcStatusCode[]): this;
-
-  /** Verify the status code is not one of the specified values. */
-  codeNotIn(...codes: ConnectRpcStatusCode[]): this;
 
   /** Verify the error message matches exactly or by regex. */
   error(expected: string | RegExp): this;
@@ -62,45 +59,45 @@ export interface ConnectRpcResponseExpectation {
   /** Verify a trailer value using a custom matcher. */
   trailerMatch(name: string, matcher: (value: string) => void): this;
 
-  /** Verify that data() is null. */
-  noContent(): this;
-
   /** Verify that data() is not null. */
-  hasContent(): this;
+  toHaveContent(): this;
 
   /** Verify that data() contains the specified properties (deep partial match). */
   // deno-lint-ignore no-explicit-any
-  dataContains<T = any>(subset: Partial<T>): this;
+  toMatchObject<T = any>(subset: Partial<T>): this;
 
   /** Verify data() using a custom matcher. */
   // deno-lint-ignore no-explicit-any
-  dataMatch<T = any>(matcher: (data: T) => void): this;
+  toSatisfy<T = any>(matcher: (data: T) => void): this;
 
   /** Verify that response duration is less than the threshold. */
-  durationLessThan(ms: number): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 class ConnectRpcResponseExpectationImpl
   implements ConnectRpcResponseExpectation {
   readonly #response: ConnectRpcResponse;
+  readonly #negate: boolean;
 
-  constructor(response: ConnectRpcResponse) {
+  constructor(response: ConnectRpcResponse, negate = false) {
     this.#response = response;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#response.ok) {
-      throw new Error(
-        `Expected ok response (code 0), got code ${this.#response.code}`,
-      );
-    }
-    return this;
+  get not(): this {
+    return new ConnectRpcResponseExpectationImpl(
+      this.#response,
+      !this.#negate,
+    ) as this;
   }
 
-  notOk(): this {
-    if (this.#response.ok) {
+  toBeSuccessful(): this {
+    const isSuccess = this.#response.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
       throw new Error(
-        `Expected non-ok response, got code ${this.#response.code}`,
+        this.#negate
+          ? `Expected non-successful response, got code ${this.#response.code}`
+          : `Expected successful response (code 0), got code ${this.#response.code}`,
       );
     }
     return this;
@@ -119,17 +116,6 @@ class ConnectRpcResponseExpectationImpl
     if (!codes.includes(this.#response.code)) {
       throw new Error(
         `Expected code to be one of [${
-          codes.join(", ")
-        }], got ${this.#response.code}`,
-      );
-    }
-    return this;
-  }
-
-  codeNotIn(...codes: ConnectRpcStatusCode[]): this {
-    if (codes.includes(this.#response.code)) {
-      throw new Error(
-        `Expected code to not be one of [${
           codes.join(", ")
         }], got ${this.#response.code}`,
       );
@@ -259,22 +245,20 @@ class ConnectRpcResponseExpectationImpl
     return this;
   }
 
-  noContent(): this {
-    if (this.#response.data() !== null) {
-      throw new Error("Expected no data, but data is not null");
-    }
-    return this;
-  }
-
-  hasContent(): this {
-    if (this.#response.data() === null) {
-      throw new Error("Expected data, but data is null");
+  toHaveContent(): this {
+    const hasData = this.#response.data() !== null;
+    if (this.#negate ? hasData : !hasData) {
+      throw new Error(
+        this.#negate
+          ? "Expected no content, but data is not null"
+          : "Expected content, but data is null",
+      );
     }
     return this;
   }
 
   // deno-lint-ignore no-explicit-any
-  dataContains<T = any>(subset: Partial<T>): this {
+  toMatchObject<T = any>(subset: Partial<T>): this {
     const data = this.#response.data<T>();
     if (!containsSubset(data, subset)) {
       throw new Error(
@@ -287,7 +271,7 @@ class ConnectRpcResponseExpectationImpl
   }
 
   // deno-lint-ignore no-explicit-any
-  dataMatch<T = any>(matcher: (data: T) => void): this {
+  toSatisfy<T = any>(matcher: (data: T) => void): this {
     const data = this.#response.data<T>();
     if (data === null) {
       throw new Error("Cannot match data: data is null");
@@ -296,7 +280,7 @@ class ConnectRpcResponseExpectationImpl
     return this;
   }
 
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#response.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#response.duration));
     }

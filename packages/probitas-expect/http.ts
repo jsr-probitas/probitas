@@ -9,11 +9,11 @@ import type { HttpResponse } from "@probitas/client-http";
  * Fluent API for HTTP response validation.
  */
 export interface HttpResponseExpectation {
-  /** Assert that response status is 200-299 */
-  ok(): this;
+  /** Invert all assertions */
+  readonly not: this;
 
-  /** Assert that response status is not 200-299 */
-  notOk(): this;
+  /** Assert that response status is 200-299 */
+  toBeSuccessful(): this;
 
   /** Assert that response status matches expected code */
   status(code: number): this;
@@ -23,9 +23,6 @@ export interface HttpResponseExpectation {
 
   /** Assert that response status is one of the given values */
   statusIn(...statuses: number[]): this;
-
-  /** Assert that response status is NOT one of the given values */
-  statusNotIn(...statuses: number[]): this;
 
   /** Assert that header value matches expected string or regex */
   header(name: string, expected: string | RegExp): this;
@@ -42,34 +39,24 @@ export interface HttpResponseExpectation {
   /** Assert that Content-Type header matches expected string or regex */
   contentType(expected: string | RegExp): this;
 
-  /** Assert that response body is null */
-  noContent(): this;
-
   /** Assert that response body is not null */
-  hasContent(): this;
+  toHaveContent(): this;
 
   /** Assert that body contains given byte sequence */
   bodyContains(subbody: Uint8Array): this;
 
-  /** Assert body using custom matcher function */
-  bodyMatch(matcher: (body: Uint8Array) => void): this;
+  /** Assert body or text using custom matcher function */
+  toSatisfy(matcher: (value: Uint8Array | string) => void): this;
 
   /** Assert that text body contains substring */
   textContains(substring: string): this;
 
-  /** Assert text body using custom matcher function */
-  textMatch(matcher: (text: string) => void): this;
-
   /** Assert that JSON body contains expected properties */
   // deno-lint-ignore no-explicit-any
-  dataContains<T = any>(subset: Partial<T>): this;
-
-  /** Assert JSON body using custom matcher function */
-  // deno-lint-ignore no-explicit-any
-  dataMatch<T = any>(matcher: (body: T) => void): this;
+  toMatchObject<T = any>(subset: Partial<T>): this;
 
   /** Assert that response duration is less than threshold (ms) */
-  durationLessThan(ms: number): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 /**
@@ -77,24 +64,27 @@ export interface HttpResponseExpectation {
  */
 class HttpResponseExpectationImpl implements HttpResponseExpectation {
   readonly #response: HttpResponse;
+  readonly #negate: boolean;
 
-  constructor(response: HttpResponse) {
+  constructor(response: HttpResponse, negate = false) {
     this.#response = response;
+    this.#negate = negate;
   }
 
-  ok(): this {
-    if (!this.#response.ok) {
-      throw new Error(
-        `Expected ok response, got status ${this.#response.status}`,
-      );
-    }
-    return this;
+  get not(): this {
+    return new HttpResponseExpectationImpl(
+      this.#response,
+      !this.#negate,
+    ) as this;
   }
 
-  notOk(): this {
-    if (this.#response.ok) {
+  toBeSuccessful(): this {
+    const isSuccess = this.#response.ok;
+    if (this.#negate ? isSuccess : !isSuccess) {
       throw new Error(
-        `Expected non-ok response, got status ${this.#response.status}`,
+        this.#negate
+          ? `Expected non-successful response, got status ${this.#response.status}`
+          : `Expected successful response (200-299), got status ${this.#response.status}`,
       );
     }
     return this;
@@ -124,16 +114,6 @@ class HttpResponseExpectationImpl implements HttpResponseExpectation {
     if (!statuses.includes(status)) {
       throw new Error(
         `Expected status in [${statuses.join(", ")}], got ${status}`,
-      );
-    }
-    return this;
-  }
-
-  statusNotIn(...statuses: number[]): this {
-    const { status } = this.#response;
-    if (statuses.includes(status)) {
-      throw new Error(
-        `Expected status not in [${statuses.join(", ")}], got ${status}`,
       );
     }
     return this;
@@ -194,14 +174,7 @@ class HttpResponseExpectationImpl implements HttpResponseExpectation {
     return this.header("Content-Type", expected);
   }
 
-  noContent(): this {
-    if (this.#response.body !== null) {
-      throw new Error("Expected no content, but body exists");
-    }
-    return this;
-  }
-
-  hasContent(): this {
+  toHaveContent(): this {
     if (this.#response.body === null) {
       throw new Error("Expected content, but body is null");
     }
@@ -218,10 +191,22 @@ class HttpResponseExpectationImpl implements HttpResponseExpectation {
     return this;
   }
 
-  bodyMatch(matcher: (body: Uint8Array) => void): this {
+  toSatisfy(matcher: (value: Uint8Array | string) => void): this {
     if (this.#response.body === null) {
       throw new Error("Expected body for matching, but body is null");
     }
+
+    // Try text first if possible
+    const text = this.#response.text();
+    if (text !== null) {
+      try {
+        matcher(text);
+        return this;
+      } catch {
+        // If text matcher fails, try with raw body
+      }
+    }
+
     matcher(this.#response.body);
     return this;
   }
@@ -237,17 +222,8 @@ class HttpResponseExpectationImpl implements HttpResponseExpectation {
     return this;
   }
 
-  textMatch(matcher: (text: string) => void): this {
-    const text = this.#response.text();
-    if (text === null) {
-      throw new Error("Expected text for matching, but body is null");
-    }
-    matcher(text);
-    return this;
-  }
-
   // deno-lint-ignore no-explicit-any
-  dataContains<T = any>(subset: Partial<T>): this {
+  toMatchObject<T = any>(subset: Partial<T>): this {
     const data = this.#response.data();
     if (data === null) {
       throw new Error("Expected data to contain properties, but body is null");
@@ -258,17 +234,7 @@ class HttpResponseExpectationImpl implements HttpResponseExpectation {
     return this;
   }
 
-  // deno-lint-ignore no-explicit-any
-  dataMatch<T = any>(matcher: (body: T) => void): this {
-    const data = this.#response.data<T>();
-    if (data === null) {
-      throw new Error("Expected data for matching, but body is null");
-    }
-    matcher(data);
-    return this;
-  }
-
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.#response.duration >= ms) {
       throw new Error(buildDurationError(ms, this.#response.duration));
     }

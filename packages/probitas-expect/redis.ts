@@ -28,20 +28,20 @@ interface RedisResultShape<T> {
  * Base fluent API for Redis result validation.
  */
 export interface RedisResultExpectation<T> {
-  /** Assert that result ok is true */
-  ok(): this;
+  /** Negates the next assertion */
+  readonly not: this;
 
-  /** Assert that result ok is false */
-  notOk(): this;
+  /** Assert that result ok is true */
+  toBeSuccessful(): this;
 
   /** Assert that data matches expected */
   data(expected: T): this;
 
   /** Assert data using custom matcher function */
-  dataMatch(matcher: (value: T) => void): this;
+  toSatisfy(matcher: (value: T) => void): this;
 
   /** Assert that duration is less than threshold (ms) */
-  durationLessThan(ms: number): this;
+  toHaveDurationLessThan(ms: number): this;
 }
 
 /**
@@ -64,11 +64,8 @@ export interface RedisCountResultExpectation
  */
 export interface RedisArrayResultExpectation<T>
   extends RedisResultExpectation<readonly T[]> {
-  /** Assert that array is empty */
-  noContent(): this;
-
   /** Assert that array is not empty */
-  hasContent(): this;
+  toHaveContent(): this;
 
   /** Assert that array count equals expected */
   count(expected: number): this;
@@ -88,21 +85,28 @@ export interface RedisArrayResultExpectation<T>
  */
 class RedisResultExpectationImpl<T> implements RedisResultExpectation<T> {
   protected readonly result: RedisResultShape<T>;
+  protected readonly negate: boolean;
 
-  constructor(result: RedisResultShape<T>) {
+  constructor(result: RedisResultShape<T>, negate = false) {
     this.result = result;
+    this.negate = negate;
   }
 
-  ok(): this {
-    if (!this.result.ok) {
-      throw new Error("Expected ok result, but ok is false");
-    }
-    return this;
+  get not(): this {
+    return new (this.constructor as new (
+      result: RedisResultShape<T>,
+      negate: boolean,
+    ) => this)(this.result, !this.negate);
   }
 
-  notOk(): this {
-    if (this.result.ok) {
-      throw new Error("Expected not ok result, but ok is true");
+  toBeSuccessful(): this {
+    const isSuccess = this.result.ok;
+    if (this.negate ? isSuccess : !isSuccess) {
+      throw new Error(
+        this.negate
+          ? "Expected not ok result, but ok is true"
+          : "Expected ok result, but ok is false",
+      );
     }
     return this;
   }
@@ -118,12 +122,12 @@ class RedisResultExpectationImpl<T> implements RedisResultExpectation<T> {
     return this;
   }
 
-  dataMatch(matcher: (value: T) => void): this {
+  toSatisfy(matcher: (value: T) => void): this {
     matcher(this.result.value);
     return this;
   }
 
-  durationLessThan(ms: number): this {
+  toHaveDurationLessThan(ms: number): this {
     if (this.result.duration >= ms) {
       throw new Error(buildDurationError(ms, this.result.duration));
     }
@@ -136,8 +140,8 @@ class RedisResultExpectationImpl<T> implements RedisResultExpectation<T> {
  */
 class RedisCountResultExpectationImpl extends RedisResultExpectationImpl<number>
   implements RedisCountResultExpectation {
-  constructor(result: RedisCountResult) {
-    super(result);
+  constructor(result: RedisCountResult, negate = false) {
+    super(result, negate);
   }
 
   count(expected: number): this {
@@ -174,22 +178,18 @@ class RedisCountResultExpectationImpl extends RedisResultExpectationImpl<number>
 class RedisArrayResultExpectationImpl<T>
   extends RedisResultExpectationImpl<readonly T[]>
   implements RedisArrayResultExpectation<T> {
-  constructor(result: RedisArrayResult<T>) {
-    super(result);
+  constructor(result: RedisArrayResult<T>, negate = false) {
+    super(result, negate);
   }
 
-  noContent(): this {
-    if (this.result.value.length !== 0) {
+  toHaveContent(): this {
+    const hasContent = this.result.value.length > 0;
+    if (this.negate ? hasContent : !hasContent) {
       throw new Error(
-        `Expected empty array, got ${this.result.value.length} items`,
+        this.negate
+          ? `Expected empty array, got ${this.result.value.length} items`
+          : "Expected non-empty array, but array is empty",
       );
-    }
-    return this;
-  }
-
-  hasContent(): this {
-    if (this.result.value.length === 0) {
-      throw new Error("Expected non-empty array, but array is empty");
     }
     return this;
   }

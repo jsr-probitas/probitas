@@ -50,7 +50,7 @@ export default scenario("DuckDB Client Example", {
         (6, '2024-01-20', 'Widget C', 'Electronics', 12, 39.99, 'North')
     `);
 
-    expect(result).ok();
+    expect(result).toBeSuccessful();
   })
   .step("Simple aggregation query", async (ctx) => {
     const { duckdb } = ctx.resources;
@@ -64,7 +64,7 @@ export default scenario("DuckDB Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .countAtLeast(2);
   })
   .step("Window function query", async (ctx) => {
@@ -84,7 +84,7 @@ export default scenario("DuckDB Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .countAtLeast(6);
   })
   .step("Parameterized query", async (ctx) => {
@@ -97,7 +97,7 @@ export default scenario("DuckDB Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .countAtLeast(2);
   })
   .step("Complex analytical query", async (ctx) => {
@@ -118,7 +118,7 @@ export default scenario("DuckDB Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .countAtLeast(4);
   })
   .step("Update row", async (ctx) => {
@@ -128,7 +128,7 @@ export default scenario("DuckDB Client Example", {
       [25, 1],
     );
 
-    expect(result).ok();
+    expect(result).toBeSuccessful();
   })
   .step("Transaction - commit", async (ctx) => {
     const { duckdb } = ctx.resources;
@@ -146,9 +146,9 @@ export default scenario("DuckDB Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .count(1)
-      .dataContains({ product_name: "TxProduct" });
+      .toMatchObject({ product_name: "TxProduct" });
   })
   .step("Transaction - rollback on error", async (ctx) => {
     const { duckdb } = ctx.resources;
@@ -171,7 +171,7 @@ export default scenario("DuckDB Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .count(0);
   })
   .step("Delete row", async (ctx) => {
@@ -181,6 +181,6 @@ export default scenario("DuckDB Client Example", {
       [7],
     );
 
-    expect(result).ok();
+    expect(result).toBeSuccessful();
   })
   .build();

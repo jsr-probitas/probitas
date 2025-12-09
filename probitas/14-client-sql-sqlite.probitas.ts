@@ -41,7 +41,7 @@ export default scenario("SQLite Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .count(1);
   })
   .step("Insert multiple rows", async (ctx) => {
@@ -58,7 +58,7 @@ export default scenario("SQLite Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .count(1);
   })
   .step("Select with WHERE clause", async (ctx) => {
@@ -69,9 +69,9 @@ export default scenario("SQLite Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .count(1)
-      .dataContains({ title: "The Pragmatic Programmer" });
+      .toMatchObject({ title: "The Pragmatic Programmer" });
   })
   .step("Select all rows", async (ctx) => {
     const { sqlite } = ctx.resources;
@@ -82,7 +82,7 @@ export default scenario("SQLite Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .countAtLeast(3);
   })
   .step("Update row", async (ctx) => {
@@ -93,7 +93,7 @@ export default scenario("SQLite Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .count(1);
   })
   .step("Transaction - commit", async (ctx) => {
@@ -111,9 +111,9 @@ export default scenario("SQLite Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .count(1)
-      .dataContains({ title: "Refactoring" });
+      .toMatchObject({ title: "Refactoring" });
   })
   .step("Transaction - rollback on error", async (ctx) => {
     const { sqlite } = ctx.resources;
@@ -135,7 +135,7 @@ export default scenario("SQLite Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .count(0);
   })
   .step("Delete row", async (ctx) => {
@@ -146,7 +146,7 @@ export default scenario("SQLite Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .count(1);
   })
   .build();

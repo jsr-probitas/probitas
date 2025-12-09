@@ -38,7 +38,7 @@ export default scenario("MySQL Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .count(1);
   })
   .step("Insert multiple rows", async (ctx) => {
@@ -49,7 +49,7 @@ export default scenario("MySQL Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .count(2);
   })
   .step("Select with WHERE clause", async (ctx) => {
@@ -60,9 +60,9 @@ export default scenario("MySQL Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .count(1)
-      .dataContains({ name: "Widget" });
+      .toMatchObject({ name: "Widget" });
   })
   .step("Select all rows", async (ctx) => {
     const { mysql } = ctx.resources;
@@ -73,7 +73,7 @@ export default scenario("MySQL Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .countAtLeast(3);
   })
   .step("Update row", async (ctx) => {
@@ -84,7 +84,7 @@ export default scenario("MySQL Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .count(1);
   })
   .step("Transaction - commit", async (ctx) => {
@@ -102,9 +102,9 @@ export default scenario("MySQL Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .count(1)
-      .dataContains({ name: "TxProduct" });
+      .toMatchObject({ name: "TxProduct" });
   })
   .step("Delete row", async (ctx) => {
     const { mysql } = ctx.resources;
@@ -114,7 +114,7 @@ export default scenario("MySQL Client Example", {
     );
 
     expect(result)
-      .ok()
+      .toBeSuccessful()
       .count(1);
   })
   .build();
