@@ -31,17 +31,18 @@ version management.
 
 ### Version Bump Rules
 
-| Commit Type                                              | Version Bump  | Example                                              |
-| -------------------------------------------------------- | ------------- | ---------------------------------------------------- |
-| `feat:`                                                  | minor (0.x.0) | `feat(@probitas/builder): add retry option`          |
-| `fix:`, `perf:`, `docs:`, `refactor:`, `test:`, `chore:` | patch (0.0.x) | `fix(@probitas/runner): handle timeout errors`       |
-| `BREAKING:` or `!` suffix                                | major (x.0.0) | `feat(@probitas/runner)!: change API signature`      |
-| Any type with `/unstable` scope                          | patch (0.0.x) | `feat(@probitas/runner/unstable): experimental API`  |
+| Commit Type                                              | Version Bump  | Example                                             |
+| -------------------------------------------------------- | ------------- | --------------------------------------------------- |
+| `feat:`                                                  | minor (0.x.0) | `feat(@probitas/builder): add retry option`         |
+| `fix:`, `perf:`, `docs:`, `refactor:`, `test:`, `chore:` | patch (0.0.x) | `fix(@probitas/runner): handle timeout errors`      |
+| `BREAKING:` or `!` suffix                                | major (x.0.0) | `feat(@probitas/runner)!: change API signature`     |
+| Any type with `/unstable` scope                          | patch (0.0.x) | `feat(@probitas/runner/unstable): experimental API` |
 
 ### Scope Convention
 
-Use full package name with `@probitas/` prefix as scope (e.g., `@probitas/expect`).
-**Scopes are required** for `BREAKING`, `feat`, `fix`, `perf`, and `deprecation`.
+Use full package name with `@probitas/` prefix as scope (e.g.,
+`@probitas/expect`). **Scopes are required** for `BREAKING`, `feat`, `fix`,
+`perf`, and `deprecation`.
 
 ```bash
 # Single package
