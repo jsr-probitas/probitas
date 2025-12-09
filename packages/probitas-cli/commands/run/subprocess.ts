@@ -161,6 +161,31 @@ async function main(): Promise<number> {
 }
 
 if (import.meta.main) {
+  // Handle unhandled promise rejections from Deno's node:http2 compatibility layer.
+  // The "Bad resource ID" error occurs during HTTP/2 stream cleanup and doesn't
+  // affect test correctness, but causes the process to exit with error code 1.
+  globalThis.addEventListener("unhandledrejection", (event) => {
+    const error = event.reason;
+    const errorMessage = error instanceof Error
+      ? error.message
+      : String(error);
+
+    // Ignore "Bad resource ID" errors from node:http2
+    if (
+      errorMessage.includes("Bad resource ID") ||
+      (error instanceof Error && error.stack?.includes("node:http2"))
+    ) {
+      logger.debug("Ignoring unhandled rejection from node:http2", {
+        error: errorMessage,
+      });
+      event.preventDefault(); // Prevent default handling (process termination)
+      return;
+    }
+
+    // Let other unhandled rejections propagate normally
+    logger.error("Unhandled promise rejection", { error });
+  });
+
   const exitCode = await main();
   Deno.exit(exitCode);
 }
