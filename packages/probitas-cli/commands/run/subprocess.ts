@@ -166,9 +166,7 @@ if (import.meta.main) {
   // affect test correctness, but causes the process to exit with error code 1.
   globalThis.addEventListener("unhandledrejection", (event) => {
     const error = event.reason;
-    const errorMessage = error instanceof Error
-      ? error.message
-      : String(error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
 
     // Ignore "Bad resource ID" errors from node:http2
     if (
