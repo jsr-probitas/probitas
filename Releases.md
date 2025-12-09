@@ -1,5 +1,11 @@
 ### 2025.12.09
 
+#### @probitas/expect 0.1.1 (patch)
+
+- docs(@probitas/expect): update JSDoc examples to use new API naming convention
+
+### 2025.12.09
+
 #### @probitas/builder 0.2.7 (patch)
 
 - docs(*): update all examples to use scenario-based patterns
