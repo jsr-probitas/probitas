@@ -63,4 +63,4 @@ export default scenario("DB example")
 - `probitas run -s "!tag:slow"` — exclude tagged scenarios
 
 ## Documentation
-Full docs: https://documents.probitas.deno.net/
+Full docs: https://jsr-probitas.github.io/documents/index.md

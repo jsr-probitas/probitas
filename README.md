@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://documents.probitas.deno.net/static/probitas.png" alt="Probitas Logo" width="200">
+  <img src="https://jsr-probitas.github.io/documents/static/probitas.png" alt="Probitas Logo" width="200">
 </p>
 
 <h1 align="center">Probitas</h1>
