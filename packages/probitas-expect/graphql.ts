@@ -1,4 +1,4 @@
-import { containsSubset } from "./common.ts";
+import { buildDurationError, containsSubset } from "./common.ts";
 import type {
   GraphqlErrorItem,
   GraphqlResponse,
@@ -240,9 +240,7 @@ class GraphqlResponseExpectationImpl implements GraphqlResponseExpectation {
 
   durationLessThan(ms: number): this {
     if (this.#response.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.#response.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.#response.duration));
     }
     return this;
   }

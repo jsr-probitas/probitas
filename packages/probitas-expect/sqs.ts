@@ -1,4 +1,10 @@
-import { containsSubset } from "./common.ts";
+import {
+  buildCountAtLeastError,
+  buildCountAtMostError,
+  buildCountError,
+  buildDurationError,
+  containsSubset,
+} from "./common.ts";
 import type {
   SqsDeleteBatchResult,
   SqsDeleteQueueResult,
@@ -168,9 +174,7 @@ class SqsSendResultExpectationImpl implements SqsSendResultExpectation {
 
   durationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.#result.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.#result.duration));
     }
     return this;
   }
@@ -213,7 +217,7 @@ class SqsSendBatchResultExpectationImpl
   successfulCount(count: number): this {
     if (this.#result.successful.length !== count) {
       throw new Error(
-        `Expected ${count} successful, got ${this.#result.successful.length}`,
+        buildCountError(count, this.#result.successful.length, "successful"),
       );
     }
     return this;
@@ -222,7 +226,7 @@ class SqsSendBatchResultExpectationImpl
   failedCount(count: number): this {
     if (this.#result.failed.length !== count) {
       throw new Error(
-        `Expected ${count} failed, got ${this.#result.failed.length}`,
+        buildCountError(count, this.#result.failed.length, "failed"),
       );
     }
     return this;
@@ -239,9 +243,7 @@ class SqsSendBatchResultExpectationImpl
 
   durationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.#result.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.#result.duration));
     }
     return this;
   }
@@ -290,7 +292,7 @@ class SqsReceiveResultExpectationImpl implements SqsReceiveResultExpectation {
   count(expected: number): this {
     if (this.#result.messages.length !== expected) {
       throw new Error(
-        `Expected ${expected} messages, got ${this.#result.messages.length}`,
+        buildCountError(expected, this.#result.messages.length, "messages"),
       );
     }
     return this;
@@ -299,7 +301,7 @@ class SqsReceiveResultExpectationImpl implements SqsReceiveResultExpectation {
   countAtLeast(min: number): this {
     if (this.#result.messages.length < min) {
       throw new Error(
-        `Expected at least ${min} messages, got ${this.#result.messages.length}`,
+        buildCountAtLeastError(min, this.#result.messages.length, "messages"),
       );
     }
     return this;
@@ -308,7 +310,7 @@ class SqsReceiveResultExpectationImpl implements SqsReceiveResultExpectation {
   countAtMost(max: number): this {
     if (this.#result.messages.length > max) {
       throw new Error(
-        `Expected at most ${max} messages, got ${this.#result.messages.length}`,
+        buildCountAtMostError(max, this.#result.messages.length, "messages"),
       );
     }
     return this;
@@ -346,9 +348,7 @@ class SqsReceiveResultExpectationImpl implements SqsReceiveResultExpectation {
 
   durationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.#result.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.#result.duration));
     }
     return this;
   }
@@ -380,9 +380,7 @@ class SqsDeleteResultExpectationImpl implements SqsDeleteResultExpectation {
 
   durationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.#result.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.#result.duration));
     }
     return this;
   }
@@ -426,7 +424,7 @@ class SqsDeleteBatchResultExpectationImpl
   successfulCount(count: number): this {
     if (this.#result.successful.length !== count) {
       throw new Error(
-        `Expected ${count} successful, got ${this.#result.successful.length}`,
+        buildCountError(count, this.#result.successful.length, "successful"),
       );
     }
     return this;
@@ -435,7 +433,7 @@ class SqsDeleteBatchResultExpectationImpl
   failedCount(count: number): this {
     if (this.#result.failed.length !== count) {
       throw new Error(
-        `Expected ${count} failed, got ${this.#result.failed.length}`,
+        buildCountError(count, this.#result.failed.length, "failed"),
       );
     }
     return this;
@@ -452,9 +450,7 @@ class SqsDeleteBatchResultExpectationImpl
 
   durationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.#result.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.#result.duration));
     }
     return this;
   }
@@ -645,9 +641,7 @@ class SqsEnsureQueueResultExpectationImpl
 
   durationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.#result.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.#result.duration));
     }
     return this;
   }
@@ -680,9 +674,7 @@ class SqsDeleteQueueResultExpectationImpl
 
   durationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.#result.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.#result.duration));
     }
     return this;
   }

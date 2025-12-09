@@ -1,4 +1,10 @@
-import { containsSubset } from "./common.ts";
+import {
+  buildCountAtLeastError,
+  buildCountAtMostError,
+  buildCountError,
+  buildDurationError,
+  containsSubset,
+} from "./common.ts";
 import type {
   DenoKvAtomicResult,
   DenoKvDeleteResult,
@@ -217,9 +223,7 @@ class DenoKvGetResultExpectationImpl<T>
 
   durationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.#result.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.#result.duration));
     }
     return this;
   }
@@ -269,7 +273,7 @@ class DenoKvListResultExpectationImpl<T>
   count(expected: number): this {
     if (this.#result.entries.length !== expected) {
       throw new Error(
-        `Expected ${expected} entries, got ${this.#result.entries.length}`,
+        buildCountError(expected, this.#result.entries.length, "entries"),
       );
     }
     return this;
@@ -278,7 +282,7 @@ class DenoKvListResultExpectationImpl<T>
   countAtLeast(min: number): this {
     if (this.#result.entries.length < min) {
       throw new Error(
-        `Expected at least ${min} entries, got ${this.#result.entries.length}`,
+        buildCountAtLeastError(min, this.#result.entries.length, "entries"),
       );
     }
     return this;
@@ -287,7 +291,7 @@ class DenoKvListResultExpectationImpl<T>
   countAtMost(max: number): this {
     if (this.#result.entries.length > max) {
       throw new Error(
-        `Expected at most ${max} entries, got ${this.#result.entries.length}`,
+        buildCountAtMostError(max, this.#result.entries.length, "entries"),
       );
     }
     return this;
@@ -320,9 +324,7 @@ class DenoKvListResultExpectationImpl<T>
 
   durationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.#result.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.#result.duration));
     }
     return this;
   }
@@ -361,9 +363,7 @@ class DenoKvSetResultExpectationImpl implements DenoKvSetResultExpectation {
 
   durationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.#result.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.#result.duration));
     }
     return this;
   }
@@ -396,9 +396,7 @@ class DenoKvDeleteResultExpectationImpl
 
   durationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.#result.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.#result.duration));
     }
     return this;
   }
@@ -438,9 +436,7 @@ class DenoKvAtomicResultExpectationImpl
 
   durationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.#result.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.#result.duration));
     }
     return this;
   }

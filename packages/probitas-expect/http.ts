@@ -1,4 +1,8 @@
-import { containsSubarray, containsSubset } from "./common.ts";
+import {
+  buildDurationError,
+  containsSubarray,
+  containsSubset,
+} from "./common.ts";
 import type { HttpResponse } from "@probitas/client-http";
 
 /**
@@ -266,9 +270,7 @@ class HttpResponseExpectationImpl implements HttpResponseExpectation {
 
   durationLessThan(ms: number): this {
     if (this.#response.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.#response.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.#response.duration));
     }
     return this;
   }

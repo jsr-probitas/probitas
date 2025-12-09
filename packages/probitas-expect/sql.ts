@@ -1,4 +1,10 @@
-import { containsSubset } from "./common.ts";
+import {
+  buildCountAtLeastError,
+  buildCountAtMostError,
+  buildCountError,
+  buildDurationError,
+  containsSubset,
+} from "./common.ts";
 import type { SqlQueryResult, SqlRows } from "@probitas/client-sql";
 
 /**
@@ -101,7 +107,7 @@ class SqlQueryResultExpectationImpl<T> implements SqlQueryResultExpectation<T> {
   count(expected: number): this {
     if (this.result.rows.length !== expected) {
       throw new Error(
-        `Expected ${expected} rows, got ${this.result.rows.length}`,
+        buildCountError(expected, this.result.rows.length, "rows"),
       );
     }
     return this;
@@ -110,7 +116,7 @@ class SqlQueryResultExpectationImpl<T> implements SqlQueryResultExpectation<T> {
   countAtLeast(expected: number): this {
     if (this.result.rows.length < expected) {
       throw new Error(
-        `Expected at least ${expected} rows, got ${this.result.rows.length}`,
+        buildCountAtLeastError(expected, this.result.rows.length, "rows"),
       );
     }
     return this;
@@ -119,7 +125,7 @@ class SqlQueryResultExpectationImpl<T> implements SqlQueryResultExpectation<T> {
   countAtMost(expected: number): this {
     if (this.result.rows.length > expected) {
       throw new Error(
-        `Expected at most ${expected} rows, got ${this.result.rows.length}`,
+        buildCountAtMostError(expected, this.result.rows.length, "rows"),
       );
     }
     return this;
@@ -128,7 +134,7 @@ class SqlQueryResultExpectationImpl<T> implements SqlQueryResultExpectation<T> {
   rowCount(count: number): this {
     if (this.result.rowCount !== count) {
       throw new Error(
-        `Expected rowCount ${count}, got ${this.result.rowCount}`,
+        buildCountError(count, this.result.rowCount, "rowCount"),
       );
     }
     return this;
@@ -137,7 +143,7 @@ class SqlQueryResultExpectationImpl<T> implements SqlQueryResultExpectation<T> {
   rowCountAtLeast(count: number): this {
     if (this.result.rowCount < count) {
       throw new Error(
-        `Expected rowCount at least ${count}, got ${this.result.rowCount}`,
+        buildCountAtLeastError(count, this.result.rowCount, "rowCount"),
       );
     }
     return this;
@@ -146,7 +152,7 @@ class SqlQueryResultExpectationImpl<T> implements SqlQueryResultExpectation<T> {
   rowCountAtMost(count: number): this {
     if (this.result.rowCount > count) {
       throw new Error(
-        `Expected rowCount at most ${count}, got ${this.result.rowCount}`,
+        buildCountAtMostError(count, this.result.rowCount, "rowCount"),
       );
     }
     return this;
@@ -212,9 +218,7 @@ class SqlQueryResultExpectationImpl<T> implements SqlQueryResultExpectation<T> {
 
   durationLessThan(ms: number): this {
     if (this.result.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.result.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.result.duration));
     }
     return this;
   }

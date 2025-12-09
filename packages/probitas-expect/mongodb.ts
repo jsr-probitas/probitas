@@ -1,4 +1,10 @@
-import { containsSubset } from "./common.ts";
+import {
+  buildCountAtLeastError,
+  buildCountAtMostError,
+  buildCountError,
+  buildDurationError,
+  containsSubset,
+} from "./common.ts";
 import type {
   MongoCountResult,
   MongoDeleteResult,
@@ -127,7 +133,7 @@ class MongoFindResultExpectationImpl<T>
   count(expected: number): this {
     if (this.#result.docs.length !== expected) {
       throw new Error(
-        `Expected ${expected} documents, got ${this.#result.docs.length}`,
+        buildCountError(expected, this.#result.docs.length, "documents"),
       );
     }
     return this;
@@ -136,7 +142,7 @@ class MongoFindResultExpectationImpl<T>
   countAtLeast(min: number): this {
     if (this.#result.docs.length < min) {
       throw new Error(
-        `Expected at least ${min} documents, got ${this.#result.docs.length}`,
+        buildCountAtLeastError(min, this.#result.docs.length, "documents"),
       );
     }
     return this;
@@ -145,7 +151,7 @@ class MongoFindResultExpectationImpl<T>
   countAtMost(max: number): this {
     if (this.#result.docs.length > max) {
       throw new Error(
-        `Expected at most ${max} documents, got ${this.#result.docs.length}`,
+        buildCountAtMostError(max, this.#result.docs.length, "documents"),
       );
     }
     return this;
@@ -168,9 +174,7 @@ class MongoFindResultExpectationImpl<T>
 
   durationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.#result.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.#result.duration));
     }
     return this;
   }
@@ -224,9 +228,7 @@ class MongoInsertResultExpectationImpl implements MongoInsertResultExpectation {
 
   durationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.#result.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.#result.duration));
     }
     return this;
   }
@@ -280,9 +282,7 @@ class MongoUpdateResultExpectationImpl implements MongoUpdateResultExpectation {
 
   durationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.#result.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.#result.duration));
     }
     return this;
   }
@@ -329,9 +329,7 @@ class MongoDeleteResultExpectationImpl implements MongoDeleteResultExpectation {
 
   durationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.#result.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.#result.duration));
     }
     return this;
   }
@@ -397,9 +395,7 @@ class MongoFindOneResultExpectationImpl<T>
 
   durationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.#result.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.#result.duration));
     }
     return this;
   }
@@ -429,7 +425,7 @@ class MongoCountResultExpectationImpl implements MongoCountResultExpectation {
   count(expected: number): this {
     if (this.#result.count !== expected) {
       throw new Error(
-        `Expected count ${expected}, got ${this.#result.count}`,
+        buildCountError(expected, this.#result.count, "count"),
       );
     }
     return this;
@@ -438,7 +434,7 @@ class MongoCountResultExpectationImpl implements MongoCountResultExpectation {
   countAtLeast(min: number): this {
     if (this.#result.count < min) {
       throw new Error(
-        `Expected count at least ${min}, got ${this.#result.count}`,
+        buildCountAtLeastError(min, this.#result.count, "count"),
       );
     }
     return this;
@@ -447,7 +443,7 @@ class MongoCountResultExpectationImpl implements MongoCountResultExpectation {
   countAtMost(max: number): this {
     if (this.#result.count > max) {
       throw new Error(
-        `Expected count at most ${max}, got ${this.#result.count}`,
+        buildCountAtMostError(max, this.#result.count, "count"),
       );
     }
     return this;
@@ -455,9 +451,7 @@ class MongoCountResultExpectationImpl implements MongoCountResultExpectation {
 
   durationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.#result.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.#result.duration));
     }
     return this;
   }

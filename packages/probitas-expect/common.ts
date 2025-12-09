@@ -161,3 +161,65 @@ export function containsSubarray(arr: Uint8Array, sub: Uint8Array): boolean {
   }
   return false;
 }
+
+/**
+ * Build error message for count assertion.
+ *
+ * @param expected - Expected count
+ * @param actual - Actual count
+ * @param itemName - Name of items being counted (e.g., "rows", "documents", "messages")
+ * @returns Formatted error message
+ */
+export function buildCountError(
+  expected: number,
+  actual: number,
+  itemName: string = "items",
+): string {
+  return `Expected ${expected} ${itemName}, got ${actual}`;
+}
+
+/**
+ * Build error message for "at least" count assertion.
+ *
+ * @param min - Minimum expected count
+ * @param actual - Actual count
+ * @param itemName - Name of items being counted
+ * @returns Formatted error message
+ */
+export function buildCountAtLeastError(
+  min: number,
+  actual: number,
+  itemName: string = "items",
+): string {
+  return `Expected at least ${min} ${itemName}, got ${actual}`;
+}
+
+/**
+ * Build error message for "at most" count assertion.
+ *
+ * @param max - Maximum expected count
+ * @param actual - Actual count
+ * @param itemName - Name of items being counted
+ * @returns Formatted error message
+ */
+export function buildCountAtMostError(
+  max: number,
+  actual: number,
+  itemName: string = "items",
+): string {
+  return `Expected at most ${max} ${itemName}, got ${actual}`;
+}
+
+/**
+ * Build error message for duration assertion.
+ *
+ * @param threshold - Maximum allowed duration in ms
+ * @param actual - Actual duration in ms
+ * @returns Formatted error message
+ */
+export function buildDurationError(
+  threshold: number,
+  actual: number,
+): string {
+  return `Expected duration < ${threshold}ms, got ${actual}ms`;
+}

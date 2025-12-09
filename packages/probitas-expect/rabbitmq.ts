@@ -1,4 +1,9 @@
-import { containsSubset } from "./common.ts";
+import {
+  buildCountAtLeastError,
+  buildCountError,
+  buildDurationError,
+  containsSubset,
+} from "./common.ts";
 import type {
   RabbitMqAckResult,
   RabbitMqConsumeResult,
@@ -129,9 +134,7 @@ class RabbitMqPublishResultExpectationImpl<T extends SimpleResult>
 
   durationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.#result.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.#result.duration));
     }
     return this;
   }
@@ -245,9 +248,7 @@ class RabbitMqConsumeResultExpectationImpl
 
   durationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.#result.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.#result.duration));
     }
     return this;
   }
@@ -281,7 +282,7 @@ class RabbitMqQueueResultExpectationImpl
   messageCount(count: number): this {
     if (this.#result.messageCount !== count) {
       throw new Error(
-        `Expected message count ${count}, got ${this.#result.messageCount}`,
+        buildCountError(count, this.#result.messageCount, "message count"),
       );
     }
     return this;
@@ -290,7 +291,7 @@ class RabbitMqQueueResultExpectationImpl
   messageCountAtLeast(min: number): this {
     if (this.#result.messageCount < min) {
       throw new Error(
-        `Expected message count >= ${min}, got ${this.#result.messageCount}`,
+        buildCountAtLeastError(min, this.#result.messageCount, "message count"),
       );
     }
     return this;
@@ -299,7 +300,7 @@ class RabbitMqQueueResultExpectationImpl
   consumerCount(count: number): this {
     if (this.#result.consumerCount !== count) {
       throw new Error(
-        `Expected consumer count ${count}, got ${this.#result.consumerCount}`,
+        buildCountError(count, this.#result.consumerCount, "consumer count"),
       );
     }
     return this;
@@ -307,9 +308,7 @@ class RabbitMqQueueResultExpectationImpl
 
   durationLessThan(ms: number): this {
     if (this.#result.duration >= ms) {
-      throw new Error(
-        `Expected duration < ${ms}ms, got ${this.#result.duration}ms`,
-      );
+      throw new Error(buildDurationError(ms, this.#result.duration));
     }
     return this;
   }
