@@ -1,5 +1,11 @@
 ### 2025.12.09
 
+#### @probitas/cli 0.3.6 (patch)
+
+- fix(@probitas/cli): handle unhandled promise rejections from node:http2
+
+### 2025.12.09
+
 #### @probitas/reporter 0.3.1 (patch)
 
 - fix(@probitas/reporter): Fix ListReporter on multiline error messages
