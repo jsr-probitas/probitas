@@ -143,6 +143,34 @@ export const stepResults = {
     duration: 0,
     error: "This step was skipped due to prerequisite failure",
   },
+
+  failedWithMultilineError: {
+    metadata: {
+      kind: "step",
+      name: "Step with multiline error",
+      timeout: 5000,
+      retry: { maxAttempts: 1, backoff: "linear" as const },
+      source: sourceLocations.step2,
+    },
+    status: "failed" as const,
+    duration: 5,
+    error: new Error(
+      "First line of error\nSecond line of error\nThird line of error",
+    ),
+  },
+
+  skippedWithMultilineError: {
+    metadata: {
+      kind: "step",
+      name: "Step skipped with multiline reason",
+      timeout: 5000,
+      retry: { maxAttempts: 1, backoff: "linear" as const },
+      source: sourceLocations.step3,
+    },
+    status: "skipped" as const,
+    duration: 0,
+    error: "Skipped due to:\nCondition A not met\nCondition B not met",
+  },
 } as const satisfies Record<string, StepResult>;
 
 // Scenario definitions

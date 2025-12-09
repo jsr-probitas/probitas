@@ -157,12 +157,16 @@ export class ListReporter implements Reporter {
 
     // Add error or skip message on next line if needed
     if (result.status === "failed" && "error" in result && result.error) {
-      const errorMessage = getErrorMessage(result.error);
+      const errorMessage = getErrorMessage(result.error)
+        .split("\n")
+        .at(0) ?? "No error message";
       lines.push(this.#formatErrorLine(errorMessage, this.#theme.failure));
     } else if (
       result.status === "skipped" && "error" in result && result.error
     ) {
-      const skipMessage = getErrorMessage(result.error);
+      const skipMessage = getErrorMessage(result.error)
+        .split("\n")
+        .at(0) ?? "Skipped";
       lines.push(this.#formatErrorLine(skipMessage, this.#theme.skip));
     }
 
@@ -240,9 +244,11 @@ export class ListReporter implements Reporter {
           if (step.status === "failed" && "error" in step && step.error) {
             failedTestsLines.push(`${this.#theme.dim(" ┆")}`);
             const message = getErrorMessage(step.error);
-            failedTestsLines.push(
-              `${this.#theme.dim(" ┆")}${this.#theme.failure(`   ${message}`)}`,
-            );
+            for (const line of message.split("\n")) {
+              failedTestsLines.push(
+                `${this.#theme.dim(" ┆")}${this.#theme.failure(`   ${line}`)}`,
+              );
+            }
             if (step.error instanceof Error && step.error.stack) {
               const stack = step.error.stack.split("\n")
                 .slice(1) // Skip first line (already shown as message)
