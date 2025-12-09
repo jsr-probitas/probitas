@@ -2,8 +2,8 @@ import {
   buildCountAtLeastError,
   buildCountAtMostError,
   buildCountError,
-  buildDurationError,
   containsSubset,
+  createDurationMethods,
 } from "./common.ts";
 import type {
   SqsDeleteBatchResult,
@@ -118,718 +118,6 @@ export interface SqsMessageExpectation {
 }
 
 /**
- * Implementation for SQS send result expectations.
- */
-class SqsSendResultExpectationImpl implements SqsSendResultExpectation {
-  readonly #result: SqsSendResult;
-  readonly #negate: boolean;
-
-  constructor(result: SqsSendResult, negate = false) {
-    this.#result = result;
-    this.#negate = negate;
-  }
-
-  get not(): this {
-    return new SqsSendResultExpectationImpl(
-      this.#result,
-      !this.#negate,
-    ) as this;
-  }
-
-  toBeSuccessful(): this {
-    const isSuccess = this.#result.ok;
-    if (this.#negate ? isSuccess : !isSuccess) {
-      throw new Error(
-        this.#negate
-          ? "Expected not ok result, but ok is true"
-          : "Expected ok result, but ok is false",
-      );
-    }
-    return this;
-  }
-
-  toHaveMessageId(): this {
-    if (!this.#result.messageId) {
-      throw new Error("Expected messageId, but messageId is undefined");
-    }
-    return this;
-  }
-
-  toHaveDurationLessThan(ms: number): this {
-    if (this.#result.duration >= ms) {
-      throw new Error(buildDurationError(ms, this.#result.duration));
-    }
-    return this;
-  }
-
-  toHaveDurationLessThanOrEqual(ms: number): this {
-    if (this.#result.duration > ms) {
-      throw new Error(
-        `Expected duration <= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThan(ms: number): this {
-    if (this.#result.duration <= ms) {
-      throw new Error(
-        `Expected duration > ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThanOrEqual(ms: number): this {
-    if (this.#result.duration < ms) {
-      throw new Error(
-        `Expected duration >= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-}
-
-/**
- * Implementation for SQS send batch result expectations.
- */
-class SqsSendBatchResultExpectationImpl
-  implements SqsSendBatchResultExpectation {
-  readonly #result: SqsSendBatchResult;
-  readonly #negate: boolean;
-
-  constructor(result: SqsSendBatchResult, negate = false) {
-    this.#result = result;
-    this.#negate = negate;
-  }
-
-  get not(): this {
-    return new SqsSendBatchResultExpectationImpl(
-      this.#result,
-      !this.#negate,
-    ) as this;
-  }
-
-  toBeSuccessful(): this {
-    const isSuccess = this.#result.ok;
-    if (this.#negate ? isSuccess : !isSuccess) {
-      throw new Error(
-        this.#negate
-          ? "Expected not ok result, but ok is true"
-          : "Expected ok result, but ok is false",
-      );
-    }
-    return this;
-  }
-
-  toBeAllSuccessful(): this {
-    if (this.#result.failed.length > 0) {
-      throw new Error(
-        `Expected all messages successful, but ${this.#result.failed.length} failed`,
-      );
-    }
-    return this;
-  }
-
-  toHaveSuccessfulCount(count: number): this {
-    if (this.#result.successful.length !== count) {
-      throw new Error(
-        buildCountError(count, this.#result.successful.length, "successful"),
-      );
-    }
-    return this;
-  }
-
-  toHaveSuccessfulCountGreaterThan(count: number): this {
-    if (this.#result.successful.length <= count) {
-      throw new Error(
-        `Expected successful count > ${count}, but got ${this.#result.successful.length}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveSuccessfulCountGreaterThanOrEqual(count: number): this {
-    if (this.#result.successful.length < count) {
-      throw new Error(
-        `Expected successful count >= ${count}, but got ${this.#result.successful.length}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveSuccessfulCountLessThan(count: number): this {
-    if (this.#result.successful.length >= count) {
-      throw new Error(
-        `Expected successful count < ${count}, but got ${this.#result.successful.length}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveSuccessfulCountLessThanOrEqual(count: number): this {
-    if (this.#result.successful.length > count) {
-      throw new Error(
-        `Expected successful count <= ${count}, but got ${this.#result.successful.length}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveFailedCount(count: number): this {
-    if (this.#result.failed.length !== count) {
-      throw new Error(
-        buildCountError(count, this.#result.failed.length, "failed"),
-      );
-    }
-    return this;
-  }
-
-  toHaveFailedCountGreaterThan(count: number): this {
-    if (this.#result.failed.length <= count) {
-      throw new Error(
-        `Expected failed count > ${count}, but got ${this.#result.failed.length}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveFailedCountGreaterThanOrEqual(count: number): this {
-    if (this.#result.failed.length < count) {
-      throw new Error(
-        `Expected failed count >= ${count}, but got ${this.#result.failed.length}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveFailedCountLessThan(count: number): this {
-    if (this.#result.failed.length >= count) {
-      throw new Error(
-        `Expected failed count < ${count}, but got ${this.#result.failed.length}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveFailedCountLessThanOrEqual(count: number): this {
-    if (this.#result.failed.length > count) {
-      throw new Error(
-        `Expected failed count <= ${count}, but got ${this.#result.failed.length}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationLessThan(ms: number): this {
-    if (this.#result.duration >= ms) {
-      throw new Error(buildDurationError(ms, this.#result.duration));
-    }
-    return this;
-  }
-
-  toHaveDurationLessThanOrEqual(ms: number): this {
-    if (this.#result.duration > ms) {
-      throw new Error(
-        `Expected duration <= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThan(ms: number): this {
-    if (this.#result.duration <= ms) {
-      throw new Error(
-        `Expected duration > ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThanOrEqual(ms: number): this {
-    if (this.#result.duration < ms) {
-      throw new Error(
-        `Expected duration >= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-}
-
-/**
- * Implementation for SQS receive result expectations.
- */
-class SqsReceiveResultExpectationImpl implements SqsReceiveResultExpectation {
-  readonly #result: SqsReceiveResult;
-  readonly #negate: boolean;
-
-  constructor(result: SqsReceiveResult, negate = false) {
-    this.#result = result;
-    this.#negate = negate;
-  }
-
-  get not(): this {
-    return new SqsReceiveResultExpectationImpl(
-      this.#result,
-      !this.#negate,
-    ) as this;
-  }
-
-  toBeSuccessful(): this {
-    const isSuccess = this.#result.ok;
-    if (this.#negate ? isSuccess : !isSuccess) {
-      throw new Error(
-        this.#negate
-          ? "Expected not ok result, but ok is true"
-          : "Expected ok result, but ok is false",
-      );
-    }
-    return this;
-  }
-
-  toHaveContent(): this {
-    const hasContent = this.#result.messages.length > 0;
-    if (this.#negate ? hasContent : !hasContent) {
-      throw new Error(
-        this.#negate
-          ? `Expected no messages, but got ${this.#result.messages.length} messages`
-          : "Expected messages, but messages array is empty",
-      );
-    }
-    return this;
-  }
-
-  toHaveLength(expected: number): this {
-    if (this.#result.messages.length !== expected) {
-      throw new Error(
-        buildCountError(expected, this.#result.messages.length, "messages"),
-      );
-    }
-    return this;
-  }
-
-  toHaveLengthGreaterThanOrEqual(min: number): this {
-    if (this.#result.messages.length < min) {
-      throw new Error(
-        buildCountAtLeastError(min, this.#result.messages.length, "messages"),
-      );
-    }
-    return this;
-  }
-
-  toHaveLengthLessThanOrEqual(max: number): this {
-    if (this.#result.messages.length > max) {
-      throw new Error(
-        buildCountAtMostError(max, this.#result.messages.length, "messages"),
-      );
-    }
-    return this;
-  }
-
-  toMatchObject(
-    subset: { body?: string; attributes?: Record<string, string> },
-  ): this {
-    const found = this.#result.messages.some((msg) => {
-      if (subset.body !== undefined && !msg.body.includes(subset.body)) {
-        return false;
-      }
-      if (subset.attributes !== undefined) {
-        for (const [key, value] of Object.entries(subset.attributes)) {
-          if (msg.attributes[key] !== value) {
-            return false;
-          }
-        }
-      }
-      return true;
-    });
-
-    if (!found) {
-      throw new Error(
-        `Expected at least one message to contain ${JSON.stringify(subset)}`,
-      );
-    }
-    return this;
-  }
-
-  toSatisfy(matcher: (messages: SqsMessages) => void): this {
-    matcher(this.#result.messages);
-    return this;
-  }
-
-  toHaveDurationLessThan(ms: number): this {
-    if (this.#result.duration >= ms) {
-      throw new Error(buildDurationError(ms, this.#result.duration));
-    }
-    return this;
-  }
-
-  toHaveDurationLessThanOrEqual(ms: number): this {
-    if (this.#result.duration > ms) {
-      throw new Error(
-        `Expected duration <= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThan(ms: number): this {
-    if (this.#result.duration <= ms) {
-      throw new Error(
-        `Expected duration > ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThanOrEqual(ms: number): this {
-    if (this.#result.duration < ms) {
-      throw new Error(
-        `Expected duration >= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-}
-
-/**
- * Implementation for SQS delete result expectations.
- */
-class SqsDeleteResultExpectationImpl implements SqsDeleteResultExpectation {
-  readonly #result: SqsDeleteResult;
-  readonly #negate: boolean;
-
-  constructor(result: SqsDeleteResult, negate = false) {
-    this.#result = result;
-    this.#negate = negate;
-  }
-
-  get not(): this {
-    return new SqsDeleteResultExpectationImpl(
-      this.#result,
-      !this.#negate,
-    ) as this;
-  }
-
-  toBeSuccessful(): this {
-    const isSuccess = this.#result.ok;
-    if (this.#negate ? isSuccess : !isSuccess) {
-      throw new Error(
-        this.#negate
-          ? "Expected not ok result, but ok is true"
-          : "Expected ok result, but ok is false",
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationLessThan(ms: number): this {
-    if (this.#result.duration >= ms) {
-      throw new Error(buildDurationError(ms, this.#result.duration));
-    }
-    return this;
-  }
-
-  toHaveDurationLessThanOrEqual(ms: number): this {
-    if (this.#result.duration > ms) {
-      throw new Error(
-        `Expected duration <= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThan(ms: number): this {
-    if (this.#result.duration <= ms) {
-      throw new Error(
-        `Expected duration > ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThanOrEqual(ms: number): this {
-    if (this.#result.duration < ms) {
-      throw new Error(
-        `Expected duration >= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-}
-
-/**
- * Implementation for SQS delete batch result expectations.
- * Reuses the same interface as SqsSendBatchResultExpectation per spec.
- */
-class SqsDeleteBatchResultExpectationImpl
-  implements SqsSendBatchResultExpectation {
-  readonly #result: SqsDeleteBatchResult;
-  readonly #negate: boolean;
-
-  constructor(result: SqsDeleteBatchResult, negate = false) {
-    this.#result = result;
-    this.#negate = negate;
-  }
-
-  get not(): this {
-    return new SqsDeleteBatchResultExpectationImpl(
-      this.#result,
-      !this.#negate,
-    ) as this;
-  }
-
-  toBeSuccessful(): this {
-    const isSuccess = this.#result.ok;
-    if (this.#negate ? isSuccess : !isSuccess) {
-      throw new Error(
-        this.#negate
-          ? "Expected not ok result, but ok is true"
-          : "Expected ok result, but ok is false",
-      );
-    }
-    return this;
-  }
-
-  toBeAllSuccessful(): this {
-    if (this.#result.failed.length > 0) {
-      throw new Error(
-        `Expected all deletions successful, but ${this.#result.failed.length} failed`,
-      );
-    }
-    return this;
-  }
-
-  toHaveSuccessfulCount(count: number): this {
-    if (this.#result.successful.length !== count) {
-      throw new Error(
-        buildCountError(count, this.#result.successful.length, "successful"),
-      );
-    }
-    return this;
-  }
-
-  toHaveSuccessfulCountGreaterThan(count: number): this {
-    if (this.#result.successful.length <= count) {
-      throw new Error(
-        `Expected successful count > ${count}, but got ${this.#result.successful.length}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveSuccessfulCountGreaterThanOrEqual(count: number): this {
-    if (this.#result.successful.length < count) {
-      throw new Error(
-        `Expected successful count >= ${count}, but got ${this.#result.successful.length}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveSuccessfulCountLessThan(count: number): this {
-    if (this.#result.successful.length >= count) {
-      throw new Error(
-        `Expected successful count < ${count}, but got ${this.#result.successful.length}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveSuccessfulCountLessThanOrEqual(count: number): this {
-    if (this.#result.successful.length > count) {
-      throw new Error(
-        `Expected successful count <= ${count}, but got ${this.#result.successful.length}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveFailedCount(count: number): this {
-    if (this.#result.failed.length !== count) {
-      throw new Error(
-        buildCountError(count, this.#result.failed.length, "failed"),
-      );
-    }
-    return this;
-  }
-
-  toHaveFailedCountGreaterThan(count: number): this {
-    if (this.#result.failed.length <= count) {
-      throw new Error(
-        `Expected failed count > ${count}, but got ${this.#result.failed.length}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveFailedCountGreaterThanOrEqual(count: number): this {
-    if (this.#result.failed.length < count) {
-      throw new Error(
-        `Expected failed count >= ${count}, but got ${this.#result.failed.length}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveFailedCountLessThan(count: number): this {
-    if (this.#result.failed.length >= count) {
-      throw new Error(
-        `Expected failed count < ${count}, but got ${this.#result.failed.length}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveFailedCountLessThanOrEqual(count: number): this {
-    if (this.#result.failed.length > count) {
-      throw new Error(
-        `Expected failed count <= ${count}, but got ${this.#result.failed.length}`,
-      );
-    }
-    return this;
-  }
-
-  noFailures(): this {
-    if (this.#result.failed.length > 0) {
-      throw new Error(
-        `Expected no failures, but ${this.#result.failed.length} failed`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationLessThan(ms: number): this {
-    if (this.#result.duration >= ms) {
-      throw new Error(buildDurationError(ms, this.#result.duration));
-    }
-    return this;
-  }
-
-  toHaveDurationLessThanOrEqual(ms: number): this {
-    if (this.#result.duration > ms) {
-      throw new Error(
-        `Expected duration <= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThan(ms: number): this {
-    if (this.#result.duration <= ms) {
-      throw new Error(
-        `Expected duration > ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThanOrEqual(ms: number): this {
-    if (this.#result.duration < ms) {
-      throw new Error(
-        `Expected duration >= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-}
-
-/**
- * Implementation for SQS message expectations.
- */
-class SqsMessageExpectationImpl implements SqsMessageExpectation {
-  readonly #message: SqsMessage;
-
-  constructor(message: SqsMessage) {
-    this.#message = message;
-  }
-
-  toHaveBodyContaining(substring: string): this {
-    if (!this.#message.body.includes(substring)) {
-      throw new Error(
-        `Expected body to contain "${substring}", but got "${this.#message.body}"`,
-      );
-    }
-    return this;
-  }
-
-  toHaveBodyMatching(matcher: (body: string) => void): this {
-    matcher(this.#message.body);
-    return this;
-  }
-
-  // deno-lint-ignore no-explicit-any
-  toHaveBodyJsonEqualTo<T = any>(expected: T): this {
-    const actual = JSON.parse(this.#message.body);
-    if (JSON.stringify(actual) !== JSON.stringify(expected)) {
-      throw new Error(
-        `Expected body JSON to equal ${JSON.stringify(expected)}, got ${
-          JSON.stringify(actual)
-        }`,
-      );
-    }
-    return this;
-  }
-
-  // deno-lint-ignore no-explicit-any
-  toHaveBodyJsonContaining<T = any>(subset: Partial<T>): this {
-    const actual = JSON.parse(this.#message.body);
-    if (!containsSubset(actual, subset)) {
-      throw new Error(
-        `Expected body JSON to contain ${JSON.stringify(subset)}, got ${
-          JSON.stringify(actual)
-        }`,
-      );
-    }
-    return this;
-  }
-
-  toHaveAttribute(name: string): this {
-    if (!this.#message.messageAttributes?.[name]) {
-      throw new Error(`Expected message to have attribute "${name}"`);
-    }
-    return this;
-  }
-
-  toHaveAttributesContaining(
-    subset: Record<string, Partial<SqsMessageAttribute>>,
-  ): this {
-    const attrs = this.#message.messageAttributes ?? {};
-    for (const [key, expected] of Object.entries(subset)) {
-      const actual = attrs[key];
-      if (!actual) {
-        throw new Error(`Expected attribute "${key}" to exist`);
-      }
-      if (!containsSubset(actual, expected)) {
-        throw new Error(
-          `Expected attribute "${key}" to contain ${
-            JSON.stringify(expected)
-          }, got ${JSON.stringify(actual)}`,
-        );
-      }
-    }
-    return this;
-  }
-
-  toHaveMessageId(expected: string): this {
-    if (this.#message.messageId !== expected) {
-      throw new Error(
-        `Expected messageId "${expected}", got "${this.#message.messageId}"`,
-      );
-    }
-    return this;
-  }
-}
-
-/**
- * Create a fluent expectation chain for SQS message validation.
- */
-export function expectSqsMessage(
-  message: SqsMessage,
-): SqsMessageExpectation {
-  return new SqsMessageExpectationImpl(message);
-}
-
-/**
  * Fluent API for SQS ensure queue result validation.
  */
 export interface SqsEnsureQueueResultExpectation {
@@ -857,161 +145,695 @@ export interface SqsDeleteQueueResultExpectation {
 }
 
 /**
- * Implementation for SQS ensure queue result expectations.
+ * Create expectation for SQS send result.
  */
-class SqsEnsureQueueResultExpectationImpl
-  implements SqsEnsureQueueResultExpectation {
-  readonly #result: SqsEnsureQueueResult;
-  readonly #negate: boolean;
+function expectSqsSendResult(
+  result: SqsSendResult,
+  negate = false,
+): SqsSendResultExpectation {
+  const self: SqsSendResultExpectation = {
+    get not(): SqsSendResultExpectation {
+      return expectSqsSendResult(result, !negate);
+    },
 
-  constructor(result: SqsEnsureQueueResult, negate = false) {
-    this.#result = result;
-    this.#negate = negate;
-  }
-
-  get not(): this {
-    return new SqsEnsureQueueResultExpectationImpl(
-      this.#result,
-      !this.#negate,
-    ) as this;
-  }
-
-  toBeSuccessful(): this {
-    const isSuccess = this.#result.ok;
-    if (this.#negate ? isSuccess : !isSuccess) {
-      throw new Error(
-        this.#negate
-          ? "Expected not ok result, but ok is true"
-          : "Expected ok result, but ok is false",
-      );
-    }
-    return this;
-  }
-
-  toHaveQueueUrl(expected?: string): this {
-    if (expected !== undefined) {
-      if (this.#result.queueUrl !== expected) {
+    toBeSuccessful() {
+      const isSuccess = result.ok;
+      if (negate ? isSuccess : !isSuccess) {
         throw new Error(
-          `Expected queueUrl "${expected}", got "${this.#result.queueUrl}"`,
+          negate
+            ? "Expected not ok result, but ok is true"
+            : "Expected ok result, but ok is false",
         );
       }
-    } else {
-      if (!this.#result.queueUrl) {
-        throw new Error("Expected queueUrl, but queueUrl is empty");
+      return this;
+    },
+
+    toHaveMessageId() {
+      const hasId = !!result.messageId;
+      if (negate ? hasId : !hasId) {
+        throw new Error(
+          negate
+            ? "Expected no messageId, but messageId exists"
+            : "Expected messageId, but messageId is undefined",
+        );
       }
-    }
-    return this;
-  }
+      return this;
+    },
 
-  toHaveQueueUrlContaining(substring: string): this {
-    if (!this.#result.queueUrl.includes(substring)) {
-      throw new Error(
-        `Expected queueUrl to contain "${substring}", got "${this.#result.queueUrl}"`,
-      );
-    }
-    return this;
-  }
+    ...createDurationMethods(result.duration, negate),
+  };
 
-  toHaveDurationLessThan(ms: number): this {
-    if (this.#result.duration >= ms) {
-      throw new Error(buildDurationError(ms, this.#result.duration));
-    }
-    return this;
-  }
-
-  toHaveDurationLessThanOrEqual(ms: number): this {
-    if (this.#result.duration > ms) {
-      throw new Error(
-        `Expected duration <= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThan(ms: number): this {
-    if (this.#result.duration <= ms) {
-      throw new Error(
-        `Expected duration > ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThanOrEqual(ms: number): this {
-    if (this.#result.duration < ms) {
-      throw new Error(
-        `Expected duration >= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+  return self;
 }
 
 /**
- * Implementation for SQS delete queue result expectations.
+ * Create expectation for SQS send batch result.
  */
-class SqsDeleteQueueResultExpectationImpl
-  implements SqsDeleteQueueResultExpectation {
-  readonly #result: SqsDeleteQueueResult;
-  readonly #negate: boolean;
+function expectSqsSendBatchResult(
+  result: SqsSendBatchResult,
+  negate = false,
+): SqsSendBatchResultExpectation {
+  const self: SqsSendBatchResultExpectation = {
+    get not(): SqsSendBatchResultExpectation {
+      return expectSqsSendBatchResult(result, !negate);
+    },
 
-  constructor(result: SqsDeleteQueueResult, negate = false) {
-    this.#result = result;
-    this.#negate = negate;
-  }
+    toBeSuccessful() {
+      const isSuccess = result.ok;
+      if (negate ? isSuccess : !isSuccess) {
+        throw new Error(
+          negate
+            ? "Expected not ok result, but ok is true"
+            : "Expected ok result, but ok is false",
+        );
+      }
+      return this;
+    },
 
-  get not(): this {
-    return new SqsDeleteQueueResultExpectationImpl(
-      this.#result,
-      !this.#negate,
-    ) as this;
-  }
+    toBeAllSuccessful() {
+      const allSuccess = result.failed.length === 0;
+      if (negate ? allSuccess : !allSuccess) {
+        throw new Error(
+          negate
+            ? "Expected some failures, but all messages were successful"
+            : `Expected all messages successful, but ${result.failed.length} failed`,
+        );
+      }
+      return this;
+    },
 
-  toBeSuccessful(): this {
-    const isSuccess = this.#result.ok;
-    if (this.#negate ? isSuccess : !isSuccess) {
-      throw new Error(
-        this.#negate
-          ? "Expected not ok result, but ok is true"
-          : "Expected ok result, but ok is false",
-      );
-    }
-    return this;
-  }
+    toHaveSuccessfulCount(count: number) {
+      const match = result.successful.length === count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected successful count to not be ${count}, got ${result.successful.length}`
+            : buildCountError(count, result.successful.length, "successful"),
+        );
+      }
+      return this;
+    },
 
-  toHaveDurationLessThan(ms: number): this {
-    if (this.#result.duration >= ms) {
-      throw new Error(buildDurationError(ms, this.#result.duration));
-    }
-    return this;
-  }
+    toHaveSuccessfulCountGreaterThan(count: number) {
+      const match = result.successful.length > count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected successful count to not be > ${count}, got ${result.successful.length}`
+            : `Expected successful count > ${count}, but got ${result.successful.length}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveDurationLessThanOrEqual(ms: number): this {
-    if (this.#result.duration > ms) {
-      throw new Error(
-        `Expected duration <= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+    toHaveSuccessfulCountGreaterThanOrEqual(count: number) {
+      const match = result.successful.length >= count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected successful count to not be >= ${count}, got ${result.successful.length}`
+            : `Expected successful count >= ${count}, but got ${result.successful.length}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveDurationGreaterThan(ms: number): this {
-    if (this.#result.duration <= ms) {
-      throw new Error(
-        `Expected duration > ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+    toHaveSuccessfulCountLessThan(count: number) {
+      const match = result.successful.length < count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected successful count to not be < ${count}, got ${result.successful.length}`
+            : `Expected successful count < ${count}, but got ${result.successful.length}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveDurationGreaterThanOrEqual(ms: number): this {
-    if (this.#result.duration < ms) {
-      throw new Error(
-        `Expected duration >= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+    toHaveSuccessfulCountLessThanOrEqual(count: number) {
+      const match = result.successful.length <= count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected successful count to not be <= ${count}, got ${result.successful.length}`
+            : `Expected successful count <= ${count}, but got ${result.successful.length}`,
+        );
+      }
+      return this;
+    },
+
+    toHaveFailedCount(count: number) {
+      const match = result.failed.length === count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected failed count to not be ${count}, got ${result.failed.length}`
+            : buildCountError(count, result.failed.length, "failed"),
+        );
+      }
+      return this;
+    },
+
+    toHaveFailedCountGreaterThan(count: number) {
+      const match = result.failed.length > count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected failed count to not be > ${count}, got ${result.failed.length}`
+            : `Expected failed count > ${count}, but got ${result.failed.length}`,
+        );
+      }
+      return this;
+    },
+
+    toHaveFailedCountGreaterThanOrEqual(count: number) {
+      const match = result.failed.length >= count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected failed count to not be >= ${count}, got ${result.failed.length}`
+            : `Expected failed count >= ${count}, but got ${result.failed.length}`,
+        );
+      }
+      return this;
+    },
+
+    toHaveFailedCountLessThan(count: number) {
+      const match = result.failed.length < count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected failed count to not be < ${count}, got ${result.failed.length}`
+            : `Expected failed count < ${count}, but got ${result.failed.length}`,
+        );
+      }
+      return this;
+    },
+
+    toHaveFailedCountLessThanOrEqual(count: number) {
+      const match = result.failed.length <= count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected failed count to not be <= ${count}, got ${result.failed.length}`
+            : `Expected failed count <= ${count}, but got ${result.failed.length}`,
+        );
+      }
+      return this;
+    },
+
+    ...createDurationMethods(result.duration, negate),
+  };
+
+  return self;
+}
+
+/**
+ * Create expectation for SQS receive result.
+ */
+function expectSqsReceiveResult(
+  result: SqsReceiveResult,
+  negate = false,
+): SqsReceiveResultExpectation {
+  const self: SqsReceiveResultExpectation = {
+    get not(): SqsReceiveResultExpectation {
+      return expectSqsReceiveResult(result, !negate);
+    },
+
+    toBeSuccessful() {
+      const isSuccess = result.ok;
+      if (negate ? isSuccess : !isSuccess) {
+        throw new Error(
+          negate
+            ? "Expected not ok result, but ok is true"
+            : "Expected ok result, but ok is false",
+        );
+      }
+      return this;
+    },
+
+    toHaveContent() {
+      const hasContent = result.messages.length > 0;
+      if (negate ? hasContent : !hasContent) {
+        throw new Error(
+          negate
+            ? `Expected no messages, but got ${result.messages.length} messages`
+            : "Expected messages, but messages array is empty",
+        );
+      }
+      return this;
+    },
+
+    toHaveLength(expected: number) {
+      const match = result.messages.length === expected;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected message count to not be ${expected}, got ${result.messages.length}`
+            : buildCountError(expected, result.messages.length, "messages"),
+        );
+      }
+      return this;
+    },
+
+    toHaveLengthGreaterThanOrEqual(min: number) {
+      const match = result.messages.length >= min;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected message count to not be >= ${min}, got ${result.messages.length}`
+            : buildCountAtLeastError(min, result.messages.length, "messages"),
+        );
+      }
+      return this;
+    },
+
+    toHaveLengthLessThanOrEqual(max: number) {
+      const match = result.messages.length <= max;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected message count to not be <= ${max}, got ${result.messages.length}`
+            : buildCountAtMostError(max, result.messages.length, "messages"),
+        );
+      }
+      return this;
+    },
+
+    toMatchObject(
+      subset: { body?: string; attributes?: Record<string, string> },
+    ) {
+      const found = result.messages.some((msg) => {
+        if (subset.body !== undefined && !msg.body.includes(subset.body)) {
+          return false;
+        }
+        if (subset.attributes !== undefined) {
+          for (const [key, value] of Object.entries(subset.attributes)) {
+            if (msg.attributes[key] !== value) {
+              return false;
+            }
+          }
+        }
+        return true;
+      });
+
+      if (negate ? found : !found) {
+        throw new Error(
+          negate
+            ? `Expected no message to contain ${
+              JSON.stringify(subset)
+            }, but found one`
+            : `Expected at least one message to contain ${
+              JSON.stringify(subset)
+            }`,
+        );
+      }
+      return this;
+    },
+
+    toSatisfy(matcher: (messages: SqsMessages) => void) {
+      matcher(result.messages);
+      return this;
+    },
+
+    ...createDurationMethods(result.duration, negate),
+  };
+
+  return self;
+}
+
+/**
+ * Create expectation for SQS delete result.
+ */
+function expectSqsDeleteResult(
+  result: SqsDeleteResult,
+  negate = false,
+): SqsDeleteResultExpectation {
+  const self: SqsDeleteResultExpectation = {
+    get not(): SqsDeleteResultExpectation {
+      return expectSqsDeleteResult(result, !negate);
+    },
+
+    toBeSuccessful() {
+      const isSuccess = result.ok;
+      if (negate ? isSuccess : !isSuccess) {
+        throw new Error(
+          negate
+            ? "Expected not ok result, but ok is true"
+            : "Expected ok result, but ok is false",
+        );
+      }
+      return this;
+    },
+
+    ...createDurationMethods(result.duration, negate),
+  };
+
+  return self;
+}
+
+/**
+ * Create expectation for SQS delete batch result.
+ */
+function expectSqsDeleteBatchResult(
+  result: SqsDeleteBatchResult,
+  negate = false,
+): SqsSendBatchResultExpectation {
+  const self: SqsSendBatchResultExpectation = {
+    get not(): SqsSendBatchResultExpectation {
+      return expectSqsDeleteBatchResult(result, !negate);
+    },
+
+    toBeSuccessful() {
+      const isSuccess = result.ok;
+      if (negate ? isSuccess : !isSuccess) {
+        throw new Error(
+          negate
+            ? "Expected not ok result, but ok is true"
+            : "Expected ok result, but ok is false",
+        );
+      }
+      return this;
+    },
+
+    toBeAllSuccessful() {
+      const allSuccess = result.failed.length === 0;
+      if (negate ? allSuccess : !allSuccess) {
+        throw new Error(
+          negate
+            ? "Expected some failures, but all deletions were successful"
+            : `Expected all deletions successful, but ${result.failed.length} failed`,
+        );
+      }
+      return this;
+    },
+
+    toHaveSuccessfulCount(count: number) {
+      const match = result.successful.length === count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected successful count to not be ${count}, got ${result.successful.length}`
+            : buildCountError(count, result.successful.length, "successful"),
+        );
+      }
+      return this;
+    },
+
+    toHaveSuccessfulCountGreaterThan(count: number) {
+      const match = result.successful.length > count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected successful count to not be > ${count}, got ${result.successful.length}`
+            : `Expected successful count > ${count}, but got ${result.successful.length}`,
+        );
+      }
+      return this;
+    },
+
+    toHaveSuccessfulCountGreaterThanOrEqual(count: number) {
+      const match = result.successful.length >= count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected successful count to not be >= ${count}, got ${result.successful.length}`
+            : `Expected successful count >= ${count}, but got ${result.successful.length}`,
+        );
+      }
+      return this;
+    },
+
+    toHaveSuccessfulCountLessThan(count: number) {
+      const match = result.successful.length < count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected successful count to not be < ${count}, got ${result.successful.length}`
+            : `Expected successful count < ${count}, but got ${result.successful.length}`,
+        );
+      }
+      return this;
+    },
+
+    toHaveSuccessfulCountLessThanOrEqual(count: number) {
+      const match = result.successful.length <= count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected successful count to not be <= ${count}, got ${result.successful.length}`
+            : `Expected successful count <= ${count}, but got ${result.successful.length}`,
+        );
+      }
+      return this;
+    },
+
+    toHaveFailedCount(count: number) {
+      const match = result.failed.length === count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected failed count to not be ${count}, got ${result.failed.length}`
+            : buildCountError(count, result.failed.length, "failed"),
+        );
+      }
+      return this;
+    },
+
+    toHaveFailedCountGreaterThan(count: number) {
+      const match = result.failed.length > count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected failed count to not be > ${count}, got ${result.failed.length}`
+            : `Expected failed count > ${count}, but got ${result.failed.length}`,
+        );
+      }
+      return this;
+    },
+
+    toHaveFailedCountGreaterThanOrEqual(count: number) {
+      const match = result.failed.length >= count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected failed count to not be >= ${count}, got ${result.failed.length}`
+            : `Expected failed count >= ${count}, but got ${result.failed.length}`,
+        );
+      }
+      return this;
+    },
+
+    toHaveFailedCountLessThan(count: number) {
+      const match = result.failed.length < count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected failed count to not be < ${count}, got ${result.failed.length}`
+            : `Expected failed count < ${count}, but got ${result.failed.length}`,
+        );
+      }
+      return this;
+    },
+
+    toHaveFailedCountLessThanOrEqual(count: number) {
+      const match = result.failed.length <= count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected failed count to not be <= ${count}, got ${result.failed.length}`
+            : `Expected failed count <= ${count}, but got ${result.failed.length}`,
+        );
+      }
+      return this;
+    },
+
+    ...createDurationMethods(result.duration, negate),
+  };
+
+  return self;
+}
+
+/**
+ * Create a fluent expectation chain for SQS message validation.
+ */
+export function expectSqsMessage(
+  message: SqsMessage,
+): SqsMessageExpectation {
+  const self: SqsMessageExpectation = {
+    toHaveBodyContaining(substring: string) {
+      if (!message.body.includes(substring)) {
+        throw new Error(
+          `Expected body to contain "${substring}", but got "${message.body}"`,
+        );
+      }
+      return this;
+    },
+
+    toHaveBodyMatching(matcher: (body: string) => void) {
+      matcher(message.body);
+      return this;
+    },
+
+    // deno-lint-ignore no-explicit-any
+    toHaveBodyJsonEqualTo<T = any>(expected: T) {
+      const actual = JSON.parse(message.body);
+      if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+        throw new Error(
+          `Expected body JSON to equal ${JSON.stringify(expected)}, got ${
+            JSON.stringify(actual)
+          }`,
+        );
+      }
+      return this;
+    },
+
+    // deno-lint-ignore no-explicit-any
+    toHaveBodyJsonContaining<T = any>(subset: Partial<T>) {
+      const actual = JSON.parse(message.body);
+      if (!containsSubset(actual, subset)) {
+        throw new Error(
+          `Expected body JSON to contain ${JSON.stringify(subset)}, got ${
+            JSON.stringify(actual)
+          }`,
+        );
+      }
+      return this;
+    },
+
+    toHaveAttribute(name: string) {
+      if (!message.messageAttributes?.[name]) {
+        throw new Error(`Expected message to have attribute "${name}"`);
+      }
+      return this;
+    },
+
+    toHaveAttributesContaining(
+      subset: Record<string, Partial<SqsMessageAttribute>>,
+    ) {
+      const attrs = message.messageAttributes ?? {};
+      for (const [key, expected] of Object.entries(subset)) {
+        const actual = attrs[key];
+        if (!actual) {
+          throw new Error(`Expected attribute "${key}" to exist`);
+        }
+        if (!containsSubset(actual, expected)) {
+          throw new Error(
+            `Expected attribute "${key}" to contain ${
+              JSON.stringify(expected)
+            }, got ${JSON.stringify(actual)}`,
+          );
+        }
+      }
+      return this;
+    },
+
+    toHaveMessageId(expected: string) {
+      if (message.messageId !== expected) {
+        throw new Error(
+          `Expected messageId "${expected}", got "${message.messageId}"`,
+        );
+      }
+      return this;
+    },
+  };
+
+  return self;
+}
+
+/**
+ * Create expectation for SQS ensure queue result.
+ */
+function expectSqsEnsureQueueResult(
+  result: SqsEnsureQueueResult,
+  negate = false,
+): SqsEnsureQueueResultExpectation {
+  const self: SqsEnsureQueueResultExpectation = {
+    get not(): SqsEnsureQueueResultExpectation {
+      return expectSqsEnsureQueueResult(result, !negate);
+    },
+
+    toBeSuccessful() {
+      const isSuccess = result.ok;
+      if (negate ? isSuccess : !isSuccess) {
+        throw new Error(
+          negate
+            ? "Expected not ok result, but ok is true"
+            : "Expected ok result, but ok is false",
+        );
+      }
+      return this;
+    },
+
+    toHaveQueueUrl(expected?: string) {
+      if (expected !== undefined) {
+        const match = result.queueUrl === expected;
+        if (negate ? match : !match) {
+          throw new Error(
+            negate
+              ? `Expected queueUrl to not be "${expected}", got "${result.queueUrl}"`
+              : `Expected queueUrl "${expected}", got "${result.queueUrl}"`,
+          );
+        }
+      } else {
+        const hasUrl = !!result.queueUrl;
+        if (negate ? hasUrl : !hasUrl) {
+          throw new Error(
+            negate
+              ? "Expected no queueUrl, but queueUrl exists"
+              : "Expected queueUrl, but queueUrl is empty",
+          );
+        }
+      }
+      return this;
+    },
+
+    toHaveQueueUrlContaining(substring: string) {
+      const contains = result.queueUrl.includes(substring);
+      if (negate ? contains : !contains) {
+        throw new Error(
+          negate
+            ? `Expected queueUrl to not contain "${substring}", got "${result.queueUrl}"`
+            : `Expected queueUrl to contain "${substring}", got "${result.queueUrl}"`,
+        );
+      }
+      return this;
+    },
+
+    ...createDurationMethods(result.duration, negate),
+  };
+
+  return self;
+}
+
+/**
+ * Create expectation for SQS delete queue result.
+ */
+function expectSqsDeleteQueueResult(
+  result: SqsDeleteQueueResult,
+  negate = false,
+): SqsDeleteQueueResultExpectation {
+  const self: SqsDeleteQueueResultExpectation = {
+    get not(): SqsDeleteQueueResultExpectation {
+      return expectSqsDeleteQueueResult(result, !negate);
+    },
+
+    toBeSuccessful() {
+      const isSuccess = result.ok;
+      if (negate ? isSuccess : !isSuccess) {
+        throw new Error(
+          negate
+            ? "Expected not ok result, but ok is true"
+            : "Expected ok result, but ok is false",
+        );
+      }
+      return this;
+    },
+
+    ...createDurationMethods(result.duration, negate),
+  };
+
+  return self;
 }
 
 /**
@@ -1104,31 +926,31 @@ export function expectSqsResult<R extends SqsResult>(
 ): SqsExpectation<R> {
   switch (result.type) {
     case "sqs:send":
-      return new SqsSendResultExpectationImpl(
+      return expectSqsSendResult(
         result as SqsSendResult,
       ) as unknown as SqsExpectation<R>;
     case "sqs:send-batch":
-      return new SqsSendBatchResultExpectationImpl(
+      return expectSqsSendBatchResult(
         result as SqsSendBatchResult,
       ) as unknown as SqsExpectation<R>;
     case "sqs:receive":
-      return new SqsReceiveResultExpectationImpl(
+      return expectSqsReceiveResult(
         result as SqsReceiveResult,
       ) as unknown as SqsExpectation<R>;
     case "sqs:delete":
-      return new SqsDeleteResultExpectationImpl(
+      return expectSqsDeleteResult(
         result as SqsDeleteResult,
       ) as unknown as SqsExpectation<R>;
     case "sqs:delete-batch":
-      return new SqsDeleteBatchResultExpectationImpl(
+      return expectSqsDeleteBatchResult(
         result as SqsDeleteBatchResult,
       ) as unknown as SqsExpectation<R>;
     case "sqs:ensure-queue":
-      return new SqsEnsureQueueResultExpectationImpl(
+      return expectSqsEnsureQueueResult(
         result as SqsEnsureQueueResult,
       ) as unknown as SqsExpectation<R>;
     case "sqs:delete-queue":
-      return new SqsDeleteQueueResultExpectationImpl(
+      return expectSqsDeleteQueueResult(
         result as SqsDeleteQueueResult,
       ) as unknown as SqsExpectation<R>;
     default:

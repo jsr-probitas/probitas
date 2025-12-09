@@ -1,8 +1,8 @@
 import {
   buildCountAtLeastError,
   buildCountError,
-  buildDurationError,
   containsSubset,
+  createDurationMethods,
 } from "./common.ts";
 import type {
   RabbitMqAckResult,
@@ -153,373 +153,306 @@ interface SimpleResult {
 }
 
 /**
- * Implementation for RabbitMQ publish result expectations.
+ * Create expectation for RabbitMQ publish/exchange/ack result.
  */
-class RabbitMqPublishResultExpectationImpl<T extends SimpleResult>
-  implements RabbitMqPublishResultExpectation {
-  readonly #result: T;
-  readonly #negate: boolean;
+function expectSimpleResult<T extends SimpleResult>(
+  result: T,
+  negate = false,
+): RabbitMqPublishResultExpectation {
+  const self: RabbitMqPublishResultExpectation = {
+    get not(): RabbitMqPublishResultExpectation {
+      return expectSimpleResult(result, !negate);
+    },
 
-  constructor(result: T, negate = false) {
-    this.#result = result;
-    this.#negate = negate;
-  }
+    toBeSuccessful() {
+      const isSuccess = result.ok;
+      if (negate ? isSuccess : !isSuccess) {
+        throw new Error(
+          negate
+            ? "Expected not ok result, but ok is true"
+            : "Expected ok result, but ok is false",
+        );
+      }
+      return this;
+    },
 
-  get not(): this {
-    return new RabbitMqPublishResultExpectationImpl(
-      this.#result,
-      !this.#negate,
-    ) as this;
-  }
+    ...createDurationMethods(result.duration, negate),
+  };
 
-  toBeSuccessful(): this {
-    const isSuccess = this.#result.ok;
-    if (this.#negate ? isSuccess : !isSuccess) {
-      throw new Error(
-        this.#negate
-          ? "Expected not ok result, but ok is true"
-          : "Expected ok result, but ok is false",
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationLessThan(ms: number): this {
-    if (this.#result.duration >= ms) {
-      throw new Error(buildDurationError(ms, this.#result.duration));
-    }
-    return this;
-  }
-
-  toHaveDurationLessThanOrEqual(ms: number): this {
-    if (this.#result.duration > ms) {
-      throw new Error(
-        `Expected duration <= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThan(ms: number): this {
-    if (this.#result.duration <= ms) {
-      throw new Error(
-        `Expected duration > ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThanOrEqual(ms: number): this {
-    if (this.#result.duration < ms) {
-      throw new Error(
-        `Expected duration >= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+  return self;
 }
 
 /**
- * Implementation for RabbitMQ consume result expectations.
+ * Create expectation for RabbitMQ consume result.
  */
-class RabbitMqConsumeResultExpectationImpl
-  implements RabbitMqConsumeResultExpectation {
-  readonly #result: RabbitMqConsumeResult;
-  readonly #negate: boolean;
+function expectRabbitMqConsumeResult(
+  result: RabbitMqConsumeResult,
+  negate = false,
+): RabbitMqConsumeResultExpectation {
+  const self: RabbitMqConsumeResultExpectation = {
+    get not(): RabbitMqConsumeResultExpectation {
+      return expectRabbitMqConsumeResult(result, !negate);
+    },
 
-  constructor(result: RabbitMqConsumeResult, negate = false) {
-    this.#result = result;
-    this.#negate = negate;
-  }
+    toBeSuccessful() {
+      const isSuccess = result.ok;
+      if (negate ? isSuccess : !isSuccess) {
+        throw new Error(
+          negate
+            ? "Expected not ok result, but ok is true"
+            : "Expected ok result, but ok is false",
+        );
+      }
+      return this;
+    },
 
-  get not(): this {
-    return new RabbitMqConsumeResultExpectationImpl(
-      this.#result,
-      !this.#negate,
-    ) as this;
-  }
+    toHaveContent() {
+      const hasContent = result.message !== null;
+      if (negate ? hasContent : !hasContent) {
+        throw new Error(
+          negate
+            ? "Expected no message, but message exists"
+            : "Expected message, but message is null",
+        );
+      }
+      return this;
+    },
 
-  toBeSuccessful(): this {
-    const isSuccess = this.#result.ok;
-    if (this.#negate ? isSuccess : !isSuccess) {
-      throw new Error(
-        this.#negate
-          ? "Expected not ok result, but ok is true"
-          : "Expected ok result, but ok is false",
-      );
-    }
-    return this;
-  }
+    toHaveBodyContaining(subbody: Uint8Array) {
+      if (result.message === null) {
+        throw new Error("Expected message, but message is null");
+      }
 
-  toHaveContent(): this {
-    const hasContent = this.#result.message !== null;
-    if (this.#negate ? hasContent : !hasContent) {
-      throw new Error(
-        this.#negate
-          ? "Expected no message, but message exists"
-          : "Expected message, but message is null",
-      );
-    }
-    return this;
-  }
+      const content = result.message.content;
+      const subbodyStr = new TextDecoder().decode(subbody);
+      const contentStr = new TextDecoder().decode(content);
 
-  toHaveBodyContaining(subbody: Uint8Array): this {
-    if (this.#result.message === null) {
-      throw new Error("Expected message, but message is null");
-    }
+      const contains = contentStr.includes(subbodyStr);
+      if (negate ? contains : !contains) {
+        throw new Error(
+          negate
+            ? `Expected data to not contain ${subbodyStr}, but it did`
+            : `Expected data to contain ${subbodyStr}, but got ${contentStr}`,
+        );
+      }
+      return this;
+    },
 
-    const content = this.#result.message.content;
-    const subbodyStr = new TextDecoder().decode(subbody);
-    const contentStr = new TextDecoder().decode(content);
+    toSatisfy(matcher: (content: Uint8Array) => void) {
+      if (result.message === null) {
+        throw new Error("Expected message, but message is null");
+      }
+      matcher(result.message.content);
+      return this;
+    },
 
-    if (!contentStr.includes(subbodyStr)) {
-      throw new Error(
-        `Expected data to contain ${subbodyStr}, but got ${contentStr}`,
-      );
-    }
-    return this;
-  }
+    toHavePropertyContaining(subset: Partial<RabbitMqMessageProperties>) {
+      if (result.message === null) {
+        throw new Error("Expected message, but message is null");
+      }
 
-  toSatisfy(matcher: (content: Uint8Array) => void): this {
-    if (this.#result.message === null) {
-      throw new Error("Expected message, but message is null");
-    }
-    matcher(this.#result.message.content);
-    return this;
-  }
+      const props = result.message.properties;
+      const matches = containsSubset(props, subset);
+      if (negate ? matches : !matches) {
+        throw new Error(
+          negate
+            ? `Expected properties to not contain ${
+              JSON.stringify(subset)
+            }, got ${JSON.stringify(props)}`
+            : `Expected properties to contain ${JSON.stringify(subset)}, got ${
+              JSON.stringify(props)
+            }`,
+        );
+      }
+      return this;
+    },
 
-  toHavePropertyContaining(subset: Partial<RabbitMqMessageProperties>): this {
-    if (this.#result.message === null) {
-      throw new Error("Expected message, but message is null");
-    }
+    toHaveRoutingKey(expected: string) {
+      if (result.message === null) {
+        throw new Error("Expected message, but message is null");
+      }
 
-    const props = this.#result.message.properties;
-    if (!containsSubset(props, subset)) {
-      throw new Error(
-        `Expected properties to contain ${JSON.stringify(subset)}, got ${
-          JSON.stringify(props)
-        }`,
-      );
-    }
-    return this;
-  }
+      const match = result.message.fields.routingKey === expected;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected routing key to not be ${expected}, got ${result.message.fields.routingKey}`
+            : `Expected routing key ${expected}, got ${result.message.fields.routingKey}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveRoutingKey(expected: string): this {
-    if (this.#result.message === null) {
-      throw new Error("Expected message, but message is null");
-    }
+    toHaveExchange(expected: string) {
+      if (result.message === null) {
+        throw new Error("Expected message, but message is null");
+      }
 
-    if (this.#result.message.fields.routingKey !== expected) {
-      throw new Error(
-        `Expected routing key ${expected}, got ${this.#result.message.fields.routingKey}`,
-      );
-    }
-    return this;
-  }
+      const match = result.message.fields.exchange === expected;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected exchange to not be ${expected}, got ${result.message.fields.exchange}`
+            : `Expected exchange ${expected}, got ${result.message.fields.exchange}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveExchange(expected: string): this {
-    if (this.#result.message === null) {
-      throw new Error("Expected message, but message is null");
-    }
+    ...createDurationMethods(result.duration, negate),
+  };
 
-    if (this.#result.message.fields.exchange !== expected) {
-      throw new Error(
-        `Expected exchange ${expected}, got ${this.#result.message.fields.exchange}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationLessThan(ms: number): this {
-    if (this.#result.duration >= ms) {
-      throw new Error(buildDurationError(ms, this.#result.duration));
-    }
-    return this;
-  }
-
-  toHaveDurationLessThanOrEqual(ms: number): this {
-    if (this.#result.duration > ms) {
-      throw new Error(
-        `Expected duration <= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThan(ms: number): this {
-    if (this.#result.duration <= ms) {
-      throw new Error(
-        `Expected duration > ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThanOrEqual(ms: number): this {
-    if (this.#result.duration < ms) {
-      throw new Error(
-        `Expected duration >= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+  return self;
 }
 
 /**
- * Implementation for RabbitMQ queue result expectations.
+ * Create expectation for RabbitMQ queue result.
  */
-class RabbitMqQueueResultExpectationImpl
-  implements RabbitMqQueueResultExpectation {
-  readonly #result: RabbitMqQueueResult;
-  readonly #negate: boolean;
+function expectRabbitMqQueueResult(
+  result: RabbitMqQueueResult,
+  negate = false,
+): RabbitMqQueueResultExpectation {
+  const self: RabbitMqQueueResultExpectation = {
+    get not(): RabbitMqQueueResultExpectation {
+      return expectRabbitMqQueueResult(result, !negate);
+    },
 
-  constructor(result: RabbitMqQueueResult, negate = false) {
-    this.#result = result;
-    this.#negate = negate;
-  }
+    toBeSuccessful() {
+      const isSuccess = result.ok;
+      if (negate ? isSuccess : !isSuccess) {
+        throw new Error(
+          negate
+            ? "Expected not ok result, but ok is true"
+            : "Expected ok result, but ok is false",
+        );
+      }
+      return this;
+    },
 
-  get not(): this {
-    return new RabbitMqQueueResultExpectationImpl(
-      this.#result,
-      !this.#negate,
-    ) as this;
-  }
+    toHaveMessageCount(count: number) {
+      const match = result.messageCount === count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected message count to not be ${count}, got ${result.messageCount}`
+            : buildCountError(count, result.messageCount, "message count"),
+        );
+      }
+      return this;
+    },
 
-  toBeSuccessful(): this {
-    const isSuccess = this.#result.ok;
-    if (this.#negate ? isSuccess : !isSuccess) {
-      throw new Error(
-        this.#negate
-          ? "Expected not ok result, but ok is true"
-          : "Expected ok result, but ok is false",
-      );
-    }
-    return this;
-  }
+    toHaveMessageCountGreaterThan(count: number) {
+      const match = result.messageCount > count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected message count to not be > ${count}, got ${result.messageCount}`
+            : `Expected message count > ${count}, but got ${result.messageCount}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveMessageCount(count: number): this {
-    if (this.#result.messageCount !== count) {
-      throw new Error(
-        buildCountError(count, this.#result.messageCount, "message count"),
-      );
-    }
-    return this;
-  }
+    toHaveMessageCountGreaterThanOrEqual(min: number) {
+      const match = result.messageCount >= min;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected message count to not be >= ${min}, got ${result.messageCount}`
+            : buildCountAtLeastError(min, result.messageCount, "message count"),
+        );
+      }
+      return this;
+    },
 
-  toHaveMessageCountGreaterThan(count: number): this {
-    if (this.#result.messageCount <= count) {
-      throw new Error(
-        `Expected message count > ${count}, but got ${this.#result.messageCount}`,
-      );
-    }
-    return this;
-  }
+    toHaveMessageCountLessThan(count: number) {
+      const match = result.messageCount < count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected message count to not be < ${count}, got ${result.messageCount}`
+            : `Expected message count < ${count}, but got ${result.messageCount}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveMessageCountGreaterThanOrEqual(min: number): this {
-    if (this.#result.messageCount < min) {
-      throw new Error(
-        buildCountAtLeastError(min, this.#result.messageCount, "message count"),
-      );
-    }
-    return this;
-  }
+    toHaveMessageCountLessThanOrEqual(count: number) {
+      const match = result.messageCount <= count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected message count to not be <= ${count}, got ${result.messageCount}`
+            : `Expected message count <= ${count}, but got ${result.messageCount}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveMessageCountLessThan(count: number): this {
-    if (this.#result.messageCount >= count) {
-      throw new Error(
-        `Expected message count < ${count}, but got ${this.#result.messageCount}`,
-      );
-    }
-    return this;
-  }
+    toHaveConsumerCount(count: number) {
+      const match = result.consumerCount === count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected consumer count to not be ${count}, got ${result.consumerCount}`
+            : buildCountError(count, result.consumerCount, "consumer count"),
+        );
+      }
+      return this;
+    },
 
-  toHaveMessageCountLessThanOrEqual(count: number): this {
-    if (this.#result.messageCount > count) {
-      throw new Error(
-        `Expected message count <= ${count}, but got ${this.#result.messageCount}`,
-      );
-    }
-    return this;
-  }
+    toHaveConsumerCountGreaterThan(count: number) {
+      const match = result.consumerCount > count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected consumer count to not be > ${count}, got ${result.consumerCount}`
+            : `Expected consumer count > ${count}, but got ${result.consumerCount}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveConsumerCount(count: number): this {
-    if (this.#result.consumerCount !== count) {
-      throw new Error(
-        buildCountError(count, this.#result.consumerCount, "consumer count"),
-      );
-    }
-    return this;
-  }
+    toHaveConsumerCountGreaterThanOrEqual(count: number) {
+      const match = result.consumerCount >= count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected consumer count to not be >= ${count}, got ${result.consumerCount}`
+            : `Expected consumer count >= ${count}, but got ${result.consumerCount}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveConsumerCountGreaterThan(count: number): this {
-    if (this.#result.consumerCount <= count) {
-      throw new Error(
-        `Expected consumer count > ${count}, but got ${this.#result.consumerCount}`,
-      );
-    }
-    return this;
-  }
+    toHaveConsumerCountLessThan(count: number) {
+      const match = result.consumerCount < count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected consumer count to not be < ${count}, got ${result.consumerCount}`
+            : `Expected consumer count < ${count}, but got ${result.consumerCount}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveConsumerCountGreaterThanOrEqual(count: number): this {
-    if (this.#result.consumerCount < count) {
-      throw new Error(
-        `Expected consumer count >= ${count}, but got ${this.#result.consumerCount}`,
-      );
-    }
-    return this;
-  }
+    toHaveConsumerCountLessThanOrEqual(count: number) {
+      const match = result.consumerCount <= count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected consumer count to not be <= ${count}, got ${result.consumerCount}`
+            : `Expected consumer count <= ${count}, but got ${result.consumerCount}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveConsumerCountLessThan(count: number): this {
-    if (this.#result.consumerCount >= count) {
-      throw new Error(
-        `Expected consumer count < ${count}, but got ${this.#result.consumerCount}`,
-      );
-    }
-    return this;
-  }
+    ...createDurationMethods(result.duration, negate),
+  };
 
-  toHaveConsumerCountLessThanOrEqual(count: number): this {
-    if (this.#result.consumerCount > count) {
-      throw new Error(
-        `Expected consumer count <= ${count}, but got ${this.#result.consumerCount}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationLessThan(ms: number): this {
-    if (this.#result.duration >= ms) {
-      throw new Error(buildDurationError(ms, this.#result.duration));
-    }
-    return this;
-  }
-
-  toHaveDurationLessThanOrEqual(ms: number): this {
-    if (this.#result.duration > ms) {
-      throw new Error(
-        `Expected duration <= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThan(ms: number): this {
-    if (this.#result.duration <= ms) {
-      throw new Error(
-        `Expected duration > ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThanOrEqual(ms: number): this {
-    if (this.#result.duration < ms) {
-      throw new Error(
-        `Expected duration >= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+  return self;
 }
 
 /**
@@ -567,23 +500,23 @@ export function expectRabbitMqResult<R extends RabbitMqResult>(
 ): RabbitMqExpectation<R> {
   switch (result.type) {
     case "rabbitmq:consume":
-      return new RabbitMqConsumeResultExpectationImpl(
+      return expectRabbitMqConsumeResult(
         result as unknown as RabbitMqConsumeResult,
       ) as unknown as RabbitMqExpectation<R>;
     case "rabbitmq:queue":
-      return new RabbitMqQueueResultExpectationImpl(
+      return expectRabbitMqQueueResult(
         result as unknown as RabbitMqQueueResult,
       ) as unknown as RabbitMqExpectation<R>;
     case "rabbitmq:publish":
-      return new RabbitMqPublishResultExpectationImpl<RabbitMqPublishResult>(
+      return expectSimpleResult(
         result as unknown as RabbitMqPublishResult,
       ) as unknown as RabbitMqExpectation<R>;
     case "rabbitmq:exchange":
-      return new RabbitMqPublishResultExpectationImpl<RabbitMqExchangeResult>(
+      return expectSimpleResult(
         result as unknown as RabbitMqExchangeResult,
       ) as unknown as RabbitMqExpectation<R>;
     case "rabbitmq:ack":
-      return new RabbitMqPublishResultExpectationImpl<RabbitMqAckResult>(
+      return expectSimpleResult(
         result as unknown as RabbitMqAckResult,
       ) as unknown as RabbitMqExpectation<R>;
     default:

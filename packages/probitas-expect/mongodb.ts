@@ -2,8 +2,8 @@ import {
   buildCountAtLeastError,
   buildCountAtMostError,
   buildCountError,
-  buildDurationError,
   containsSubset,
+  createDurationMethods,
 } from "./common.ts";
 import type {
   MongoCountResult,
@@ -123,717 +123,602 @@ export interface MongoCountResultExpectation {
   toHaveDurationGreaterThanOrEqual(ms: number): this;
 }
 
-class MongoFindResultExpectationImpl<T>
-  implements MongoFindResultExpectation<T> {
-  readonly #result: MongoFindResult<T>;
-  readonly #negate: boolean;
+/**
+ * Create expectation for MongoDB find result.
+ */
+function expectMongoFindResult<T>(
+  result: MongoFindResult<T>,
+  negate = false,
+): MongoFindResultExpectation<T> {
+  const self: MongoFindResultExpectation<T> = {
+    get not(): MongoFindResultExpectation<T> {
+      return expectMongoFindResult(result, !negate);
+    },
 
-  constructor(result: MongoFindResult<T>, negate = false) {
-    this.#result = result;
-    this.#negate = negate;
-  }
-
-  get not(): this {
-    return new MongoFindResultExpectationImpl(
-      this.#result,
-      !this.#negate,
-    ) as this;
-  }
-
-  toBeSuccessful(): this {
-    const isSuccess = this.#result.ok;
-    if (this.#negate ? isSuccess : !isSuccess) {
-      throw new Error(
-        this.#negate
-          ? "Expected not ok result, but ok is true"
-          : "Expected ok result, but ok is false",
-      );
-    }
-    return this;
-  }
-
-  toHaveContent(): this {
-    const hasContent = this.#result.docs.length > 0;
-    if (this.#negate ? hasContent : !hasContent) {
-      throw new Error(
-        this.#negate
-          ? `Expected no documents, got ${this.#result.docs.length}`
-          : "Expected documents, but got none",
-      );
-    }
-    return this;
-  }
-
-  toHaveLength(expected: number): this {
-    if (this.#result.docs.length !== expected) {
-      throw new Error(
-        buildCountError(expected, this.#result.docs.length, "documents"),
-      );
-    }
-    return this;
-  }
-
-  toHaveLengthGreaterThanOrEqual(min: number): this {
-    if (this.#result.docs.length < min) {
-      throw new Error(
-        buildCountAtLeastError(min, this.#result.docs.length, "documents"),
-      );
-    }
-    return this;
-  }
-
-  toHaveLengthLessThanOrEqual(max: number): this {
-    if (this.#result.docs.length > max) {
-      throw new Error(
-        buildCountAtMostError(max, this.#result.docs.length, "documents"),
-      );
-    }
-    return this;
-  }
-
-  toMatchObject(subset: Partial<T>): this {
-    const found = this.#result.docs.some((doc) => containsSubset(doc, subset));
-    if (!found) {
-      throw new Error(
-        `Expected at least one document to contain ${JSON.stringify(subset)}`,
-      );
-    }
-    return this;
-  }
-
-  toSatisfy(matcher: (docs: MongoDocs<T>) => void): this {
-    matcher(this.#result.docs);
-    return this;
-  }
-
-  toHaveDurationLessThan(ms: number): this {
-    if (this.#result.duration >= ms) {
-      throw new Error(buildDurationError(ms, this.#result.duration));
-    }
-    return this;
-  }
-
-  toHaveDurationLessThanOrEqual(ms: number): this {
-    if (this.#result.duration > ms) {
-      throw new Error(
-        `Expected duration <= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThan(ms: number): this {
-    if (this.#result.duration <= ms) {
-      throw new Error(
-        `Expected duration > ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThanOrEqual(ms: number): this {
-    if (this.#result.duration < ms) {
-      throw new Error(
-        `Expected duration >= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-}
-
-class MongoInsertResultExpectationImpl implements MongoInsertResultExpectation {
-  readonly #result: MongoInsertOneResult | MongoInsertManyResult;
-  readonly #negate: boolean;
-
-  constructor(
-    result: MongoInsertOneResult | MongoInsertManyResult,
-    negate = false,
-  ) {
-    this.#result = result;
-    this.#negate = negate;
-  }
-
-  get not(): this {
-    return new MongoInsertResultExpectationImpl(
-      this.#result,
-      !this.#negate,
-    ) as this;
-  }
-
-  toBeSuccessful(): this {
-    const isSuccess = this.#result.ok;
-    if (this.#negate ? isSuccess : !isSuccess) {
-      throw new Error(
-        this.#negate
-          ? "Expected not ok result, but ok is true"
-          : "Expected ok result, but ok is false",
-      );
-    }
-    return this;
-  }
-
-  toHaveInsertedCount(count: number): this {
-    const actualCount = "insertedCount" in this.#result
-      ? this.#result.insertedCount
-      : 1;
-    if (actualCount !== count) {
-      throw new Error(
-        `Expected ${count} inserted documents, got ${actualCount}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveInsertedCountGreaterThan(count: number): this {
-    const actualCount = "insertedCount" in this.#result
-      ? this.#result.insertedCount
-      : 1;
-    if (actualCount <= count) {
-      throw new Error(
-        `Expected inserted count > ${count}, but got ${actualCount}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveInsertedCountGreaterThanOrEqual(count: number): this {
-    const actualCount = "insertedCount" in this.#result
-      ? this.#result.insertedCount
-      : 1;
-    if (actualCount < count) {
-      throw new Error(
-        `Expected inserted count >= ${count}, but got ${actualCount}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveInsertedCountLessThan(count: number): this {
-    const actualCount = "insertedCount" in this.#result
-      ? this.#result.insertedCount
-      : 1;
-    if (actualCount >= count) {
-      throw new Error(
-        `Expected inserted count < ${count}, but got ${actualCount}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveInsertedCountLessThanOrEqual(count: number): this {
-    const actualCount = "insertedCount" in this.#result
-      ? this.#result.insertedCount
-      : 1;
-    if (actualCount > count) {
-      throw new Error(
-        `Expected inserted count <= ${count}, but got ${actualCount}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveInsertedId(): this {
-    if ("insertedId" in this.#result) {
-      if (!this.#result.insertedId) {
-        throw new Error("Expected insertedId, but it is empty");
+    toBeSuccessful() {
+      const isSuccess = result.ok;
+      if (negate ? isSuccess : !isSuccess) {
+        throw new Error(
+          negate
+            ? "Expected not ok result, but ok is true"
+            : "Expected ok result, but ok is false",
+        );
       }
-    } else {
-      if (this.#result.insertedIds.length === 0) {
-        throw new Error("Expected insertedIds, but array is empty");
+      return this;
+    },
+
+    toHaveContent() {
+      const hasContent = result.docs.length > 0;
+      if (negate ? hasContent : !hasContent) {
+        throw new Error(
+          negate
+            ? `Expected no documents, got ${result.docs.length}`
+            : "Expected documents, but got none",
+        );
       }
-    }
-    return this;
-  }
+      return this;
+    },
 
-  toHaveDurationLessThan(ms: number): this {
-    if (this.#result.duration >= ms) {
-      throw new Error(buildDurationError(ms, this.#result.duration));
-    }
-    return this;
-  }
+    toHaveLength(expected: number) {
+      const match = result.docs.length === expected;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected document count to not be ${expected}, got ${result.docs.length}`
+            : buildCountError(expected, result.docs.length, "documents"),
+        );
+      }
+      return this;
+    },
 
-  toHaveDurationLessThanOrEqual(ms: number): this {
-    if (this.#result.duration > ms) {
-      throw new Error(
-        `Expected duration <= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+    toHaveLengthGreaterThanOrEqual(min: number) {
+      const match = result.docs.length >= min;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected document count to not be >= ${min}, got ${result.docs.length}`
+            : buildCountAtLeastError(min, result.docs.length, "documents"),
+        );
+      }
+      return this;
+    },
 
-  toHaveDurationGreaterThan(ms: number): this {
-    if (this.#result.duration <= ms) {
-      throw new Error(
-        `Expected duration > ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+    toHaveLengthLessThanOrEqual(max: number) {
+      const match = result.docs.length <= max;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected document count to not be <= ${max}, got ${result.docs.length}`
+            : buildCountAtMostError(max, result.docs.length, "documents"),
+        );
+      }
+      return this;
+    },
 
-  toHaveDurationGreaterThanOrEqual(ms: number): this {
-    if (this.#result.duration < ms) {
-      throw new Error(
-        `Expected duration >= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+    toMatchObject(subset: Partial<T>) {
+      const found = result.docs.some((doc) => containsSubset(doc, subset));
+      if (negate ? found : !found) {
+        throw new Error(
+          negate
+            ? `Expected no document to contain ${
+              JSON.stringify(subset)
+            }, but found one`
+            : `Expected at least one document to contain ${
+              JSON.stringify(subset)
+            }`,
+        );
+      }
+      return this;
+    },
+
+    toSatisfy(matcher: (docs: MongoDocs<T>) => void) {
+      matcher(result.docs);
+      return this;
+    },
+
+    ...createDurationMethods(result.duration, negate),
+  };
+
+  return self;
 }
 
-class MongoUpdateResultExpectationImpl implements MongoUpdateResultExpectation {
-  readonly #result: MongoUpdateResult;
-  readonly #negate: boolean;
+/**
+ * Create expectation for MongoDB insert result.
+ */
+function expectMongoInsertResult(
+  result: MongoInsertOneResult | MongoInsertManyResult,
+  negate = false,
+): MongoInsertResultExpectation {
+  const self: MongoInsertResultExpectation = {
+    get not(): MongoInsertResultExpectation {
+      return expectMongoInsertResult(result, !negate);
+    },
 
-  constructor(result: MongoUpdateResult, negate = false) {
-    this.#result = result;
-    this.#negate = negate;
-  }
+    toBeSuccessful() {
+      const isSuccess = result.ok;
+      if (negate ? isSuccess : !isSuccess) {
+        throw new Error(
+          negate
+            ? "Expected not ok result, but ok is true"
+            : "Expected ok result, but ok is false",
+        );
+      }
+      return this;
+    },
 
-  get not(): this {
-    return new MongoUpdateResultExpectationImpl(
-      this.#result,
-      !this.#negate,
-    ) as this;
-  }
+    toHaveInsertedCount(count: number) {
+      const actualCount = "insertedCount" in result ? result.insertedCount : 1;
+      const match = actualCount === count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected inserted count to not be ${count}, got ${actualCount}`
+            : `Expected ${count} inserted documents, got ${actualCount}`,
+        );
+      }
+      return this;
+    },
 
-  toBeSuccessful(): this {
-    const isSuccess = this.#result.ok;
-    if (this.#negate ? isSuccess : !isSuccess) {
-      throw new Error(
-        this.#negate
-          ? "Expected not ok result, but ok is true"
-          : "Expected ok result, but ok is false",
-      );
-    }
-    return this;
-  }
+    toHaveInsertedCountGreaterThan(count: number) {
+      const actualCount = "insertedCount" in result ? result.insertedCount : 1;
+      const match = actualCount > count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected inserted count to not be > ${count}, got ${actualCount}`
+            : `Expected inserted count > ${count}, but got ${actualCount}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveMatchedCount(count: number): this {
-    if (this.#result.matchedCount !== count) {
-      throw new Error(
-        `Expected ${count} matched documents, got ${this.#result.matchedCount}`,
-      );
-    }
-    return this;
-  }
+    toHaveInsertedCountGreaterThanOrEqual(count: number) {
+      const actualCount = "insertedCount" in result ? result.insertedCount : 1;
+      const match = actualCount >= count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected inserted count to not be >= ${count}, got ${actualCount}`
+            : `Expected inserted count >= ${count}, but got ${actualCount}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveMatchedCountGreaterThan(count: number): this {
-    if (this.#result.matchedCount <= count) {
-      throw new Error(
-        `Expected matched count > ${count}, but got ${this.#result.matchedCount}`,
-      );
-    }
-    return this;
-  }
+    toHaveInsertedCountLessThan(count: number) {
+      const actualCount = "insertedCount" in result ? result.insertedCount : 1;
+      const match = actualCount < count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected inserted count to not be < ${count}, got ${actualCount}`
+            : `Expected inserted count < ${count}, but got ${actualCount}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveMatchedCountGreaterThanOrEqual(count: number): this {
-    if (this.#result.matchedCount < count) {
-      throw new Error(
-        `Expected matched count >= ${count}, but got ${this.#result.matchedCount}`,
-      );
-    }
-    return this;
-  }
+    toHaveInsertedCountLessThanOrEqual(count: number) {
+      const actualCount = "insertedCount" in result ? result.insertedCount : 1;
+      const match = actualCount <= count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected inserted count to not be <= ${count}, got ${actualCount}`
+            : `Expected inserted count <= ${count}, but got ${actualCount}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveMatchedCountLessThan(count: number): this {
-    if (this.#result.matchedCount >= count) {
-      throw new Error(
-        `Expected matched count < ${count}, but got ${this.#result.matchedCount}`,
-      );
-    }
-    return this;
-  }
+    toHaveInsertedId() {
+      let hasId: boolean;
+      if ("insertedId" in result) {
+        hasId = !!result.insertedId;
+      } else {
+        hasId = result.insertedIds.length > 0;
+      }
+      if (negate ? hasId : !hasId) {
+        throw new Error(
+          negate
+            ? "Expected no insertedId, but insertedId exists"
+            : "insertedId" in result
+            ? "Expected insertedId, but it is empty"
+            : "Expected insertedIds, but array is empty",
+        );
+      }
+      return this;
+    },
 
-  toHaveMatchedCountLessThanOrEqual(count: number): this {
-    if (this.#result.matchedCount > count) {
-      throw new Error(
-        `Expected matched count <= ${count}, but got ${this.#result.matchedCount}`,
-      );
-    }
-    return this;
-  }
+    ...createDurationMethods(result.duration, negate),
+  };
 
-  toHaveModifiedCount(count: number): this {
-    if (this.#result.modifiedCount !== count) {
-      throw new Error(
-        `Expected ${count} modified documents, got ${this.#result.modifiedCount}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveModifiedCountGreaterThan(count: number): this {
-    if (this.#result.modifiedCount <= count) {
-      throw new Error(
-        `Expected modified count > ${count}, but got ${this.#result.modifiedCount}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveModifiedCountGreaterThanOrEqual(count: number): this {
-    if (this.#result.modifiedCount < count) {
-      throw new Error(
-        `Expected modified count >= ${count}, but got ${this.#result.modifiedCount}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveModifiedCountLessThan(count: number): this {
-    if (this.#result.modifiedCount >= count) {
-      throw new Error(
-        `Expected modified count < ${count}, but got ${this.#result.modifiedCount}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveModifiedCountLessThanOrEqual(count: number): this {
-    if (this.#result.modifiedCount > count) {
-      throw new Error(
-        `Expected modified count <= ${count}, but got ${this.#result.modifiedCount}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveUpsertedId(): this {
-    if (!this.#result.upsertedId) {
-      throw new Error("Expected upsertedId, but no document was upserted");
-    }
-    return this;
-  }
-
-  toHaveDurationLessThan(ms: number): this {
-    if (this.#result.duration >= ms) {
-      throw new Error(buildDurationError(ms, this.#result.duration));
-    }
-    return this;
-  }
-
-  toHaveDurationLessThanOrEqual(ms: number): this {
-    if (this.#result.duration > ms) {
-      throw new Error(
-        `Expected duration <= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThan(ms: number): this {
-    if (this.#result.duration <= ms) {
-      throw new Error(
-        `Expected duration > ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThanOrEqual(ms: number): this {
-    if (this.#result.duration < ms) {
-      throw new Error(
-        `Expected duration >= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+  return self;
 }
 
-class MongoDeleteResultExpectationImpl implements MongoDeleteResultExpectation {
-  readonly #result: MongoDeleteResult;
-  readonly #negate: boolean;
+/**
+ * Create expectation for MongoDB update result.
+ */
+function expectMongoUpdateResult(
+  result: MongoUpdateResult,
+  negate = false,
+): MongoUpdateResultExpectation {
+  const self: MongoUpdateResultExpectation = {
+    get not(): MongoUpdateResultExpectation {
+      return expectMongoUpdateResult(result, !negate);
+    },
 
-  constructor(result: MongoDeleteResult, negate = false) {
-    this.#result = result;
-    this.#negate = negate;
-  }
+    toBeSuccessful() {
+      const isSuccess = result.ok;
+      if (negate ? isSuccess : !isSuccess) {
+        throw new Error(
+          negate
+            ? "Expected not ok result, but ok is true"
+            : "Expected ok result, but ok is false",
+        );
+      }
+      return this;
+    },
 
-  get not(): this {
-    return new MongoDeleteResultExpectationImpl(
-      this.#result,
-      !this.#negate,
-    ) as this;
-  }
+    toHaveMatchedCount(count: number) {
+      const match = result.matchedCount === count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected matched count to not be ${count}, got ${result.matchedCount}`
+            : `Expected ${count} matched documents, got ${result.matchedCount}`,
+        );
+      }
+      return this;
+    },
 
-  toBeSuccessful(): this {
-    const isSuccess = this.#result.ok;
-    if (this.#negate ? isSuccess : !isSuccess) {
-      throw new Error(
-        this.#negate
-          ? "Expected not ok result, but ok is true"
-          : "Expected ok result, but ok is false",
-      );
-    }
-    return this;
-  }
+    toHaveMatchedCountGreaterThan(count: number) {
+      const match = result.matchedCount > count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected matched count to not be > ${count}, got ${result.matchedCount}`
+            : `Expected matched count > ${count}, but got ${result.matchedCount}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveDeletedCount(count: number): this {
-    if (this.#result.deletedCount !== count) {
-      throw new Error(
-        `Expected ${count} deleted documents, got ${this.#result.deletedCount}`,
-      );
-    }
-    return this;
-  }
+    toHaveMatchedCountGreaterThanOrEqual(count: number) {
+      const match = result.matchedCount >= count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected matched count to not be >= ${count}, got ${result.matchedCount}`
+            : `Expected matched count >= ${count}, but got ${result.matchedCount}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveDeletedCountGreaterThan(count: number): this {
-    if (this.#result.deletedCount <= count) {
-      throw new Error(
-        `Expected deleted count > ${count}, but got ${this.#result.deletedCount}`,
-      );
-    }
-    return this;
-  }
+    toHaveMatchedCountLessThan(count: number) {
+      const match = result.matchedCount < count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected matched count to not be < ${count}, got ${result.matchedCount}`
+            : `Expected matched count < ${count}, but got ${result.matchedCount}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveDeletedCountGreaterThanOrEqual(count: number): this {
-    if (this.#result.deletedCount < count) {
-      throw new Error(
-        `Expected deleted count >= ${count}, but got ${this.#result.deletedCount}`,
-      );
-    }
-    return this;
-  }
+    toHaveMatchedCountLessThanOrEqual(count: number) {
+      const match = result.matchedCount <= count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected matched count to not be <= ${count}, got ${result.matchedCount}`
+            : `Expected matched count <= ${count}, but got ${result.matchedCount}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveDeletedCountLessThan(count: number): this {
-    if (this.#result.deletedCount >= count) {
-      throw new Error(
-        `Expected deleted count < ${count}, but got ${this.#result.deletedCount}`,
-      );
-    }
-    return this;
-  }
+    toHaveModifiedCount(count: number) {
+      const match = result.modifiedCount === count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected modified count to not be ${count}, got ${result.modifiedCount}`
+            : `Expected ${count} modified documents, got ${result.modifiedCount}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveDeletedCountLessThanOrEqual(count: number): this {
-    if (this.#result.deletedCount > count) {
-      throw new Error(
-        `Expected deleted count <= ${count}, but got ${this.#result.deletedCount}`,
-      );
-    }
-    return this;
-  }
+    toHaveModifiedCountGreaterThan(count: number) {
+      const match = result.modifiedCount > count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected modified count to not be > ${count}, got ${result.modifiedCount}`
+            : `Expected modified count > ${count}, but got ${result.modifiedCount}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveDurationLessThan(ms: number): this {
-    if (this.#result.duration >= ms) {
-      throw new Error(buildDurationError(ms, this.#result.duration));
-    }
-    return this;
-  }
+    toHaveModifiedCountGreaterThanOrEqual(count: number) {
+      const match = result.modifiedCount >= count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected modified count to not be >= ${count}, got ${result.modifiedCount}`
+            : `Expected modified count >= ${count}, but got ${result.modifiedCount}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveDurationLessThanOrEqual(ms: number): this {
-    if (this.#result.duration > ms) {
-      throw new Error(
-        `Expected duration <= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+    toHaveModifiedCountLessThan(count: number) {
+      const match = result.modifiedCount < count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected modified count to not be < ${count}, got ${result.modifiedCount}`
+            : `Expected modified count < ${count}, but got ${result.modifiedCount}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveDurationGreaterThan(ms: number): this {
-    if (this.#result.duration <= ms) {
-      throw new Error(
-        `Expected duration > ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+    toHaveModifiedCountLessThanOrEqual(count: number) {
+      const match = result.modifiedCount <= count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected modified count to not be <= ${count}, got ${result.modifiedCount}`
+            : `Expected modified count <= ${count}, but got ${result.modifiedCount}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveDurationGreaterThanOrEqual(ms: number): this {
-    if (this.#result.duration < ms) {
-      throw new Error(
-        `Expected duration >= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+    toHaveUpsertedId() {
+      const hasId = !!result.upsertedId;
+      if (negate ? hasId : !hasId) {
+        throw new Error(
+          negate
+            ? "Expected no upsertedId, but upsertedId exists"
+            : "Expected upsertedId, but no document was upserted",
+        );
+      }
+      return this;
+    },
+
+    ...createDurationMethods(result.duration, negate),
+  };
+
+  return self;
 }
 
-class MongoFindOneResultExpectationImpl<T>
-  implements MongoFindOneResultExpectation<T> {
-  readonly #result: MongoFindOneResult<T>;
-  readonly #negate: boolean;
+/**
+ * Create expectation for MongoDB delete result.
+ */
+function expectMongoDeleteResult(
+  result: MongoDeleteResult,
+  negate = false,
+): MongoDeleteResultExpectation {
+  const self: MongoDeleteResultExpectation = {
+    get not(): MongoDeleteResultExpectation {
+      return expectMongoDeleteResult(result, !negate);
+    },
 
-  constructor(result: MongoFindOneResult<T>, negate = false) {
-    this.#result = result;
-    this.#negate = negate;
-  }
+    toBeSuccessful() {
+      const isSuccess = result.ok;
+      if (negate ? isSuccess : !isSuccess) {
+        throw new Error(
+          negate
+            ? "Expected not ok result, but ok is true"
+            : "Expected ok result, but ok is false",
+        );
+      }
+      return this;
+    },
 
-  get not(): this {
-    return new MongoFindOneResultExpectationImpl(
-      this.#result,
-      !this.#negate,
-    ) as this;
-  }
+    toHaveDeletedCount(count: number) {
+      const match = result.deletedCount === count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected deleted count to not be ${count}, got ${result.deletedCount}`
+            : `Expected ${count} deleted documents, got ${result.deletedCount}`,
+        );
+      }
+      return this;
+    },
 
-  toBeSuccessful(): this {
-    const isSuccess = this.#result.ok;
-    if (this.#negate ? isSuccess : !isSuccess) {
-      throw new Error(
-        this.#negate
-          ? "Expected not ok result, but ok is true"
-          : "Expected ok result, but ok is false",
-      );
-    }
-    return this;
-  }
+    toHaveDeletedCountGreaterThan(count: number) {
+      const match = result.deletedCount > count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected deleted count to not be > ${count}, got ${result.deletedCount}`
+            : `Expected deleted count > ${count}, but got ${result.deletedCount}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveContent(): this {
-    const hasContent = this.#result.doc !== undefined;
-    if (this.#negate ? hasContent : !hasContent) {
-      throw new Error(
-        this.#negate
-          ? "Expected document not to be found, but got a document"
-          : "Expected document to be found, but got undefined",
-      );
-    }
-    return this;
-  }
+    toHaveDeletedCountGreaterThanOrEqual(count: number) {
+      const match = result.deletedCount >= count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected deleted count to not be >= ${count}, got ${result.deletedCount}`
+            : `Expected deleted count >= ${count}, but got ${result.deletedCount}`,
+        );
+      }
+      return this;
+    },
 
-  toMatchObject(subset: Partial<T>): this {
-    if (this.#result.doc === undefined) {
-      throw new Error(
-        "Expected document to contain subset, but doc is undefined",
-      );
-    }
-    if (!containsSubset(this.#result.doc, subset)) {
-      throw new Error(
-        `Expected document to contain ${JSON.stringify(subset)}`,
-      );
-    }
-    return this;
-  }
+    toHaveDeletedCountLessThan(count: number) {
+      const match = result.deletedCount < count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected deleted count to not be < ${count}, got ${result.deletedCount}`
+            : `Expected deleted count < ${count}, but got ${result.deletedCount}`,
+        );
+      }
+      return this;
+    },
 
-  toSatisfy(matcher: (doc: T) => void): this {
-    if (this.#result.doc === undefined) {
-      throw new Error("Expected document for matching, but doc is undefined");
-    }
-    matcher(this.#result.doc);
-    return this;
-  }
+    toHaveDeletedCountLessThanOrEqual(count: number) {
+      const match = result.deletedCount <= count;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected deleted count to not be <= ${count}, got ${result.deletedCount}`
+            : `Expected deleted count <= ${count}, but got ${result.deletedCount}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveDurationLessThan(ms: number): this {
-    if (this.#result.duration >= ms) {
-      throw new Error(buildDurationError(ms, this.#result.duration));
-    }
-    return this;
-  }
+    ...createDurationMethods(result.duration, negate),
+  };
 
-  toHaveDurationLessThanOrEqual(ms: number): this {
-    if (this.#result.duration > ms) {
-      throw new Error(
-        `Expected duration <= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThan(ms: number): this {
-    if (this.#result.duration <= ms) {
-      throw new Error(
-        `Expected duration > ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThanOrEqual(ms: number): this {
-    if (this.#result.duration < ms) {
-      throw new Error(
-        `Expected duration >= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+  return self;
 }
 
-class MongoCountResultExpectationImpl implements MongoCountResultExpectation {
-  readonly #result: MongoCountResult;
-  readonly #negate: boolean;
+/**
+ * Create expectation for MongoDB findOne result.
+ */
+function expectMongoFindOneResult<T>(
+  result: MongoFindOneResult<T>,
+  negate = false,
+): MongoFindOneResultExpectation<T> {
+  const self: MongoFindOneResultExpectation<T> = {
+    get not(): MongoFindOneResultExpectation<T> {
+      return expectMongoFindOneResult(result, !negate);
+    },
 
-  constructor(result: MongoCountResult, negate = false) {
-    this.#result = result;
-    this.#negate = negate;
-  }
+    toBeSuccessful() {
+      const isSuccess = result.ok;
+      if (negate ? isSuccess : !isSuccess) {
+        throw new Error(
+          negate
+            ? "Expected not ok result, but ok is true"
+            : "Expected ok result, but ok is false",
+        );
+      }
+      return this;
+    },
 
-  get not(): this {
-    return new MongoCountResultExpectationImpl(
-      this.#result,
-      !this.#negate,
-    ) as this;
-  }
+    toHaveContent() {
+      const hasContent = result.doc !== undefined;
+      if (negate ? hasContent : !hasContent) {
+        throw new Error(
+          negate
+            ? "Expected document not to be found, but got a document"
+            : "Expected document to be found, but got undefined",
+        );
+      }
+      return this;
+    },
 
-  toBeSuccessful(): this {
-    const isSuccess = this.#result.ok;
-    if (this.#negate ? isSuccess : !isSuccess) {
-      throw new Error(
-        this.#negate
-          ? "Expected not ok result, but ok is true"
-          : "Expected ok result, but ok is false",
-      );
-    }
-    return this;
-  }
+    toMatchObject(subset: Partial<T>) {
+      if (result.doc === undefined) {
+        throw new Error(
+          "Expected document to contain subset, but doc is undefined",
+        );
+      }
+      const matches = containsSubset(result.doc, subset);
+      if (negate ? matches : !matches) {
+        throw new Error(
+          negate
+            ? `Expected document to not contain ${JSON.stringify(subset)}`
+            : `Expected document to contain ${JSON.stringify(subset)}`,
+        );
+      }
+      return this;
+    },
 
-  toHaveLength(expected: number): this {
-    if (this.#result.count !== expected) {
-      throw new Error(
-        buildCountError(expected, this.#result.count, "count"),
-      );
-    }
-    return this;
-  }
+    toSatisfy(matcher: (doc: T) => void) {
+      if (result.doc === undefined) {
+        throw new Error("Expected document for matching, but doc is undefined");
+      }
+      matcher(result.doc);
+      return this;
+    },
 
-  toHaveLengthGreaterThanOrEqual(min: number): this {
-    if (this.#result.count < min) {
-      throw new Error(
-        buildCountAtLeastError(min, this.#result.count, "count"),
-      );
-    }
-    return this;
-  }
+    ...createDurationMethods(result.duration, negate),
+  };
 
-  toHaveLengthLessThanOrEqual(max: number): this {
-    if (this.#result.count > max) {
-      throw new Error(
-        buildCountAtMostError(max, this.#result.count, "count"),
-      );
-    }
-    return this;
-  }
+  return self;
+}
 
-  toHaveDurationLessThan(ms: number): this {
-    if (this.#result.duration >= ms) {
-      throw new Error(buildDurationError(ms, this.#result.duration));
-    }
-    return this;
-  }
+/**
+ * Create expectation for MongoDB count result.
+ */
+function expectMongoCountResult(
+  result: MongoCountResult,
+  negate = false,
+): MongoCountResultExpectation {
+  const self: MongoCountResultExpectation = {
+    get not(): MongoCountResultExpectation {
+      return expectMongoCountResult(result, !negate);
+    },
 
-  toHaveDurationLessThanOrEqual(ms: number): this {
-    if (this.#result.duration > ms) {
-      throw new Error(
-        `Expected duration <= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+    toBeSuccessful() {
+      const isSuccess = result.ok;
+      if (negate ? isSuccess : !isSuccess) {
+        throw new Error(
+          negate
+            ? "Expected not ok result, but ok is true"
+            : "Expected ok result, but ok is false",
+        );
+      }
+      return this;
+    },
 
-  toHaveDurationGreaterThan(ms: number): this {
-    if (this.#result.duration <= ms) {
-      throw new Error(
-        `Expected duration > ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+    toHaveLength(expected: number) {
+      const match = result.count === expected;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected count to not be ${expected}, got ${result.count}`
+            : buildCountError(expected, result.count, "count"),
+        );
+      }
+      return this;
+    },
 
-  toHaveDurationGreaterThanOrEqual(ms: number): this {
-    if (this.#result.duration < ms) {
-      throw new Error(
-        `Expected duration >= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+    toHaveLengthGreaterThanOrEqual(min: number) {
+      const match = result.count >= min;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected count to not be >= ${min}, got ${result.count}`
+            : buildCountAtLeastError(min, result.count, "count"),
+        );
+      }
+      return this;
+    },
+
+    toHaveLengthLessThanOrEqual(max: number) {
+      const match = result.count <= max;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected count to not be <= ${max}, got ${result.count}`
+            : buildCountAtMostError(max, result.count, "count"),
+        );
+      }
+      return this;
+    },
+
+    ...createDurationMethods(result.duration, negate),
+  };
+
+  return self;
 }
 
 /**
@@ -888,27 +773,27 @@ export function expectMongoResult<R extends MongoResult<any>>(
 ): MongoExpectation<R> {
   switch (result.type) {
     case "mongo:find":
-      return new MongoFindResultExpectationImpl(
+      return expectMongoFindResult(
         result as MongoFindResult,
       ) as unknown as MongoExpectation<R>;
     case "mongo:insert":
-      return new MongoInsertResultExpectationImpl(
+      return expectMongoInsertResult(
         result as MongoInsertOneResult | MongoInsertManyResult,
       ) as unknown as MongoExpectation<R>;
     case "mongo:update":
-      return new MongoUpdateResultExpectationImpl(
+      return expectMongoUpdateResult(
         result as MongoUpdateResult,
       ) as unknown as MongoExpectation<R>;
     case "mongo:delete":
-      return new MongoDeleteResultExpectationImpl(
+      return expectMongoDeleteResult(
         result as MongoDeleteResult,
       ) as unknown as MongoExpectation<R>;
     case "mongo:find-one":
-      return new MongoFindOneResultExpectationImpl(
+      return expectMongoFindOneResult(
         result as MongoFindOneResult,
       ) as unknown as MongoExpectation<R>;
     case "mongo:count":
-      return new MongoCountResultExpectationImpl(
+      return expectMongoCountResult(
         result as MongoCountResult,
       ) as unknown as MongoExpectation<R>;
     default:

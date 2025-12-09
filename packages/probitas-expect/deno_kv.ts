@@ -2,8 +2,8 @@ import {
   buildCountAtLeastError,
   buildCountAtMostError,
   buildCountError,
-  buildDurationError,
   containsSubset,
+  createDurationMethods,
 } from "./common.ts";
 import type {
   DenoKvAtomicResult,
@@ -181,460 +181,312 @@ function keysEqual(a: Deno.KvKey, b: Deno.KvKey): boolean {
 }
 
 /**
- * DenoKvGetResultExpectation implementation.
+ * Create expectation for Deno KV get result.
  */
-class DenoKvGetResultExpectationImpl<T>
-  implements DenoKvGetResultExpectation<T> {
-  readonly #result: DenoKvGetResult<T>;
-  readonly #negate: boolean;
+function expectDenoKvGetResult<T>(
+  result: DenoKvGetResult<T>,
+  negate = false,
+): DenoKvGetResultExpectation<T> {
+  const self: DenoKvGetResultExpectation<T> = {
+    get not(): DenoKvGetResultExpectation<T> {
+      return expectDenoKvGetResult(result, !negate);
+    },
 
-  constructor(result: DenoKvGetResult<T>, negate = false) {
-    this.#result = result;
-    this.#negate = negate;
-  }
-
-  get not(): this {
-    return new DenoKvGetResultExpectationImpl(
-      this.#result,
-      !this.#negate,
-    ) as this;
-  }
-
-  toBeSuccessful(): this {
-    const isSuccess = this.#result.ok;
-    if (this.#negate ? isSuccess : !isSuccess) {
-      throw new Error(
-        this.#negate ? "Expected not ok result" : "Expected ok result",
-      );
-    }
-    return this;
-  }
-
-  toHaveContent(): this {
-    const hasContent = this.#result.value !== null;
-    if (this.#negate ? hasContent : !hasContent) {
-      throw new Error(
-        this.#negate
-          ? "Expected no content, but value exists"
-          : "Expected content, but value is null",
-      );
-    }
-    return this;
-  }
-
-  toHaveValue(expected: T): this {
-    if (this.#result.value === null) {
-      throw new Error("Expected value, but value is null");
-    }
-    if (JSON.stringify(this.#result.value) !== JSON.stringify(expected)) {
-      throw new Error(
-        `Expected value ${JSON.stringify(expected)}, got ${
-          JSON.stringify(this.#result.value)
-        }`,
-      );
-    }
-    return this;
-  }
-
-  toMatchObject(subset: Partial<T>): this {
-    if (this.#result.value === null) {
-      throw new Error(
-        "Expected data to contain properties, but value is null",
-      );
-    }
-    if (!containsSubset(this.#result.value, subset)) {
-      throw new Error("Data does not contain expected properties");
-    }
-    return this;
-  }
-
-  toSatisfy(matcher: (value: T) => void): this {
-    if (this.#result.value === null) {
-      throw new Error("Expected data for matching, but value is null");
-    }
-    matcher(this.#result.value);
-    return this;
-  }
-
-  toHaveVersionstamp(): this {
-    if (this.#result.versionstamp === null) {
-      throw new Error("Expected versionstamp, but it is null");
-    }
-    return this;
-  }
-
-  toHaveDurationLessThan(ms: number): this {
-    if (this.#result.duration >= ms) {
-      throw new Error(buildDurationError(ms, this.#result.duration));
-    }
-    return this;
-  }
-
-  toHaveDurationLessThanOrEqual(ms: number): this {
-    if (this.#result.duration > ms) {
-      throw new Error(
-        `Expected duration <= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThan(ms: number): this {
-    if (this.#result.duration <= ms) {
-      throw new Error(
-        `Expected duration > ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThanOrEqual(ms: number): this {
-    if (this.#result.duration < ms) {
-      throw new Error(
-        `Expected duration >= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-}
-
-/**
- * DenoKvListResultExpectation implementation.
- */
-class DenoKvListResultExpectationImpl<T>
-  implements DenoKvListResultExpectation<T> {
-  readonly #result: DenoKvListResult<T>;
-  readonly #negate: boolean;
-
-  constructor(result: DenoKvListResult<T>, negate = false) {
-    this.#result = result;
-    this.#negate = negate;
-  }
-
-  get not(): this {
-    return new DenoKvListResultExpectationImpl(
-      this.#result,
-      !this.#negate,
-    ) as this;
-  }
-
-  toBeSuccessful(): this {
-    const isSuccess = this.#result.ok;
-    if (this.#negate ? isSuccess : !isSuccess) {
-      throw new Error(
-        this.#negate ? "Expected not ok result" : "Expected ok result",
-      );
-    }
-    return this;
-  }
-
-  toHaveContent(): this {
-    const hasContent = this.#result.entries.length > 0;
-    if (this.#negate ? hasContent : !hasContent) {
-      throw new Error(
-        this.#negate
-          ? `Expected no entries, but found ${this.#result.entries.length}`
-          : "Expected entries, but none found",
-      );
-    }
-    return this;
-  }
-
-  toHaveLength(expected: number): this {
-    if (this.#result.entries.length !== expected) {
-      throw new Error(
-        buildCountError(expected, this.#result.entries.length, "entries"),
-      );
-    }
-    return this;
-  }
-
-  toHaveLengthGreaterThanOrEqual(min: number): this {
-    if (this.#result.entries.length < min) {
-      throw new Error(
-        buildCountAtLeastError(min, this.#result.entries.length, "entries"),
-      );
-    }
-    return this;
-  }
-
-  toHaveLengthLessThanOrEqual(max: number): this {
-    if (this.#result.entries.length > max) {
-      throw new Error(
-        buildCountAtMostError(max, this.#result.entries.length, "entries"),
-      );
-    }
-    return this;
-  }
-
-  toHaveEntryContaining(
-    subset: { key?: Deno.KvKey; value?: Partial<T> },
-  ): this {
-    const found = this.#result.entries.some((entry) => {
-      if (subset.key !== undefined && !keysEqual(entry.key, subset.key)) {
-        return false;
+    toBeSuccessful() {
+      const isSuccess = result.ok;
+      if (negate ? isSuccess : !isSuccess) {
+        throw new Error(
+          negate ? "Expected not ok result" : "Expected ok result",
+        );
       }
-      if (
-        subset.value !== undefined &&
-        !containsSubset(entry.value, subset.value)
-      ) {
-        return false;
+      return this;
+    },
+
+    toHaveContent() {
+      const hasContent = result.value !== null;
+      if (negate ? hasContent : !hasContent) {
+        throw new Error(
+          negate
+            ? "Expected no content, but value exists"
+            : "Expected content, but value is null",
+        );
       }
-      return true;
-    });
+      return this;
+    },
 
-    if (!found) {
-      throw new Error("No entry matches the expected criteria");
-    }
-    return this;
-  }
+    toHaveValue(expected: T) {
+      if (result.value === null) {
+        throw new Error("Expected value, but value is null");
+      }
+      const match = JSON.stringify(result.value) === JSON.stringify(expected);
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected value to not be ${JSON.stringify(expected)}, got ${
+              JSON.stringify(result.value)
+            }`
+            : `Expected value ${JSON.stringify(expected)}, got ${
+              JSON.stringify(result.value)
+            }`,
+        );
+      }
+      return this;
+    },
 
-  toSatisfy(matcher: (entries: DenoKvEntries<T>) => void): this {
-    matcher(this.#result.entries);
-    return this;
-  }
+    toMatchObject(subset: Partial<T>) {
+      if (result.value === null) {
+        throw new Error(
+          "Expected data to contain properties, but value is null",
+        );
+      }
+      const matches = containsSubset(result.value, subset);
+      if (negate ? matches : !matches) {
+        throw new Error(
+          negate
+            ? "Expected data to not contain properties"
+            : "Data does not contain expected properties",
+        );
+      }
+      return this;
+    },
 
-  toHaveDurationLessThan(ms: number): this {
-    if (this.#result.duration >= ms) {
-      throw new Error(buildDurationError(ms, this.#result.duration));
-    }
-    return this;
-  }
+    toSatisfy(matcher: (value: T) => void) {
+      if (result.value === null) {
+        throw new Error("Expected data for matching, but value is null");
+      }
+      matcher(result.value);
+      return this;
+    },
 
-  toHaveDurationLessThanOrEqual(ms: number): this {
-    if (this.#result.duration > ms) {
-      throw new Error(
-        `Expected duration <= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+    toHaveVersionstamp() {
+      const hasStamp = result.versionstamp !== null;
+      if (negate ? hasStamp : !hasStamp) {
+        throw new Error(
+          negate
+            ? "Expected no versionstamp, but it exists"
+            : "Expected versionstamp, but it is null",
+        );
+      }
+      return this;
+    },
 
-  toHaveDurationGreaterThan(ms: number): this {
-    if (this.#result.duration <= ms) {
-      throw new Error(
-        `Expected duration > ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+    ...createDurationMethods(result.duration, negate),
+  };
 
-  toHaveDurationGreaterThanOrEqual(ms: number): this {
-    if (this.#result.duration < ms) {
-      throw new Error(
-        `Expected duration >= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+  return self;
 }
 
 /**
- * DenoKvSetResultExpectation implementation.
+ * Create expectation for Deno KV list result.
  */
-class DenoKvSetResultExpectationImpl implements DenoKvSetResultExpectation {
-  readonly #result: DenoKvSetResult;
-  readonly #negate: boolean;
+function expectDenoKvListResult<T>(
+  result: DenoKvListResult<T>,
+  negate = false,
+): DenoKvListResultExpectation<T> {
+  const self: DenoKvListResultExpectation<T> = {
+    get not(): DenoKvListResultExpectation<T> {
+      return expectDenoKvListResult(result, !negate);
+    },
 
-  constructor(result: DenoKvSetResult, negate = false) {
-    this.#result = result;
-    this.#negate = negate;
-  }
+    toBeSuccessful() {
+      const isSuccess = result.ok;
+      if (negate ? isSuccess : !isSuccess) {
+        throw new Error(
+          negate ? "Expected not ok result" : "Expected ok result",
+        );
+      }
+      return this;
+    },
 
-  get not(): this {
-    return new DenoKvSetResultExpectationImpl(
-      this.#result,
-      !this.#negate,
-    ) as this;
-  }
+    toHaveContent() {
+      const hasContent = result.entries.length > 0;
+      if (negate ? hasContent : !hasContent) {
+        throw new Error(
+          negate
+            ? `Expected no entries, but found ${result.entries.length}`
+            : "Expected entries, but none found",
+        );
+      }
+      return this;
+    },
 
-  toBeSuccessful(): this {
-    const isSuccess = this.#result.ok;
-    if (this.#negate ? isSuccess : !isSuccess) {
-      throw new Error(
-        this.#negate ? "Expected not ok result" : "Expected ok result",
-      );
-    }
-    return this;
-  }
+    toHaveLength(expected: number) {
+      const match = result.entries.length === expected;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected entry count to not be ${expected}, got ${result.entries.length}`
+            : buildCountError(expected, result.entries.length, "entries"),
+        );
+      }
+      return this;
+    },
 
-  toHaveVersionstamp(): this {
-    if (!this.#result.versionstamp) {
-      throw new Error("Expected versionstamp, but it is empty");
-    }
-    return this;
-  }
+    toHaveLengthGreaterThanOrEqual(min: number) {
+      const match = result.entries.length >= min;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected entry count to not be >= ${min}, got ${result.entries.length}`
+            : buildCountAtLeastError(min, result.entries.length, "entries"),
+        );
+      }
+      return this;
+    },
 
-  toHaveDurationLessThan(ms: number): this {
-    if (this.#result.duration >= ms) {
-      throw new Error(buildDurationError(ms, this.#result.duration));
-    }
-    return this;
-  }
+    toHaveLengthLessThanOrEqual(max: number) {
+      const match = result.entries.length <= max;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected entry count to not be <= ${max}, got ${result.entries.length}`
+            : buildCountAtMostError(max, result.entries.length, "entries"),
+        );
+      }
+      return this;
+    },
 
-  toHaveDurationLessThanOrEqual(ms: number): this {
-    if (this.#result.duration > ms) {
-      throw new Error(
-        `Expected duration <= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+    toHaveEntryContaining(subset: { key?: Deno.KvKey; value?: Partial<T> }) {
+      const found = result.entries.some((entry) => {
+        if (subset.key !== undefined && !keysEqual(entry.key, subset.key)) {
+          return false;
+        }
+        if (
+          subset.value !== undefined &&
+          !containsSubset(entry.value, subset.value)
+        ) {
+          return false;
+        }
+        return true;
+      });
 
-  toHaveDurationGreaterThan(ms: number): this {
-    if (this.#result.duration <= ms) {
-      throw new Error(
-        `Expected duration > ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+      if (negate ? found : !found) {
+        throw new Error(
+          negate
+            ? "Expected no entry to match the criteria, but found one"
+            : "No entry matches the expected criteria",
+        );
+      }
+      return this;
+    },
 
-  toHaveDurationGreaterThanOrEqual(ms: number): this {
-    if (this.#result.duration < ms) {
-      throw new Error(
-        `Expected duration >= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+    toSatisfy(matcher: (entries: DenoKvEntries<T>) => void) {
+      matcher(result.entries);
+      return this;
+    },
+
+    ...createDurationMethods(result.duration, negate),
+  };
+
+  return self;
 }
 
 /**
- * DenoKvDeleteResultExpectation implementation.
+ * Create expectation for Deno KV set result.
  */
-class DenoKvDeleteResultExpectationImpl
-  implements DenoKvDeleteResultExpectation {
-  readonly #result: DenoKvDeleteResult;
-  readonly #negate: boolean;
+function expectDenoKvSetResult(
+  result: DenoKvSetResult,
+  negate = false,
+): DenoKvSetResultExpectation {
+  const self: DenoKvSetResultExpectation = {
+    get not(): DenoKvSetResultExpectation {
+      return expectDenoKvSetResult(result, !negate);
+    },
 
-  constructor(result: DenoKvDeleteResult, negate = false) {
-    this.#result = result;
-    this.#negate = negate;
-  }
+    toBeSuccessful() {
+      const isSuccess = result.ok;
+      if (negate ? isSuccess : !isSuccess) {
+        throw new Error(
+          negate ? "Expected not ok result" : "Expected ok result",
+        );
+      }
+      return this;
+    },
 
-  get not(): this {
-    return new DenoKvDeleteResultExpectationImpl(
-      this.#result,
-      !this.#negate,
-    ) as this;
-  }
+    toHaveVersionstamp() {
+      const hasStamp = !!result.versionstamp;
+      if (negate ? hasStamp : !hasStamp) {
+        throw new Error(
+          negate
+            ? "Expected no versionstamp, but it exists"
+            : "Expected versionstamp, but it is empty",
+        );
+      }
+      return this;
+    },
 
-  toBeSuccessful(): this {
-    const isSuccess = this.#result.ok;
-    if (this.#negate ? isSuccess : !isSuccess) {
-      throw new Error(
-        this.#negate ? "Expected not ok result" : "Expected ok result",
-      );
-    }
-    return this;
-  }
+    ...createDurationMethods(result.duration, negate),
+  };
 
-  toHaveDurationLessThan(ms: number): this {
-    if (this.#result.duration >= ms) {
-      throw new Error(buildDurationError(ms, this.#result.duration));
-    }
-    return this;
-  }
-
-  toHaveDurationLessThanOrEqual(ms: number): this {
-    if (this.#result.duration > ms) {
-      throw new Error(
-        `Expected duration <= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThan(ms: number): this {
-    if (this.#result.duration <= ms) {
-      throw new Error(
-        `Expected duration > ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThanOrEqual(ms: number): this {
-    if (this.#result.duration < ms) {
-      throw new Error(
-        `Expected duration >= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+  return self;
 }
 
 /**
- * DenoKvAtomicResultExpectation implementation.
+ * Create expectation for Deno KV delete result.
  */
-class DenoKvAtomicResultExpectationImpl
-  implements DenoKvAtomicResultExpectation {
-  readonly #result: DenoKvAtomicResult;
-  readonly #negate: boolean;
+function expectDenoKvDeleteResult(
+  result: DenoKvDeleteResult,
+  negate = false,
+): DenoKvDeleteResultExpectation {
+  const self: DenoKvDeleteResultExpectation = {
+    get not(): DenoKvDeleteResultExpectation {
+      return expectDenoKvDeleteResult(result, !negate);
+    },
 
-  constructor(result: DenoKvAtomicResult, negate = false) {
-    this.#result = result;
-    this.#negate = negate;
-  }
+    toBeSuccessful() {
+      const isSuccess = result.ok;
+      if (negate ? isSuccess : !isSuccess) {
+        throw new Error(
+          negate ? "Expected not ok result" : "Expected ok result",
+        );
+      }
+      return this;
+    },
 
-  get not(): this {
-    return new DenoKvAtomicResultExpectationImpl(
-      this.#result,
-      !this.#negate,
-    ) as this;
-  }
+    ...createDurationMethods(result.duration, negate),
+  };
 
-  toBeSuccessful(): this {
-    const isSuccess = this.#result.ok;
-    if (this.#negate ? isSuccess : !isSuccess) {
-      throw new Error(
-        this.#negate ? "Expected not ok result" : "Expected ok result",
-      );
-    }
-    return this;
-  }
+  return self;
+}
 
-  toHaveVersionstamp(): this {
-    if (!this.#result.versionstamp) {
-      throw new Error("Expected versionstamp, but it is missing or empty");
-    }
-    return this;
-  }
+/**
+ * Create expectation for Deno KV atomic result.
+ */
+function expectDenoKvAtomicResult(
+  result: DenoKvAtomicResult,
+  negate = false,
+): DenoKvAtomicResultExpectation {
+  const self: DenoKvAtomicResultExpectation = {
+    get not(): DenoKvAtomicResultExpectation {
+      return expectDenoKvAtomicResult(result, !negate);
+    },
 
-  toHaveDurationLessThan(ms: number): this {
-    if (this.#result.duration >= ms) {
-      throw new Error(buildDurationError(ms, this.#result.duration));
-    }
-    return this;
-  }
+    toBeSuccessful() {
+      const isSuccess = result.ok;
+      if (negate ? isSuccess : !isSuccess) {
+        throw new Error(
+          negate ? "Expected not ok result" : "Expected ok result",
+        );
+      }
+      return this;
+    },
 
-  toHaveDurationLessThanOrEqual(ms: number): this {
-    if (this.#result.duration > ms) {
-      throw new Error(
-        `Expected duration <= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+    toHaveVersionstamp() {
+      const hasStamp = !!result.versionstamp;
+      if (negate ? hasStamp : !hasStamp) {
+        throw new Error(
+          negate
+            ? "Expected no versionstamp, but it exists"
+            : "Expected versionstamp, but it is missing or empty",
+        );
+      }
+      return this;
+    },
 
-  toHaveDurationGreaterThan(ms: number): this {
-    if (this.#result.duration <= ms) {
-      throw new Error(
-        `Expected duration > ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+    ...createDurationMethods(result.duration, negate),
+  };
 
-  toHaveDurationGreaterThanOrEqual(ms: number): this {
-    if (this.#result.duration < ms) {
-      throw new Error(
-        `Expected duration >= ${ms}ms, but got ${this.#result.duration}ms`,
-      );
-    }
-    return this;
-  }
+  return self;
 }
 
 /**
@@ -683,25 +535,25 @@ export function expectDenoKvResult<R extends DenoKvResult<any>>(
 ): DenoKvExpectation<R> {
   switch (result.type) {
     case "deno-kv:get":
-      return new DenoKvGetResultExpectationImpl(
+      return expectDenoKvGetResult(
         // deno-lint-ignore no-explicit-any
         result as DenoKvGetResult<any>,
       ) as unknown as DenoKvExpectation<R>;
     case "deno-kv:list":
-      return new DenoKvListResultExpectationImpl(
+      return expectDenoKvListResult(
         // deno-lint-ignore no-explicit-any
         result as DenoKvListResult<any>,
       ) as unknown as DenoKvExpectation<R>;
     case "deno-kv:set":
-      return new DenoKvSetResultExpectationImpl(
+      return expectDenoKvSetResult(
         result as DenoKvSetResult,
       ) as unknown as DenoKvExpectation<R>;
     case "deno-kv:delete":
-      return new DenoKvDeleteResultExpectationImpl(
+      return expectDenoKvDeleteResult(
         result as DenoKvDeleteResult,
       ) as unknown as DenoKvExpectation<R>;
     case "deno-kv:atomic":
-      return new DenoKvAtomicResultExpectationImpl(
+      return expectDenoKvAtomicResult(
         result as DenoKvAtomicResult,
       ) as unknown as DenoKvExpectation<R>;
     default:

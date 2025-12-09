@@ -8,8 +8,12 @@
  */
 
 import type { GrpcResponse } from "@probitas/client-grpc";
-import { assertEquals } from "@std/assert";
-import { buildErrorMessage, formatDifferences } from "./common.ts";
+import {
+  buildErrorMessage,
+  containsSubset,
+  createDurationMethods,
+  formatDifferences,
+} from "./common.ts";
 
 /**
  * Fluent expectation interface for gRPC responses.
@@ -141,318 +145,10 @@ export interface GrpcResponseExpectation {
 }
 
 /**
- * Implementation of GrpcResponseExpectation.
- */
-class GrpcResponseExpectationImpl implements GrpcResponseExpectation {
-  #response: GrpcResponse;
-  #negate: boolean;
-
-  constructor(response: GrpcResponse, negate = false) {
-    this.#response = response;
-    this.#negate = negate;
-  }
-
-  get not(): this {
-    return new GrpcResponseExpectationImpl(
-      this.#response,
-      !this.#negate,
-    ) as this;
-  }
-
-  toBeSuccessful(): this {
-    const isOk = this.#response.ok;
-    if (this.#negate ? isOk : !isOk) {
-      const code = this.#response.code;
-      const message = this.#response.message ?? "";
-      throw new Error(
-        this.#negate
-          ? `Expected response to not be successful, but got code 0 (OK)`
-          : `Expected response to be successful (code 0), but got code ${code}: ${message}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveCode(expected: number): this {
-    const matches = this.#response.code === expected;
-    if (this.#negate ? matches : !matches) {
-      throw new Error(
-        this.#negate
-          ? `Expected code to not be ${expected}, but got ${this.#response.code}`
-          : `Expected code ${expected}, but got ${this.#response.code}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveCodeOneOf(codes: number[]): this {
-    const matches = codes.includes(this.#response.code);
-    if (this.#negate ? matches : !matches) {
-      throw new Error(
-        this.#negate
-          ? `Expected code to not be one of [${
-            codes.join(", ")
-          }], but got ${this.#response.code}`
-          : `Expected code to be one of [${
-            codes.join(", ")
-          }], but got ${this.#response.code}`,
-      );
-    }
-    return this;
-  }
-
-  toHaveMessage(expected: string): this {
-    const matches = this.#response.message === expected;
-    if (this.#negate ? matches : !matches) {
-      throw new Error(
-        this.#negate
-          ? `Expected message to not be "${expected}", but got "${this.#response.message}"`
-          : `Expected message "${expected}", but got "${this.#response.message}"`,
-      );
-    }
-    return this;
-  }
-
-  toHaveMessageContaining(substring: string): this {
-    const message = this.#response.message ?? "";
-    const contains = message.includes(substring);
-    if (this.#negate ? contains : !contains) {
-      throw new Error(
-        this.#negate
-          ? `Expected message to not contain "${substring}", but got "${message}"`
-          : `Expected message to contain "${substring}", but got "${message}"`,
-      );
-    }
-    return this;
-  }
-
-  toHaveMessageMatching(pattern: RegExp): this {
-    const message = this.#response.message ?? "";
-    const matches = pattern.test(message);
-    if (this.#negate ? matches : !matches) {
-      throw new Error(
-        this.#negate
-          ? `Expected message to not match ${pattern}, but got "${message}"`
-          : `Expected message to match ${pattern}, but got "${message}"`,
-      );
-    }
-    return this;
-  }
-
-  toHaveTrailerValue(name: string, value: string): this {
-    const trailers = this.#response.trailers as
-      | Record<string, string>
-      | undefined;
-    const matches = trailers?.[name] === value;
-    if (this.#negate ? matches : !matches) {
-      throw new Error(
-        this.#negate
-          ? `Expected trailer "${name}" to not be "${value}", but got "${
-            trailers?.[name]
-          }"`
-          : `Expected trailer "${name}" to be "${value}", but got "${
-            trailers?.[name]
-          }"`,
-      );
-    }
-    return this;
-  }
-
-  toHaveTrailer(name: string): this {
-    const trailers = this.#response.trailers as
-      | Record<string, string>
-      | undefined;
-    const exists = trailers && (name in trailers);
-    if (this.#negate ? exists : !exists) {
-      throw new Error(
-        this.#negate
-          ? `Expected trailer "${name}" to not exist, but it was present`
-          : `Expected trailer "${name}" to exist, but it was missing`,
-      );
-    }
-    return this;
-  }
-
-  toHaveContent(): this {
-    const data = this.#response.data();
-    const hasContent = data !== null && data !== undefined;
-    if (this.#negate ? hasContent : !hasContent) {
-      throw new Error(
-        this.#negate
-          ? `Expected response to not have content, but got: ${
-            JSON.stringify(data)
-          }`
-          : `Expected response to have content, but data is ${
-            data === null ? "null" : "undefined"
-          }`,
-      );
-    }
-    return this;
-  }
-
-  toHaveBodyContaining<T>(subset: Partial<T>): this {
-    const data = this.#response.data();
-
-    try {
-      assertEquals(
-        data,
-        subset,
-        "Response body does not contain expected properties",
-      );
-      if (this.#negate) {
-        throw new Error(
-          `Expected body to not contain ${JSON.stringify(subset)}, but it did`,
-        );
-      }
-    } catch (_error) {
-      if (this.#negate) {
-        return this;
-      }
-      const diffs = formatDifferences(data, subset);
-      const message = buildErrorMessage(
-        "toHaveBodyContaining",
-        diffs,
-        subset,
-        data,
-      );
-      throw new Error(message);
-    }
-
-    return this;
-  }
-
-  toHaveBodyMatching(fn: (body: unknown) => void): this {
-    const data = this.#response.data();
-    try {
-      fn(data);
-      if (this.#negate) {
-        throw new Error(
-          `Expected body to not match predicate, but it did. Body: ${
-            JSON.stringify(data)
-          }`,
-        );
-      }
-    } catch (error) {
-      if (this.#negate) {
-        return this;
-      }
-      throw new Error(
-        `Body does not match predicate. Body: ${JSON.stringify(data)}. Error: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDataContaining<T>(subset: Partial<T>): this {
-    const data = this.#response.data();
-
-    try {
-      assertEquals(
-        data,
-        subset,
-        "Response data does not contain expected properties",
-      );
-      if (this.#negate) {
-        throw new Error(
-          `Expected data to not contain ${JSON.stringify(subset)}, but it did`,
-        );
-      }
-    } catch (_error) {
-      if (this.#negate) {
-        return this;
-      }
-      const diffs = formatDifferences(data, subset);
-      const message = buildErrorMessage(
-        "toHaveDataContaining",
-        diffs,
-        subset,
-        data,
-      );
-      throw new Error(message);
-    }
-
-    return this;
-  }
-
-  toHaveDataMatching(fn: (data: unknown) => void): this {
-    const data = this.#response.data();
-    try {
-      fn(data);
-      if (this.#negate) {
-        throw new Error(
-          `Expected data to not match predicate, but it did. Data: ${
-            JSON.stringify(data)
-          }`,
-        );
-      }
-    } catch (error) {
-      if (this.#negate) {
-        return this;
-      }
-      throw new Error(
-        `Data does not match predicate. Data: ${JSON.stringify(data)}. Error: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationLessThan(ms: number): this {
-    const isLess = this.#response.duration < ms;
-    if (this.#negate ? isLess : !isLess) {
-      throw new Error(
-        this.#negate
-          ? `Expected duration to not be less than ${ms}ms, but got ${this.#response.duration}ms`
-          : `Expected duration less than ${ms}ms, but got ${this.#response.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationLessThanOrEqual(ms: number): this {
-    const isLessOrEqual = this.#response.duration <= ms;
-    if (this.#negate ? isLessOrEqual : !isLessOrEqual) {
-      throw new Error(
-        this.#negate
-          ? `Expected duration to not be <= ${ms}ms, but got ${this.#response.duration}ms`
-          : `Expected duration <= ${ms}ms, but got ${this.#response.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThan(ms: number): this {
-    const isGreater = this.#response.duration > ms;
-    if (this.#negate ? isGreater : !isGreater) {
-      throw new Error(
-        this.#negate
-          ? `Expected duration to not be > ${ms}ms, but got ${this.#response.duration}ms`
-          : `Expected duration > ${ms}ms, but got ${this.#response.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThanOrEqual(ms: number): this {
-    const isGreaterOrEqual = this.#response.duration >= ms;
-    if (this.#negate ? isGreaterOrEqual : !isGreaterOrEqual) {
-      throw new Error(
-        this.#negate
-          ? `Expected duration to not be >= ${ms}ms, but got ${this.#response.duration}ms`
-          : `Expected duration >= ${ms}ms, but got ${this.#response.duration}ms`,
-      );
-    }
-    return this;
-  }
-}
-
-/**
  * Creates an expectation for a gRPC response.
  *
  * @param response - gRPC response to test
+ * @param negate - Whether to negate assertions (used internally by .not)
  * @returns Fluent expectation interface
  *
  * @example
@@ -469,8 +165,236 @@ class GrpcResponseExpectationImpl implements GrpcResponseExpectation {
  */
 export function expectGrpcResponse(
   response: GrpcResponse,
+  negate = false,
 ): GrpcResponseExpectation {
-  return new GrpcResponseExpectationImpl(response);
+  const self: GrpcResponseExpectation = {
+    get not(): GrpcResponseExpectation {
+      return expectGrpcResponse(response, !negate);
+    },
+
+    toBeSuccessful() {
+      const isOk = response.ok;
+      if (negate ? isOk : !isOk) {
+        const code = response.code;
+        const message = response.message ?? "";
+        throw new Error(
+          negate
+            ? `Expected response to not be successful, but got code 0 (OK)`
+            : `Expected response to be successful (code 0), but got code ${code}: ${message}`,
+        );
+      }
+      return this;
+    },
+
+    toHaveCode(expected: number) {
+      const matches = response.code === expected;
+      if (negate ? matches : !matches) {
+        throw new Error(
+          negate
+            ? `Expected code to not be ${expected}, but got ${response.code}`
+            : `Expected code ${expected}, but got ${response.code}`,
+        );
+      }
+      return this;
+    },
+
+    toHaveCodeOneOf(codes: number[]) {
+      const matches = codes.includes(response.code);
+      if (negate ? matches : !matches) {
+        throw new Error(
+          negate
+            ? `Expected code to not be one of [${
+              codes.join(", ")
+            }], but got ${response.code}`
+            : `Expected code to be one of [${
+              codes.join(", ")
+            }], but got ${response.code}`,
+        );
+      }
+      return this;
+    },
+
+    toHaveMessage(expected: string) {
+      const matches = response.message === expected;
+      if (negate ? matches : !matches) {
+        throw new Error(
+          negate
+            ? `Expected message to not be "${expected}", but got "${response.message}"`
+            : `Expected message "${expected}", but got "${response.message}"`,
+        );
+      }
+      return this;
+    },
+
+    toHaveMessageContaining(substring: string) {
+      const message = response.message ?? "";
+      const contains = message.includes(substring);
+      if (negate ? contains : !contains) {
+        throw new Error(
+          negate
+            ? `Expected message to not contain "${substring}", but got "${message}"`
+            : `Expected message to contain "${substring}", but got "${message}"`,
+        );
+      }
+      return this;
+    },
+
+    toHaveMessageMatching(pattern: RegExp) {
+      const message = response.message ?? "";
+      const matches = pattern.test(message);
+      if (negate ? matches : !matches) {
+        throw new Error(
+          negate
+            ? `Expected message to not match ${pattern}, but got "${message}"`
+            : `Expected message to match ${pattern}, but got "${message}"`,
+        );
+      }
+      return this;
+    },
+
+    toHaveTrailerValue(name: string, value: string) {
+      const trailers = response.trailers as
+        | Record<string, string>
+        | undefined;
+      const matches = trailers?.[name] === value;
+      if (negate ? matches : !matches) {
+        throw new Error(
+          negate
+            ? `Expected trailer "${name}" to not be "${value}", but got "${
+              trailers?.[name]
+            }"`
+            : `Expected trailer "${name}" to be "${value}", but got "${
+              trailers?.[name]
+            }"`,
+        );
+      }
+      return this;
+    },
+
+    toHaveTrailer(name: string) {
+      const trailers = response.trailers as
+        | Record<string, string>
+        | undefined;
+      const exists = trailers && (name in trailers);
+      if (negate ? exists : !exists) {
+        throw new Error(
+          negate
+            ? `Expected trailer "${name}" to not exist, but it was present`
+            : `Expected trailer "${name}" to exist, but it was missing`,
+        );
+      }
+      return this;
+    },
+
+    toHaveContent() {
+      const data = response.data();
+      const hasContent = data !== null && data !== undefined;
+      if (negate ? hasContent : !hasContent) {
+        throw new Error(
+          negate
+            ? `Expected response to not have content, but got: ${
+              JSON.stringify(data)
+            }`
+            : `Expected response to have content, but data is ${
+              data === null ? "null" : "undefined"
+            }`,
+        );
+      }
+      return this;
+    },
+
+    toHaveBodyContaining<T>(subset: Partial<T>) {
+      const data = response.data();
+      const contains = containsSubset(data, subset);
+
+      if (negate ? contains : !contains) {
+        const diffs = formatDifferences(data, subset);
+        const message = negate
+          ? `Expected body to not contain ${JSON.stringify(subset)}, but it did`
+          : buildErrorMessage(
+            "toHaveBodyContaining",
+            diffs,
+            subset,
+            data,
+          );
+        throw new Error(message);
+      }
+
+      return this;
+    },
+
+    toHaveBodyMatching(fn: (body: unknown) => void) {
+      const data = response.data();
+      try {
+        fn(data);
+        if (negate) {
+          throw new Error(
+            `Expected body to not match predicate, but it did. Body: ${
+              JSON.stringify(data)
+            }`,
+          );
+        }
+      } catch (error) {
+        if (negate) {
+          return this;
+        }
+        throw new Error(
+          `Body does not match predicate. Body: ${
+            JSON.stringify(data)
+          }. Error: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+      return this;
+    },
+
+    toHaveDataContaining<T>(subset: Partial<T>) {
+      const data = response.data();
+      const contains = containsSubset(data, subset);
+
+      if (negate ? contains : !contains) {
+        const diffs = formatDifferences(data, subset);
+        const message = negate
+          ? `Expected data to not contain ${JSON.stringify(subset)}, but it did`
+          : buildErrorMessage(
+            "toHaveDataContaining",
+            diffs,
+            subset,
+            data,
+          );
+        throw new Error(message);
+      }
+
+      return this;
+    },
+
+    toHaveDataMatching(fn: (data: unknown) => void) {
+      const data = response.data();
+      try {
+        fn(data);
+        if (negate) {
+          throw new Error(
+            `Expected data to not match predicate, but it did. Data: ${
+              JSON.stringify(data)
+            }`,
+          );
+        }
+      } catch (error) {
+        if (negate) {
+          return this;
+        }
+        throw new Error(
+          `Data does not match predicate. Data: ${
+            JSON.stringify(data)
+          }. Error: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+      return this;
+    },
+
+    ...createDurationMethods(response.duration, negate),
+  };
+
+  return self;
 }
 
 // Re-export types for convenience

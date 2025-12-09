@@ -2,7 +2,7 @@ import {
   buildCountAtLeastError,
   buildCountAtMostError,
   buildCountError,
-  buildDurationError,
+  createDurationMethods,
 } from "./common.ts";
 import type {
   RedisArrayResult,
@@ -13,16 +13,6 @@ import type {
   RedisResult,
   RedisSetResult,
 } from "@probitas/client-redis";
-
-/**
- * Common shape for all Redis results (internal use only).
- */
-interface RedisResultShape<T> {
-  readonly type: string;
-  readonly ok: boolean;
-  readonly value: T;
-  readonly duration: number;
-}
 
 /**
  * Base fluent API for Redis result validation.
@@ -90,181 +80,266 @@ export interface RedisArrayResultExpectation<T>
 }
 
 /**
- * Base implementation for Redis result expectations.
+ * Common shape for all Redis results (internal use only).
  */
-class RedisResultExpectationImpl<T> implements RedisResultExpectation<T> {
-  protected readonly result: RedisResultShape<T>;
-  protected readonly negate: boolean;
-
-  constructor(result: RedisResultShape<T>, negate = false) {
-    this.result = result;
-    this.negate = negate;
-  }
-
-  get not(): this {
-    return new (this.constructor as new (
-      result: RedisResultShape<T>,
-      negate: boolean,
-    ) => this)(this.result, !this.negate);
-  }
-
-  toBeSuccessful(): this {
-    const isSuccess = this.result.ok;
-    if (this.negate ? isSuccess : !isSuccess) {
-      throw new Error(
-        this.negate
-          ? "Expected not ok result, but ok is true"
-          : "Expected ok result, but ok is false",
-      );
-    }
-    return this;
-  }
-
-  toHaveData(expected: T): this {
-    if (this.result.value !== expected) {
-      throw new Error(
-        `Expected data ${JSON.stringify(expected)}, got ${
-          JSON.stringify(this.result.value)
-        }`,
-      );
-    }
-    return this;
-  }
-
-  toSatisfy(matcher: (value: T) => void): this {
-    matcher(this.result.value);
-    return this;
-  }
-
-  toHaveDurationLessThan(ms: number): this {
-    if (this.result.duration >= ms) {
-      throw new Error(buildDurationError(ms, this.result.duration));
-    }
-    return this;
-  }
-
-  toHaveDurationLessThanOrEqual(ms: number): this {
-    if (this.result.duration > ms) {
-      throw new Error(
-        `Expected duration <= ${ms}ms, but got ${this.result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThan(ms: number): this {
-    if (this.result.duration <= ms) {
-      throw new Error(
-        `Expected duration > ${ms}ms, but got ${this.result.duration}ms`,
-      );
-    }
-    return this;
-  }
-
-  toHaveDurationGreaterThanOrEqual(ms: number): this {
-    if (this.result.duration < ms) {
-      throw new Error(
-        `Expected duration >= ${ms}ms, but got ${this.result.duration}ms`,
-      );
-    }
-    return this;
-  }
+interface RedisResultShape<T> {
+  readonly type: string;
+  readonly ok: boolean;
+  readonly value: T;
+  readonly duration: number;
 }
 
 /**
- * Implementation for Redis count result expectations.
+ * Create base expectation for Redis result.
  */
-class RedisCountResultExpectationImpl extends RedisResultExpectationImpl<number>
-  implements RedisCountResultExpectation {
-  constructor(result: RedisCountResult, negate = false) {
-    super(result, negate);
-  }
+function expectRedisResultBase<T>(
+  result: RedisResultShape<T>,
+  negate = false,
+): RedisResultExpectation<T> {
+  const self: RedisResultExpectation<T> = {
+    get not(): RedisResultExpectation<T> {
+      return expectRedisResultBase(result, !negate);
+    },
 
-  toHaveLength(expected: number): this {
-    if (this.result.value !== expected) {
-      throw new Error(
-        buildCountError(expected, this.result.value, "count"),
-      );
-    }
-    return this;
-  }
+    toBeSuccessful() {
+      const isSuccess = result.ok;
+      if (negate ? isSuccess : !isSuccess) {
+        throw new Error(
+          negate
+            ? "Expected not ok result, but ok is true"
+            : "Expected ok result, but ok is false",
+        );
+      }
+      return this;
+    },
 
-  toHaveLengthGreaterThanOrEqual(min: number): this {
-    if (this.result.value < min) {
-      throw new Error(
-        buildCountAtLeastError(min, this.result.value, "count"),
-      );
-    }
-    return this;
-  }
+    toHaveData(expected: T) {
+      const match = result.value === expected;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected data to not be ${JSON.stringify(expected)}, got ${
+              JSON.stringify(result.value)
+            }`
+            : `Expected data ${JSON.stringify(expected)}, got ${
+              JSON.stringify(result.value)
+            }`,
+        );
+      }
+      return this;
+    },
 
-  toHaveLengthLessThanOrEqual(max: number): this {
-    if (this.result.value > max) {
-      throw new Error(
-        buildCountAtMostError(max, this.result.value, "count"),
-      );
-    }
-    return this;
-  }
+    toSatisfy(matcher: (value: T) => void) {
+      matcher(result.value);
+      return this;
+    },
+
+    ...createDurationMethods(result.duration, negate),
+  };
+
+  return self;
 }
 
 /**
- * Implementation for Redis array result expectations.
+ * Create expectation for Redis count result.
  */
-class RedisArrayResultExpectationImpl<T>
-  extends RedisResultExpectationImpl<readonly T[]>
-  implements RedisArrayResultExpectation<T> {
-  constructor(result: RedisArrayResult<T>, negate = false) {
-    super(result, negate);
-  }
+function expectRedisCountResult(
+  result: RedisCountResult,
+  negate = false,
+): RedisCountResultExpectation {
+  const base = expectRedisResultBase(result, negate);
 
-  toHaveContent(): this {
-    const hasContent = this.result.value.length > 0;
-    if (this.negate ? hasContent : !hasContent) {
-      throw new Error(
-        this.negate
-          ? `Expected empty array, got ${this.result.value.length} items`
-          : "Expected non-empty array, but array is empty",
-      );
-    }
-    return this;
-  }
+  const self: RedisCountResultExpectation = {
+    get not(): RedisCountResultExpectation {
+      return expectRedisCountResult(result, !negate);
+    },
 
-  toHaveLength(expected: number): this {
-    if (this.result.value.length !== expected) {
-      throw new Error(
-        buildCountError(expected, this.result.value.length, "array count"),
-      );
-    }
-    return this;
-  }
+    toBeSuccessful() {
+      base.toBeSuccessful();
+      return this;
+    },
 
-  toHaveLengthGreaterThanOrEqual(min: number): this {
-    if (this.result.value.length < min) {
-      throw new Error(
-        buildCountAtLeastError(min, this.result.value.length, "array count"),
-      );
-    }
-    return this;
-  }
+    toHaveData(expected: number) {
+      base.toHaveData(expected);
+      return this;
+    },
 
-  toHaveLengthLessThanOrEqual(max: number): this {
-    if (this.result.value.length > max) {
-      throw new Error(
-        buildCountAtMostError(max, this.result.value.length, "array count"),
-      );
-    }
-    return this;
-  }
+    toSatisfy(matcher: (value: number) => void) {
+      base.toSatisfy(matcher);
+      return this;
+    },
 
-  toContain(item: T): this {
-    if (!this.result.value.includes(item)) {
-      throw new Error(
-        `Expected array to contain ${JSON.stringify(item)}`,
-      );
-    }
-    return this;
-  }
+    toHaveDurationLessThan(ms: number) {
+      base.toHaveDurationLessThan(ms);
+      return this;
+    },
+
+    toHaveDurationLessThanOrEqual(ms: number) {
+      base.toHaveDurationLessThanOrEqual(ms);
+      return this;
+    },
+
+    toHaveDurationGreaterThan(ms: number) {
+      base.toHaveDurationGreaterThan(ms);
+      return this;
+    },
+
+    toHaveDurationGreaterThanOrEqual(ms: number) {
+      base.toHaveDurationGreaterThanOrEqual(ms);
+      return this;
+    },
+
+    toHaveLength(expected: number) {
+      const match = result.value === expected;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected count to not be ${expected}, got ${result.value}`
+            : buildCountError(expected, result.value, "count"),
+        );
+      }
+      return this;
+    },
+
+    toHaveLengthGreaterThanOrEqual(min: number) {
+      const match = result.value >= min;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected count to not be >= ${min}, got ${result.value}`
+            : buildCountAtLeastError(min, result.value, "count"),
+        );
+      }
+      return this;
+    },
+
+    toHaveLengthLessThanOrEqual(max: number) {
+      const match = result.value <= max;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected count to not be <= ${max}, got ${result.value}`
+            : buildCountAtMostError(max, result.value, "count"),
+        );
+      }
+      return this;
+    },
+  };
+
+  return self;
+}
+
+/**
+ * Create expectation for Redis array result.
+ */
+function expectRedisArrayResult<T>(
+  result: RedisArrayResult<T>,
+  negate = false,
+): RedisArrayResultExpectation<T> {
+  const base = expectRedisResultBase(result, negate);
+
+  const self: RedisArrayResultExpectation<T> = {
+    get not(): RedisArrayResultExpectation<T> {
+      return expectRedisArrayResult(result, !negate);
+    },
+
+    toBeSuccessful() {
+      base.toBeSuccessful();
+      return this;
+    },
+
+    toHaveData(expected: readonly T[]) {
+      base.toHaveData(expected);
+      return this;
+    },
+
+    toSatisfy(matcher: (value: readonly T[]) => void) {
+      base.toSatisfy(matcher);
+      return this;
+    },
+
+    toHaveDurationLessThan(ms: number) {
+      base.toHaveDurationLessThan(ms);
+      return this;
+    },
+
+    toHaveDurationLessThanOrEqual(ms: number) {
+      base.toHaveDurationLessThanOrEqual(ms);
+      return this;
+    },
+
+    toHaveDurationGreaterThan(ms: number) {
+      base.toHaveDurationGreaterThan(ms);
+      return this;
+    },
+
+    toHaveDurationGreaterThanOrEqual(ms: number) {
+      base.toHaveDurationGreaterThanOrEqual(ms);
+      return this;
+    },
+
+    toHaveContent() {
+      const hasContent = result.value.length > 0;
+      if (negate ? hasContent : !hasContent) {
+        throw new Error(
+          negate
+            ? `Expected empty array, got ${result.value.length} items`
+            : "Expected non-empty array, but array is empty",
+        );
+      }
+      return this;
+    },
+
+    toHaveLength(expected: number) {
+      const match = result.value.length === expected;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected array count to not be ${expected}, got ${result.value.length}`
+            : buildCountError(expected, result.value.length, "array count"),
+        );
+      }
+      return this;
+    },
+
+    toHaveLengthGreaterThanOrEqual(min: number) {
+      const match = result.value.length >= min;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected array count to not be >= ${min}, got ${result.value.length}`
+            : buildCountAtLeastError(min, result.value.length, "array count"),
+        );
+      }
+      return this;
+    },
+
+    toHaveLengthLessThanOrEqual(max: number) {
+      const match = result.value.length <= max;
+      if (negate ? match : !match) {
+        throw new Error(
+          negate
+            ? `Expected array count to not be <= ${max}, got ${result.value.length}`
+            : buildCountAtMostError(max, result.value.length, "array count"),
+        );
+      }
+      return this;
+    },
+
+    toContain(item: T) {
+      const found = result.value.includes(item);
+      if (negate ? found : !found) {
+        throw new Error(
+          negate
+            ? `Expected array to not contain ${JSON.stringify(item)}`
+            : `Expected array to contain ${JSON.stringify(item)}`,
+        );
+      }
+      return this;
+    },
+  };
+
+  return self;
 }
 
 /**
@@ -306,11 +381,11 @@ export function expectRedisResult<R extends RedisResult<any>>(
 ): RedisExpectation<R> {
   switch (result.type) {
     case "redis:count":
-      return new RedisCountResultExpectationImpl(
+      return expectRedisCountResult(
         result as RedisCountResult,
       ) as unknown as RedisExpectation<R>;
     case "redis:array":
-      return new RedisArrayResultExpectationImpl(
+      return expectRedisArrayResult(
         // deno-lint-ignore no-explicit-any
         result as RedisArrayResult<any>,
       ) as unknown as RedisExpectation<R>;
@@ -318,7 +393,7 @@ export function expectRedisResult<R extends RedisResult<any>>(
     case "redis:set":
     case "redis:hash":
     case "redis:common":
-      return new RedisResultExpectationImpl(
+      return expectRedisResultBase(
         result,
       ) as unknown as RedisExpectation<R>;
     default:
