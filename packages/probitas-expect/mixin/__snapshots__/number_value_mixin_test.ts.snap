@@ -1,0 +1,13 @@
+export const snapshot = {};
+
+snapshot[`createNumberValueMixin - toHaveScoreLessThan 1`] = `"Expected score to be less than 50, but got 100"`;
+
+snapshot[`createNumberValueMixin - toHaveScoreLessThanOrEqual 1`] = `"Expected score to be less than or equal to 50, but got 100"`;
+
+snapshot[`createNumberValueMixin - toHaveScoreNaN 1`] = `"Expected score to be NaN, but got 100"`;
+
+snapshot[`createNumberValueMixin - toHaveScoreGreaterThan 1`] = `"Expected score to be greater than 200, but got 100"`;
+
+snapshot[`createNumberValueMixin - toHaveScoreCloseTo 1`] = `"Expected score to be close to 200 (within 2 digits), but got 100"`;
+
+snapshot[`createNumberValueMixin - toHaveScoreGreaterThanOrEqual 1`] = `"Expected score to be greater than or equal to 200, but got 100"`;
