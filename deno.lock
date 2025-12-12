@@ -17,7 +17,6 @@
     "jsr:@probitas/client-grpc@0": "0.4.0",
     "jsr:@probitas/client-http@0": "0.3.0",
     "jsr:@probitas/client-mongodb@0": "0.4.0",
-    "jsr:@probitas/client-mongodb@0.4.0": "0.4.0",
     "jsr:@probitas/client-rabbitmq@0": "0.3.0",
     "jsr:@probitas/client-redis@0": "0.3.0",
     "jsr:@probitas/client-sql-duckdb@0": "0.3.0",
@@ -1347,8 +1346,8 @@
     "standard-as-callback@2.1.0": {
       "integrity": "sha512-qoRRSyROncaz1z0mvYqIE4lCd9p2R90i6GxW3uZv5ucSu8tU7B5HXUP1gG8pVZsYNVaXjk8ClXHPttLyxAL48A=="
     },
-    "strnum@2.1.1": {
-      "integrity": "sha512-7ZvoFTiCnGxBtDqJ//Cu6fWtZtc7Y3x+QOirG15wztbdngGSkht27o2pyGWrVy0b4WAy3jbKmnoK6g5VlVNUUw=="
+    "strnum@2.1.2": {
+      "integrity": "sha512-l63NF9y/cLROq/yqKXSLtcMeeyOfnSQlfMSlzFt/K73oIaD8DGaQWd7Z34X9GPiKqP5rbSh84Hl4bOlLcjiSrQ=="
     },
     "tr46@5.1.1": {
       "integrity": "sha512-hdF5ZgjTqgAntKkklYw0R03MG2x/bSzTtkxmIRw/sTNV8YXsCJ1tfLAX23lhxhHJlEf3CRCOCGGWw3vI3GaSPw==",
