@@ -1,5 +1,5 @@
 import type { ConnectRpcResponse } from "@probitas/client-connectrpc";
-import { getNonNull } from "./common.ts";
+import { ensureNonNullish } from "./common.ts";
 import * as mixin from "./mixin.ts";
 
 /**
@@ -480,7 +480,7 @@ export function expectConnectRpcResponse(
       { valueName: "status message" },
     ),
     mixin.createStringValueMixin(
-      () => getNonNull(response.statusMessage, "status message"),
+      () => ensureNonNullish(response.statusMessage, "status message"),
       negate,
       { valueName: "status message" },
     ),
@@ -518,7 +518,7 @@ export function expectConnectRpcResponse(
       { valueName: "data" },
     ),
     mixin.createObjectValueMixin(
-      () => getNonNull(response.data(), "data"),
+      () => ensureNonNullish(response.data(), "data"),
       negate,
       { valueName: "data" },
     ),

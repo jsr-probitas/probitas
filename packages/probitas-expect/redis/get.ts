@@ -1,5 +1,5 @@
 import type { RedisGetResult } from "@probitas/client-redis";
-import { getNonNull } from "../common.ts";
+import { ensureNonNullish } from "../common.ts";
 import * as mixin from "../mixin.ts";
 
 /**
@@ -161,7 +161,7 @@ export function expectRedisGetResult(
       { valueName: "value" },
     ),
     mixin.createStringValueMixin(
-      () => getNonNull(result.value, "value"),
+      () => ensureNonNullish(result.value, "value"),
       negate,
       { valueName: "value" },
     ),

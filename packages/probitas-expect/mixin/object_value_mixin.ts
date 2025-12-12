@@ -1,5 +1,5 @@
 import { expect as stdExpect } from "@std/expect";
-import { getNonNull } from "../common/assertions.ts";
+import { ensureNonNullish } from "../common.ts";
 import { formatValue } from "../common/format_value.ts";
 import { toPascalCase } from "../common/pascal_case.ts";
 import { tryOk } from "../common/try_ok.ts";
@@ -253,7 +253,10 @@ export function createObjectValueMixin<
         stdExpect(obj).toHaveProperty(keyPath);
         propertyExists = true;
         const keyPathStr = Array.isArray(keyPath) ? keyPath.join(".") : keyPath;
-        const value = getNonNull(getPropertyValue<I>(obj, keyPath), keyPathStr);
+        const value = ensureNonNullish(
+          getPropertyValue<I>(obj, keyPath),
+          keyPathStr,
+        );
         matcher(value);
       } catch (error) {
         if (error instanceof Error) {

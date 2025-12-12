@@ -1,5 +1,5 @@
 import type { MongoFindOneResult } from "@probitas/client-mongodb";
-import { getNonNull } from "../common.ts";
+import { ensureNonNullish } from "../common.ts";
 import * as mixin from "../mixin.ts";
 
 /**
@@ -194,7 +194,7 @@ export function expectMongoFindOneResult<T>(
       { valueName: "doc" },
     ),
     mixin.createObjectValueMixin(
-      () => getNonNull(result.doc, "doc"),
+      () => ensureNonNullish(result.doc, "doc"),
       negate,
       { valueName: "doc" },
     ),

@@ -1,5 +1,5 @@
 import type { RabbitMqConsumeResult } from "@probitas/client-rabbitmq";
-import { getNonNull } from "../common.ts";
+import { ensureNonNullish } from "../common.ts";
 import * as mixin from "../mixin.ts";
 
 /**
@@ -299,7 +299,7 @@ export function expectRabbitMqConsumeResult(
       { valueName: "message" },
     ),
     mixin.createObjectValueMixin(
-      () => getNonNull(result.message, "message"),
+      () => ensureNonNullish(result.message, "message"),
       negate,
       { valueName: "message" },
     ),

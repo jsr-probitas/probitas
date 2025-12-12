@@ -1,5 +1,5 @@
 import type { HttpResponse } from "@probitas/client-http";
-import { getNonNull } from "./common.ts";
+import { ensureNonNullish } from "./common.ts";
 import * as mixin from "./mixin.ts";
 
 /**
@@ -679,12 +679,12 @@ export function expectHttpResponse(
     ),
     // Body length
     mixin.createValueMixin(
-      () => getNonNull(response.body?.length, "body length"),
+      () => ensureNonNullish(response.body?.length, "body length"),
       negate,
       { valueName: "body length" },
     ),
     mixin.createNumberValueMixin(
-      () => getNonNull(response.body?.length, "body length"),
+      () => ensureNonNullish(response.body?.length, "body length"),
       negate,
       { valueName: "body length" },
     ),
@@ -700,18 +700,18 @@ export function expectHttpResponse(
       { valueName: "text" },
     ),
     mixin.createStringValueMixin(
-      () => getNonNull(response.text(), "text"),
+      () => ensureNonNullish(response.text(), "text"),
       negate,
       { valueName: "text" },
     ),
     // Text length
     mixin.createValueMixin(
-      () => getNonNull(response.text(), "text length").length,
+      () => ensureNonNullish(response.text(), "text length").length,
       negate,
       { valueName: "text length" },
     ),
     mixin.createNumberValueMixin(
-      () => getNonNull(response.text(), "text length").length,
+      () => ensureNonNullish(response.text(), "text length").length,
       negate,
       { valueName: "text length" },
     ),
@@ -727,7 +727,7 @@ export function expectHttpResponse(
       { valueName: "data" },
     ),
     mixin.createObjectValueMixin(
-      () => getNonNull(response.data(), "response data"),
+      () => ensureNonNullish(response.data(), "response data"),
       negate,
       { valueName: "data" },
     ),

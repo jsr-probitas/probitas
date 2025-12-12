@@ -1,5 +1,5 @@
 import type { DenoKvGetResult } from "@probitas/client-deno-kv";
-import { getNonNull } from "../common.ts";
+import { ensureNonNullish } from "../common.ts";
 import * as mixin from "../mixin.ts";
 
 /**
@@ -299,7 +299,7 @@ export function expectDenoKvGetResult<T>(
       { valueName: "key" },
     ),
     mixin.createArrayValueMixin(
-      () => getNonNull(result.key, "key"),
+      () => ensureNonNullish(result.key, "key"),
       negate,
       { valueName: "key" },
     ),
@@ -315,7 +315,7 @@ export function expectDenoKvGetResult<T>(
       { valueName: "value" },
     ),
     mixin.createObjectValueMixin(
-      () => getNonNull(result.value, "value"),
+      () => ensureNonNullish(result.value, "value"),
       negate,
       { valueName: "value" },
     ),
@@ -331,7 +331,7 @@ export function expectDenoKvGetResult<T>(
       { valueName: "versionstamp" },
     ),
     mixin.createStringValueMixin(
-      () => getNonNull(result.versionstamp, "versionstamp"),
+      () => ensureNonNullish(result.versionstamp, "versionstamp"),
       negate,
       { valueName: "versionstamp" },
     ),

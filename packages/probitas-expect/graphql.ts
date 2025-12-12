@@ -1,5 +1,5 @@
 import type { GraphqlResponse } from "@probitas/client-graphql";
-import { getNonNull } from "./common.ts";
+import { ensureNonNullish } from "./common.ts";
 import * as mixin from "./mixin.ts";
 
 /**
@@ -582,7 +582,7 @@ export function expectGraphqlResponse(
       { valueName: "errors" },
     ),
     mixin.createArrayValueMixin(
-      () => getNonNull(response.errors, "errors"),
+      () => ensureNonNullish(response.errors, "errors"),
       negate,
       { valueName: "errors" },
     ),
@@ -609,7 +609,7 @@ export function expectGraphqlResponse(
       { valueName: "extensions" },
     ),
     mixin.createObjectValueMixin(
-      () => getNonNull(response.extensions, "extensions"),
+      () => ensureNonNullish(response.extensions, "extensions"),
       negate,
       { valueName: "extensions" },
     ),
@@ -625,7 +625,7 @@ export function expectGraphqlResponse(
       { valueName: "data" },
     ),
     mixin.createObjectValueMixin(
-      () => getNonNull(response.data, "data"),
+      () => ensureNonNullish(response.data, "data"),
       negate,
       { valueName: "data" },
     ),

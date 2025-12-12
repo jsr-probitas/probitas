@@ -1,5 +1,5 @@
 import type { MongoUpdateResult } from "@probitas/client-mongodb";
-import { getNonNull } from "../common.ts";
+import { ensureNonNullish } from "../common.ts";
 import * as mixin from "../mixin.ts";
 
 /**
@@ -303,7 +303,7 @@ export function expectMongoUpdateResult(
       { valueName: "upserted id" },
     ),
     mixin.createStringValueMixin(
-      () => getNonNull(result.upsertedId, "upserted id"),
+      () => ensureNonNullish(result.upsertedId, "upserted id"),
       negate,
       { valueName: "upserted id" },
     ),

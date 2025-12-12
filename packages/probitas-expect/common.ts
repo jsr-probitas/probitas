@@ -10,4 +10,4 @@
 
 // Re-export utilities from sub-modules
 export { formatValue } from "./common/format_value.ts";
-export { getNonNull } from "./common/assertions.ts";
+export { ensureNonNullish } from "./common/ensure_non_nullish.ts";

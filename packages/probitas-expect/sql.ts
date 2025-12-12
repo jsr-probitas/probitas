@@ -1,5 +1,5 @@
 import type { SqlQueryResult } from "@probitas/client-sql";
-import { getNonNull } from "./common.ts";
+import { ensureNonNullish } from "./common.ts";
 import * as mixin from "./mixin.ts";
 
 /**
@@ -366,7 +366,7 @@ export function expectSqlQueryResult<T = Record<string, any>>(
       { valueName: "warnings" },
     ),
     mixin.createArrayValueMixin(
-      () => getNonNull(result.warnings, "warnings"),
+      () => ensureNonNullish(result.warnings, "warnings"),
       negate,
       { valueName: "warnings" },
     ),

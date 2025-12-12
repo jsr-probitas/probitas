@@ -1,20 +1,21 @@
 /**
- * Assertion helper functions for expect implementations.
+ * Utility to ensure values are non-nullish.
  *
- * This module provides utility functions for common assertion patterns.
+ * This module provides the ensureNonNullish function for asserting
+ * that values are not null or undefined.
  *
  * @module
  */
 
 /**
- * Gets a non-null value or throws an error.
+ * Ensures a value is non-nullish (not null or undefined) or throws an error.
  *
  * @param value - Value to check
  * @param valueName - Name of the value (for error messages)
  * @returns The value if not null/undefined
  * @throws Error if value is null or undefined
  */
-export function getNonNull<T>(
+export function ensureNonNullish<T>(
   value: T,
   valueName: string,
 ): NonNullable<T> {
