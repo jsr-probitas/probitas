@@ -1,10 +1,11 @@
-import { containsSubset, createDurationMethods } from "../common.ts";
 import type { MongoFindOneResult } from "@probitas/client-mongodb";
+import { getNonNull } from "../common.ts";
+import * as mixin from "../mixin.ts";
 
 /**
  * Fluent API for MongoDB findOne result validation.
  */
-export interface MongoFindOneResultExpectation<T> {
+export interface MongoFindOneResultExpectation<_T = unknown> {
   /**
    * Negates the next assertion.
    *
@@ -16,154 +17,197 @@ export interface MongoFindOneResultExpectation<T> {
   readonly not: this;
 
   /**
-   * Asserts that the findOne operation completed successfully.
-   *
-   * @example
-   * ```ts
-   * expectMongoResult(findOneResult).toBeSuccessful();
-   * ```
+   * Asserts that the findOne result is successful.
    */
-  toBeSuccessful(): this;
+  toBeOk(): this;
 
   /**
-   * Asserts that a document was found (not undefined).
-   *
-   * @example
-   * ```ts
-   * expectMongoResult(findOneResult).toHaveContent();
-   * ```
+   * Asserts that the doc equals the expected value.
+   * @param expected - The expected doc value
    */
-  toHaveContent(): this;
+  toHaveDoc(expected: unknown): this;
 
   /**
-   * Asserts that the found document contains the given subset of properties.
-   *
-   * @param subset - An object containing the properties to match
-   * @example
-   * ```ts
-   * expectMongoResult(findOneResult).toMatchObject({ name: "Alice", age: 30 });
-   * ```
+   * Asserts that the doc equals the expected value using deep equality.
+   * @param expected - The expected doc value
    */
-  toMatchObject(subset: Partial<T>): this;
+  toHaveDocEqual(expected: unknown): this;
 
   /**
-   * Asserts the document using a custom matcher function.
-   *
-   * @param matcher - A function that receives the document and performs assertions
-   * @example
-   * ```ts
-   * expectMongoResult(findOneResult).toSatisfy((doc) => {
-   *   expect(doc.age).toBeGreaterThan(18);
-   * });
-   * ```
+   * Asserts that the doc strictly equals the expected value.
+   * @param expected - The expected doc value
    */
-  toSatisfy(matcher: (doc: T) => void): this;
+  toHaveDocStrictEqual(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is less than the specified threshold.
-   *
-   * @param ms - The maximum duration in milliseconds
-   * @example
-   * ```ts
-   * expectMongoResult(findOneResult).toHaveDurationLessThan(100);
-   * ```
+   * Asserts that the doc satisfies the provided matcher function.
+   * @param matcher - A function that receives the doc and performs assertions
    */
-  toHaveDurationLessThan(ms: number): this;
+  toHaveDocSatisfying(
+    matcher: (value: Record<string, unknown> | undefined) => void,
+  ): this;
 
   /**
-   * Asserts that the operation duration is less than or equal to the specified threshold.
-   *
-   * @param ms - The maximum duration in milliseconds
-   * @example
-   * ```ts
-   * expectMongoResult(findOneResult).toHaveDurationLessThanOrEqual(100);
-   * ```
+   * Asserts that the doc is present (not null or undefined).
    */
-  toHaveDurationLessThanOrEqual(ms: number): this;
+  toHaveDocPresent(): this;
 
   /**
-   * Asserts that the operation duration is greater than the specified threshold.
-   *
-   * @param ms - The minimum duration in milliseconds
-   * @example
-   * ```ts
-   * expectMongoResult(findOneResult).toHaveDurationGreaterThan(50);
-   * ```
+   * Asserts that the doc is null.
    */
-  toHaveDurationGreaterThan(ms: number): this;
+  toHaveDocNull(): this;
 
   /**
-   * Asserts that the operation duration is greater than or equal to the specified threshold.
-   *
-   * @param ms - The minimum duration in milliseconds
-   * @example
-   * ```ts
-   * expectMongoResult(findOneResult).toHaveDurationGreaterThanOrEqual(50);
-   * ```
+   * Asserts that the doc is undefined.
    */
-  toHaveDurationGreaterThanOrEqual(ms: number): this;
+  toHaveDocUndefined(): this;
+
+  /**
+   * Asserts that the doc is nullish (null or undefined).
+   */
+  toHaveDocNullish(): this;
+
+  /**
+   * Asserts that the doc matches the specified subset.
+   * @param subset - The subset to match against
+   */
+  toHaveDocMatching(
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
+  ): this;
+
+  /**
+   * Asserts that the doc has the specified property.
+   * @param keyPath - The key path to check
+   * @param value - Optional expected value at the key path
+   */
+  toHaveDocProperty(keyPath: string | string[], value?: unknown): this;
+
+  /**
+   * Asserts that the doc property contains the expected value.
+   * @param keyPath - The key path to check
+   * @param expected - The expected contained value
+   */
+  toHaveDocPropertyContaining(
+    keyPath: string | string[],
+    expected: unknown,
+  ): this;
+
+  /**
+   * Asserts that the doc property matches the specified subset.
+   * @param keyPath - The key path to check
+   * @param subset - The subset to match against
+   */
+  toHaveDocPropertyMatching(
+    keyPath: string | string[],
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
+  ): this;
+
+  /**
+   * Asserts that the doc property satisfies the provided matcher function.
+   * @param keyPath - The key path to check
+   * @param matcher - A function that receives the property value and performs assertions
+   */
+  toHaveDocPropertySatisfying<I>(
+    keyPath: string | string[],
+    matcher: (value: I) => void,
+  ): this;
+
+  /**
+   * Asserts that the duration equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDuration(expected: unknown): this;
+
+  /**
+   * Asserts that the duration equals the expected value using deep equality.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration strictly equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration satisfies the provided matcher function.
+   * @param matcher - A function that receives the duration and performs assertions
+   */
+  toHaveDurationSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the duration is NaN.
+   */
+  toHaveDurationNaN(): this;
+
+  /**
+   * Asserts that the duration is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveDurationCloseTo(expected: number, numDigits?: number): this;
 }
 
 export function expectMongoFindOneResult<T>(
   result: MongoFindOneResult<T>,
-  negate = false,
-): MongoFindOneResultExpectation<T> {
-  const self: MongoFindOneResultExpectation<T> = {
-    get not(): MongoFindOneResultExpectation<T> {
-      return expectMongoFindOneResult(result, !negate);
-    },
-
-    toBeSuccessful() {
-      const isSuccess = result.ok;
-      if (negate ? isSuccess : !isSuccess) {
-        throw new Error(
-          negate
-            ? "Expected not ok result, but ok is true"
-            : "Expected ok result, but ok is false",
-        );
-      }
-      return this;
-    },
-
-    toHaveContent() {
-      const hasContent = result.doc !== undefined;
-      if (negate ? hasContent : !hasContent) {
-        throw new Error(
-          negate
-            ? "Expected document not to be found, but got a document"
-            : "Expected document to be found, but got undefined",
-        );
-      }
-      return this;
-    },
-
-    toMatchObject(subset: Partial<T>) {
-      if (result.doc === undefined) {
-        throw new Error(
-          "Expected document to contain subset, but doc is undefined",
-        );
-      }
-      const matches = containsSubset(result.doc, subset);
-      if (negate ? matches : !matches) {
-        throw new Error(
-          negate
-            ? `Expected document to not contain ${JSON.stringify(subset)}`
-            : `Expected document to contain ${JSON.stringify(subset)}`,
-        );
-      }
-      return this;
-    },
-
-    toSatisfy(matcher: (doc: T) => void) {
-      if (result.doc === undefined) {
-        throw new Error("Expected document for matching, but doc is undefined");
-      }
-      matcher(result.doc);
-      return this;
-    },
-
-    ...createDurationMethods(result.duration, negate),
-  };
-
-  return self;
+): MongoFindOneResultExpectation {
+  return mixin.defineExpectation((negate) => [
+    mixin.createOkMixin(
+      () => result.ok,
+      negate,
+      { valueName: "findOne result" },
+    ),
+    // Doc
+    mixin.createValueMixin(
+      () => result.doc,
+      negate,
+      { valueName: "doc" },
+    ),
+    mixin.createNullishValueMixin(
+      () => result.doc,
+      negate,
+      { valueName: "doc" },
+    ),
+    mixin.createObjectValueMixin(
+      () => getNonNull(result.doc, "doc"),
+      negate,
+      { valueName: "doc" },
+    ),
+    // Duration
+    mixin.createValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+  ]);
 }

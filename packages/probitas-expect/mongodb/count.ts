@@ -1,10 +1,5 @@
-import {
-  buildCountAtLeastError,
-  buildCountAtMostError,
-  buildCountError,
-  createDurationMethods,
-} from "../common.ts";
 import type { MongoCountResult } from "@probitas/client-mongodb";
+import * as mixin from "../mixin.ts";
 
 /**
  * Fluent API for MongoDB count result validation.
@@ -21,152 +16,161 @@ export interface MongoCountResultExpectation {
   readonly not: this;
 
   /**
-   * Asserts that the count operation completed successfully.
-   *
-   * @example
-   * ```ts
-   * expectMongoResult(countResult).toBeSuccessful();
-   * ```
+   * Asserts that the count result is successful.
    */
-  toBeSuccessful(): this;
+  toBeOk(): this;
 
   /**
-   * Asserts that the document count equals the expected value.
-   *
-   * @param expected - The expected document count
-   * @example
-   * ```ts
-   * expectMongoResult(countResult).toHaveLength(10);
-   * ```
+   * Asserts that the count equals the expected value.
+   * @param expected - The expected count
    */
-  toHaveLength(expected: number): this;
+  toHaveCount(expected: unknown): this;
 
   /**
-   * Asserts that the document count is at least the specified minimum.
-   *
-   * @param min - The minimum expected document count
-   * @example
-   * ```ts
-   * expectMongoResult(countResult).toHaveLengthGreaterThanOrEqual(5);
-   * ```
+   * Asserts that the count equals the expected value using deep equality.
+   * @param expected - The expected count
    */
-  toHaveLengthGreaterThanOrEqual(min: number): this;
+  toHaveCountEqual(expected: unknown): this;
 
   /**
-   * Asserts that the document count is at most the specified maximum.
-   *
-   * @param max - The maximum expected document count
-   * @example
-   * ```ts
-   * expectMongoResult(countResult).toHaveLengthLessThanOrEqual(100);
-   * ```
+   * Asserts that the count strictly equals the expected value.
+   * @param expected - The expected count
    */
-  toHaveLengthLessThanOrEqual(max: number): this;
+  toHaveCountStrictEqual(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is less than the specified threshold.
-   *
-   * @param ms - The maximum duration in milliseconds
-   * @example
-   * ```ts
-   * expectMongoResult(countResult).toHaveDurationLessThan(100);
-   * ```
+   * Asserts that the count satisfies the provided matcher function.
+   * @param matcher - A function that receives the count and performs assertions
    */
-  toHaveDurationLessThan(ms: number): this;
+  toHaveCountSatisfying(matcher: (value: number) => void): this;
 
   /**
-   * Asserts that the operation duration is less than or equal to the specified threshold.
-   *
-   * @param ms - The maximum duration in milliseconds
-   * @example
-   * ```ts
-   * expectMongoResult(countResult).toHaveDurationLessThanOrEqual(100);
-   * ```
+   * Asserts that the count is NaN.
    */
-  toHaveDurationLessThanOrEqual(ms: number): this;
+  toHaveCountNaN(): this;
 
   /**
-   * Asserts that the operation duration is greater than the specified threshold.
-   *
-   * @param ms - The minimum duration in milliseconds
-   * @example
-   * ```ts
-   * expectMongoResult(countResult).toHaveDurationGreaterThan(50);
-   * ```
+   * Asserts that the count is greater than the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveDurationGreaterThan(ms: number): this;
+  toHaveCountGreaterThan(expected: number): this;
 
   /**
-   * Asserts that the operation duration is greater than or equal to the specified threshold.
-   *
-   * @param ms - The minimum duration in milliseconds
-   * @example
-   * ```ts
-   * expectMongoResult(countResult).toHaveDurationGreaterThanOrEqual(50);
-   * ```
+   * Asserts that the count is greater than or equal to the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveDurationGreaterThanOrEqual(ms: number): this;
+  toHaveCountGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the count is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveCountLessThan(expected: number): this;
+
+  /**
+   * Asserts that the count is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveCountLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the count is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveCountCloseTo(expected: number, numDigits?: number): this;
+
+  /**
+   * Asserts that the duration equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDuration(expected: unknown): this;
+
+  /**
+   * Asserts that the duration equals the expected value using deep equality.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration strictly equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration satisfies the provided matcher function.
+   * @param matcher - A function that receives the duration and performs assertions
+   */
+  toHaveDurationSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the duration is NaN.
+   */
+  toHaveDurationNaN(): this;
+
+  /**
+   * Asserts that the duration is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveDurationCloseTo(expected: number, numDigits?: number): this;
 }
 
 export function expectMongoCountResult(
   result: MongoCountResult,
-  negate = false,
 ): MongoCountResultExpectation {
-  const self: MongoCountResultExpectation = {
-    get not(): MongoCountResultExpectation {
-      return expectMongoCountResult(result, !negate);
-    },
-
-    toBeSuccessful() {
-      const isSuccess = result.ok;
-      if (negate ? isSuccess : !isSuccess) {
-        throw new Error(
-          negate
-            ? "Expected not ok result, but ok is true"
-            : "Expected ok result, but ok is false",
-        );
-      }
-      return this;
-    },
-
-    toHaveLength(expected: number) {
-      const match = result.count === expected;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected count to not be ${expected}, got ${result.count}`
-            : buildCountError(expected, result.count, "count"),
-        );
-      }
-      return this;
-    },
-
-    toHaveLengthGreaterThanOrEqual(min: number) {
-      const match = result.count >= min;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected count to not be >= ${min}, got ${result.count}`
-            : buildCountAtLeastError(min, result.count, "count"),
-        );
-      }
-      return this;
-    },
-
-    toHaveLengthLessThanOrEqual(max: number) {
-      const match = result.count <= max;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected count to not be <= ${max}, got ${result.count}`
-            : buildCountAtMostError(max, result.count, "count"),
-        );
-      }
-      return this;
-    },
-
-    ...createDurationMethods(result.duration, negate),
-  };
-
-  return self;
+  return mixin.defineExpectation((negate) => [
+    mixin.createOkMixin(
+      () => result.ok,
+      negate,
+      { valueName: "count result" },
+    ),
+    // Count
+    mixin.createValueMixin(
+      () => result.count,
+      negate,
+      { valueName: "count" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.count,
+      negate,
+      { valueName: "count" },
+    ),
+    // Duration
+    mixin.createValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+  ]);
 }

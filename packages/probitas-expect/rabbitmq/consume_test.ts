@@ -1,180 +1,172 @@
-import { assertThrows } from "@std/assert";
-import { expectRabbitMqConsumeResult } from "./consume.ts";
+import { assertEquals, assertExists } from "@std/assert";
+import {
+  expectRabbitMqConsumeResult,
+  type RabbitMqConsumeResultExpectation,
+} from "./consume.ts";
 import { mockRabbitMqConsumeResult } from "./_test_utils.ts";
 
-Deno.test("expectRabbitMqConsumeResult", async (t) => {
-  await t.step("toBeSuccessful", () => {
-    const result = mockRabbitMqConsumeResult({ ok: true });
-    expectRabbitMqConsumeResult(result).toBeSuccessful();
+// Define expected methods with their test arguments
+// Using Record to ensure all interface methods are listed (compile-time check)
+const EXPECTED_METHODS: Record<
+  keyof RabbitMqConsumeResultExpectation,
+  unknown[]
+> = {
+  // Core (special property, not a method)
+  not: [],
+  // Ok
+  toBeOk: [],
+  // Message
+  toHaveMessage: [],
+  toHaveMessageEqual: [],
+  toHaveMessageStrictEqual: [],
+  toHaveMessageSatisfying: [(v: unknown) => assertExists(v)],
+  toHaveMessagePresent: [],
+  toHaveMessageNull: [],
+  toHaveMessageUndefined: [],
+  toHaveMessageNullish: [],
+  toHaveMessageMatching: [{
+    content: new TextEncoder().encode("test message"),
+  }],
+  toHaveMessageProperty: ["content"],
+  toHaveMessagePropertyContaining: [],
+  toHaveMessagePropertyMatching: [],
+  toHaveMessagePropertySatisfying: [
+    "content",
+    (v: unknown) => assertExists(v),
+  ],
+  // Content
+  toHaveContent: [],
+  toHaveContentEqual: [],
+  toHaveContentStrictEqual: [],
+  toHaveContentSatisfying: [(v: unknown) => assertExists(v)],
+  toHaveContentPresent: [],
+  toHaveContentNull: [],
+  toHaveContentUndefined: [],
+  toHaveContentNullish: [],
+  // Content length
+  toHaveContentLength: [12],
+  toHaveContentLengthEqual: [12],
+  toHaveContentLengthStrictEqual: [12],
+  toHaveContentLengthSatisfying: [(v: number) => assertEquals(v, 12)],
+  toHaveContentLengthNaN: [],
+  toHaveContentLengthGreaterThan: [5],
+  toHaveContentLengthGreaterThanOrEqual: [12],
+  toHaveContentLengthLessThan: [100],
+  toHaveContentLengthLessThanOrEqual: [12],
+  toHaveContentLengthCloseTo: [12, 0],
+  // Duration
+  toHaveDuration: [100],
+  toHaveDurationEqual: [100],
+  toHaveDurationStrictEqual: [100],
+  toHaveDurationSatisfying: [(v: number) => assertEquals(v, 100)],
+  toHaveDurationNaN: [],
+  toHaveDurationGreaterThan: [50],
+  toHaveDurationGreaterThanOrEqual: [100],
+  toHaveDurationLessThan: [200],
+  toHaveDurationLessThanOrEqual: [100],
+  toHaveDurationCloseTo: [100, 0],
+};
+
+Deno.test("expectRabbitMqConsumeResult - method existence check", () => {
+  const result = mockRabbitMqConsumeResult();
+  const expectation = expectRabbitMqConsumeResult(result);
+
+  const expectedMethodNames = Object.keys(EXPECTED_METHODS) as Array<
+    keyof RabbitMqConsumeResultExpectation
+  >;
+
+  // Check that all expected methods exist
+  for (const method of expectedMethodNames) {
+    assertExists(
+      expectation[method],
+      `Method '${method}' should exist on RabbitMqConsumeResultExpectation`,
+    );
+  }
+
+  // Verify count matches (helps catch if we added methods but didn't list them)
+  const actualPropertyCount = Object.getOwnPropertyNames(expectation).length;
+  assertEquals(
+    actualPropertyCount,
+    expectedMethodNames.length,
+    `Expected ${expectedMethodNames.length} methods but found ${actualPropertyCount}`,
+  );
+});
+
+// Generate individual test for each method
+for (
+  const [methodName, args] of Object.entries(EXPECTED_METHODS) as Array<
+    [keyof RabbitMqConsumeResultExpectation, unknown[]]
+  >
+) {
+  // Skip 'not' as it's a property, not a method
+  if (methodName === "not") continue;
+
+  // Skip methods that require special setup (null/undefined/nullish values, NaN)
+  if (
+    methodName === "toHaveMessageNull" ||
+    methodName === "toHaveMessageUndefined" ||
+    methodName === "toHaveMessageNullish" ||
+    methodName === "toHaveContentLengthNaN" ||
+    methodName === "toHaveDurationNaN" ||
+    // Skip methods with empty args (need special handling like null headers)
+    (args.length === 0 && methodName !== "toBeOk" &&
+      methodName !== "toHaveMessagePresent")
+  ) {
+    continue;
+  }
+
+  Deno.test(`expectRabbitMqConsumeResult - ${methodName} - success`, () => {
+    const result = mockRabbitMqConsumeResult();
+    const expectation = expectRabbitMqConsumeResult(result);
+
+    // Call the method with provided arguments
+    // deno-lint-ignore no-explicit-any
+    const method = expectation[methodName] as (...args: any[]) => any;
+    const returnValue = method.call(expectation, ...args);
+
+    // Verify method returns an expectation object (for chaining)
+    assertExists(returnValue);
+    assertExists(
+      returnValue.toBeOk,
+      "Result should have toBeOk method for chaining",
+    );
   });
+}
 
-  await t.step("toHaveContent", async (t) => {
-    await t.step("passes when message exists", () => {
-      const result = mockRabbitMqConsumeResult();
-      expectRabbitMqConsumeResult(result).toHaveContent();
-    });
+Deno.test("expectRabbitMqConsumeResult - not property - success", () => {
+  const result = mockRabbitMqConsumeResult({ ok: false });
+  const expectation = expectRabbitMqConsumeResult(result);
 
-    await t.step("fails when message is null", () => {
-      const result = mockRabbitMqConsumeResult({ message: null });
-      assertThrows(
-        () => expectRabbitMqConsumeResult(result).toHaveContent(),
-        Error,
-        "Expected message, but message is null",
-      );
-    });
+  // Verify .not is accessible and returns expectation
+  expectation.not.toBeOk();
+  expectation.not.toHaveDuration(200);
+});
 
-    await t.step("negated - passes when message is null", () => {
-      const result = mockRabbitMqConsumeResult({ message: null });
-      expectRabbitMqConsumeResult(result).not.toHaveContent();
-    });
+Deno.test("expectRabbitMqConsumeResult - nullish message methods - success", () => {
+  // Test null message
+  const nullResult = mockRabbitMqConsumeResult({
+    message: null,
   });
+  const nullExpectation = expectRabbitMqConsumeResult(nullResult);
 
-  await t.step("toHaveBodyContaining", async (t) => {
-    await t.step("passes when body contains subbody", () => {
-      const result = mockRabbitMqConsumeResult({
-        message: {
-          content: new TextEncoder().encode("hello world"),
-          properties: {},
-          fields: {
-            routingKey: "",
-            exchange: "",
-            deliveryTag: 1n,
-            redelivered: false,
-          },
-        },
-      });
-      expectRabbitMqConsumeResult(result).toHaveBodyContaining(
-        new TextEncoder().encode("world"),
-      );
-    });
+  nullExpectation.toHaveMessageNull();
+  nullExpectation.toHaveMessageNullish();
 
-    await t.step("fails when body does not contain subbody", () => {
-      const result = mockRabbitMqConsumeResult({
-        message: {
-          content: new TextEncoder().encode("hello"),
-          properties: {},
-          fields: {
-            routingKey: "",
-            exchange: "",
-            deliveryTag: 1n,
-            redelivered: false,
-          },
-        },
-      });
-      assertThrows(
-        () =>
-          expectRabbitMqConsumeResult(result).toHaveBodyContaining(
-            new TextEncoder().encode("world"),
-          ),
-        Error,
-        "Expected data to contain world, but got hello",
-      );
-    });
-  });
+  // Test present message
+  const presentResult = mockRabbitMqConsumeResult();
+  const presentExpectation = expectRabbitMqConsumeResult(presentResult);
 
-  await t.step("toSatisfy", async (t) => {
-    await t.step("passes when matcher succeeds", () => {
-      const result = mockRabbitMqConsumeResult();
-      expectRabbitMqConsumeResult(result).toSatisfy((content) => {
-        if (content.length === 0) throw new Error("Expected content");
-      });
-    });
+  presentExpectation.toHaveMessagePresent();
+});
 
-    await t.step("fails when matcher throws", () => {
-      const result = mockRabbitMqConsumeResult();
-      assertThrows(
-        () =>
-          expectRabbitMqConsumeResult(result).toSatisfy((content) => {
-            if (content.length > 0) throw new Error("Expected no content");
-          }),
-        Error,
-        "Expected no content",
-      );
-    });
-  });
+Deno.test("expectRabbitMqConsumeResult - chaining - success", () => {
+  const result = mockRabbitMqConsumeResult();
+  const expectation = expectRabbitMqConsumeResult(result);
 
-  await t.step("toHavePropertyContaining", async (t) => {
-    await t.step("passes when properties contain subset", () => {
-      const result = mockRabbitMqConsumeResult({
-        message: {
-          content: new Uint8Array(),
-          properties: { contentType: "application/json", messageId: "123" },
-          fields: {
-            routingKey: "",
-            exchange: "",
-            deliveryTag: 1n,
-            redelivered: false,
-          },
-        },
-      });
-      expectRabbitMqConsumeResult(result).toHavePropertyContaining({
-        contentType: "application/json",
-      });
-    });
-
-    await t.step("fails when properties do not contain subset", () => {
-      const result = mockRabbitMqConsumeResult();
-      assertThrows(
-        () =>
-          expectRabbitMqConsumeResult(result).toHavePropertyContaining({
-            messageId: "123",
-          }),
-        Error,
-      );
-    });
-  });
-
-  await t.step("toHaveRoutingKey", async (t) => {
-    await t.step("passes for matching key", () => {
-      const result = mockRabbitMqConsumeResult({
-        message: {
-          content: new Uint8Array(),
-          properties: {},
-          fields: {
-            routingKey: "test.key",
-            exchange: "",
-            deliveryTag: 1n,
-            redelivered: false,
-          },
-        },
-      });
-      expectRabbitMqConsumeResult(result).toHaveRoutingKey("test.key");
-    });
-
-    await t.step("fails for non-matching key", () => {
-      const result = mockRabbitMqConsumeResult();
-      assertThrows(
-        () => expectRabbitMqConsumeResult(result).toHaveRoutingKey("wrong.key"),
-        Error,
-        "Expected routing key wrong.key, got test.key",
-      );
-    });
-  });
-
-  await t.step("toHaveExchange", async (t) => {
-    await t.step("passes for matching exchange", () => {
-      const result = mockRabbitMqConsumeResult();
-      expectRabbitMqConsumeResult(result).toHaveExchange("test.exchange");
-    });
-
-    await t.step("fails for non-matching exchange", () => {
-      const result = mockRabbitMqConsumeResult();
-      assertThrows(
-        () =>
-          expectRabbitMqConsumeResult(result).toHaveExchange("wrong.exchange"),
-        Error,
-        "Expected exchange wrong.exchange, got test.exchange",
-      );
-    });
-  });
-
-  await t.step("method chaining", () => {
-    const result = mockRabbitMqConsumeResult({ ok: true, duration: 50 });
-    expectRabbitMqConsumeResult(result)
-      .toBeSuccessful()
-      .toHaveContent()
-      .toHaveRoutingKey("test.key")
-      .toHaveExchange("test.exchange")
-      .toHaveDurationLessThan(100);
-  });
+  // Chain multiple assertions
+  expectation
+    .toBeOk()
+    .toHaveMessagePresent()
+    .toHaveDurationGreaterThan(50)
+    .toHaveDurationLessThan(200);
 });

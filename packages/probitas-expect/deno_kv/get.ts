@@ -1,5 +1,6 @@
-import { containsSubset, createDurationMethods } from "../common.ts";
 import type { DenoKvGetResult } from "@probitas/client-deno-kv";
+import { getNonNull } from "../common.ts";
+import * as mixin from "../mixin.ts";
 
 /**
  * Fluent API for validating DenoKvGetResult.
@@ -7,126 +8,276 @@ import type { DenoKvGetResult } from "@probitas/client-deno-kv";
  * Provides chainable assertions specifically designed for Deno KV get operation results.
  * All assertion methods return `this` to enable method chaining.
  */
-export interface DenoKvGetResultExpectation<T> {
+export interface DenoKvGetResultExpectation<_T = unknown> {
   /**
    * Negates the next assertion.
    *
    * @example
    * ```ts
-   * expectDenoKvResult(result).not.toBeSuccessful();
+   * expectDenoKvResult(result).not.toBeOk();
    * expectDenoKvResult(result).not.toHaveContent();
    * ```
    */
   readonly not: this;
 
   /**
-   * Asserts that the get operation succeeded.
-   *
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toBeSuccessful();
-   * ```
+   * Asserts that the result is successful.
    */
-  toBeSuccessful(): this;
+  toBeOk(): this;
 
   /**
-   * Asserts that the result contains a value (not null).
-   *
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveContent();
-   * ```
+   * Asserts that the key equals the expected value.
+   * @param expected - The expected key value
    */
-  toHaveContent(): this;
+  toHaveKey(expected: unknown): this;
 
   /**
-   * Asserts that the retrieved value equals the expected value (deep equality).
-   *
-   * @param expected - The expected value to compare against
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveValue({ name: "Alice", age: 30 });
-   * ```
+   * Asserts that the key equals the expected value using deep equality.
+   * @param expected - The expected key value
    */
-  toHaveValue(expected: T): this;
+  toHaveKeyEqual(expected: unknown): this;
 
   /**
-   * Asserts that the retrieved value contains the expected properties.
-   *
-   * @param subset - An object containing the expected properties
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toMatchObject({ name: "Alice" });
-   * ```
+   * Asserts that the key strictly equals the expected value.
+   * @param expected - The expected key value
    */
-  toMatchObject(subset: Partial<T>): this;
+  toHaveKeyStrictEqual(expected: unknown): this;
 
   /**
-   * Asserts that the retrieved value satisfies a custom matcher function.
-   *
-   * @param matcher - A function that receives the value and should throw if the assertion fails
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toSatisfy((value) => {
-   *   if (value.age < 18) throw new Error("Expected adult user");
-   * });
-   * ```
+   * Asserts that the key satisfies the provided matcher function.
+   * @param matcher - A function that receives the key and performs assertions
    */
-  toSatisfy(matcher: (value: T) => void): this;
+  toHaveKeySatisfying(matcher: (value: unknown[]) => void): this;
 
   /**
-   * Asserts that the result has a versionstamp (indicates the entry exists).
-   *
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveVersionstamp();
-   * ```
+   * Asserts that the key array contains the specified item.
+   * @param item - The item to search for
    */
-  toHaveVersionstamp(): this;
+  toHaveKeyContaining(item: unknown): this;
 
   /**
-   * Asserts that the operation duration is less than the specified threshold.
-   *
-   * @param ms - The maximum duration in milliseconds (exclusive)
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveDurationLessThan(100);
-   * ```
+   * Asserts that the key array contains an item equal to the specified value.
+   * @param item - The item to search for using deep equality
    */
-  toHaveDurationLessThan(ms: number): this;
+  toHaveKeyContainingEqual(item: unknown): this;
 
   /**
-   * Asserts that the operation duration is less than or equal to the specified threshold.
-   *
-   * @param ms - The maximum duration in milliseconds (inclusive)
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveDurationLessThanOrEqual(100);
-   * ```
+   * Asserts that the key array matches the specified subset.
+   * @param subset - The subset to match against
    */
-  toHaveDurationLessThanOrEqual(ms: number): this;
+  toHaveKeyMatching(
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
+  ): this;
 
   /**
-   * Asserts that the operation duration is greater than the specified threshold.
-   *
-   * @param ms - The minimum duration in milliseconds (exclusive)
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveDurationGreaterThan(10);
-   * ```
+   * Asserts that the key array is empty.
    */
-  toHaveDurationGreaterThan(ms: number): this;
+  toHaveKeyEmpty(): this;
 
   /**
-   * Asserts that the operation duration is greater than or equal to the specified threshold.
-   *
-   * @param ms - The minimum duration in milliseconds (inclusive)
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveDurationGreaterThanOrEqual(10);
-   * ```
+   * Asserts that the value equals the expected value.
+   * @param expected - The expected value
    */
-  toHaveDurationGreaterThanOrEqual(ms: number): this;
+  toHaveValue(expected: unknown): this;
+
+  /**
+   * Asserts that the value equals the expected value using deep equality.
+   * @param expected - The expected value
+   */
+  toHaveValueEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the value strictly equals the expected value.
+   * @param expected - The expected value
+   */
+  toHaveValueStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the value satisfies the provided matcher function.
+   * @param matcher - A function that receives the value and performs assertions
+   */
+  toHaveValueSatisfying(matcher: (value: unknown) => void): this;
+
+  /**
+   * Asserts that the value is present (not null or undefined).
+   */
+  toHaveValuePresent(): this;
+
+  /**
+   * Asserts that the value is null.
+   */
+  toHaveValueNull(): this;
+
+  /**
+   * Asserts that the value is undefined.
+   */
+  toHaveValueUndefined(): this;
+
+  /**
+   * Asserts that the value is nullish (null or undefined).
+   */
+  toHaveValueNullish(): this;
+
+  /**
+   * Asserts that the value matches the specified subset.
+   * @param subset - The subset to match against
+   */
+  toHaveValueMatching(
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
+  ): this;
+
+  /**
+   * Asserts that the value has the specified property.
+   * @param keyPath - The key path to check
+   * @param value - Optional expected value at the key path
+   */
+  toHaveValueProperty(keyPath: string | string[], value?: unknown): this;
+
+  /**
+   * Asserts that the value property contains the expected value.
+   * @param keyPath - The key path to check
+   * @param expected - The expected contained value
+   */
+  toHaveValuePropertyContaining(
+    keyPath: string | string[],
+    expected: unknown,
+  ): this;
+
+  /**
+   * Asserts that the value property matches the specified subset.
+   * @param keyPath - The key path to check
+   * @param subset - The subset to match against
+   */
+  toHaveValuePropertyMatching(
+    keyPath: string | string[],
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
+  ): this;
+
+  /**
+   * Asserts that the value property satisfies the provided matcher function.
+   * @param keyPath - The key path to check
+   * @param matcher - A function that receives the property value and performs assertions
+   */
+  toHaveValuePropertySatisfying<I>(
+    keyPath: string | string[],
+    matcher: (value: I) => void,
+  ): this;
+
+  /**
+   * Asserts that the versionstamp equals the expected value.
+   * @param expected - The expected versionstamp value
+   */
+  toHaveVersionstamp(expected: unknown): this;
+
+  /**
+   * Asserts that the versionstamp equals the expected value using deep equality.
+   * @param expected - The expected versionstamp value
+   */
+  toHaveVersionstampEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the versionstamp strictly equals the expected value.
+   * @param expected - The expected versionstamp value
+   */
+  toHaveVersionstampStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the versionstamp satisfies the provided matcher function.
+   * @param matcher - A function that receives the versionstamp and performs assertions
+   */
+  toHaveVersionstampSatisfying(matcher: (value: string) => void): this;
+
+  /**
+   * Asserts that the versionstamp contains the specified substring.
+   * @param substr - The substring to search for
+   */
+  toHaveVersionstampContaining(substr: string): this;
+
+  /**
+   * Asserts that the versionstamp matches the specified regular expression.
+   * @param expected - The regular expression to match against
+   */
+  toHaveVersionstampMatching(expected: RegExp): this;
+
+  /**
+   * Asserts that the versionstamp is present (not null or undefined).
+   */
+  toHaveVersionstampPresent(): this;
+
+  /**
+   * Asserts that the versionstamp is null.
+   */
+  toHaveVersionstampNull(): this;
+
+  /**
+   * Asserts that the versionstamp is undefined.
+   */
+  toHaveVersionstampUndefined(): this;
+
+  /**
+   * Asserts that the versionstamp is nullish (null or undefined).
+   */
+  toHaveVersionstampNullish(): this;
+
+  /**
+   * Asserts that the duration equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDuration(expected: unknown): this;
+
+  /**
+   * Asserts that the duration equals the expected value using deep equality.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration strictly equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration satisfies the provided matcher function.
+   * @param matcher - A function that receives the duration and performs assertions
+   */
+  toHaveDurationSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the duration is NaN.
+   */
+  toHaveDurationNaN(): this;
+
+  /**
+   * Asserts that the duration is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveDurationCloseTo(expected: number, numDigits?: number): this;
 }
 
 /**
@@ -134,93 +285,66 @@ export interface DenoKvGetResultExpectation<T> {
  */
 export function expectDenoKvGetResult<T>(
   result: DenoKvGetResult<T>,
-  negate = false,
-): DenoKvGetResultExpectation<T> {
-  const self: DenoKvGetResultExpectation<T> = {
-    get not(): DenoKvGetResultExpectation<T> {
-      return expectDenoKvGetResult(result, !negate);
-    },
-
-    toBeSuccessful() {
-      const isSuccess = result.ok;
-      if (negate ? isSuccess : !isSuccess) {
-        throw new Error(
-          negate ? "Expected not ok result" : "Expected ok result",
-        );
-      }
-      return this;
-    },
-
-    toHaveContent() {
-      const hasContent = result.value !== null;
-      if (negate ? hasContent : !hasContent) {
-        throw new Error(
-          negate
-            ? "Expected no content, but value exists"
-            : "Expected content, but value is null",
-        );
-      }
-      return this;
-    },
-
-    toHaveValue(expected: T) {
-      if (result.value === null) {
-        throw new Error("Expected value, but value is null");
-      }
-      const match = JSON.stringify(result.value) === JSON.stringify(expected);
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected value to not be ${JSON.stringify(expected)}, got ${
-              JSON.stringify(result.value)
-            }`
-            : `Expected value ${JSON.stringify(expected)}, got ${
-              JSON.stringify(result.value)
-            }`,
-        );
-      }
-      return this;
-    },
-
-    toMatchObject(subset: Partial<T>) {
-      if (result.value === null) {
-        throw new Error(
-          "Expected data to contain properties, but value is null",
-        );
-      }
-      const matches = containsSubset(result.value, subset);
-      if (negate ? matches : !matches) {
-        throw new Error(
-          negate
-            ? "Expected data to not contain properties"
-            : "Data does not contain expected properties",
-        );
-      }
-      return this;
-    },
-
-    toSatisfy(matcher: (value: T) => void) {
-      if (result.value === null) {
-        throw new Error("Expected data for matching, but value is null");
-      }
-      matcher(result.value);
-      return this;
-    },
-
-    toHaveVersionstamp() {
-      const hasStamp = result.versionstamp !== null;
-      if (negate ? hasStamp : !hasStamp) {
-        throw new Error(
-          negate
-            ? "Expected no versionstamp, but it exists"
-            : "Expected versionstamp, but it is null",
-        );
-      }
-      return this;
-    },
-
-    ...createDurationMethods(result.duration, negate),
-  };
-
-  return self;
+): DenoKvGetResultExpectation {
+  return mixin.defineExpectation((negate) => [
+    mixin.createOkMixin(
+      () => result.ok,
+      negate,
+      { valueName: "result" },
+    ),
+    // Key
+    mixin.createValueMixin(
+      () => result.key,
+      negate,
+      { valueName: "key" },
+    ),
+    mixin.createArrayValueMixin(
+      () => getNonNull(result.key, "key"),
+      negate,
+      { valueName: "key" },
+    ),
+    // Value
+    mixin.createValueMixin(
+      () => result.value,
+      negate,
+      { valueName: "value" },
+    ),
+    mixin.createNullishValueMixin(
+      () => result.value,
+      negate,
+      { valueName: "value" },
+    ),
+    mixin.createObjectValueMixin(
+      () => getNonNull(result.value, "value"),
+      negate,
+      { valueName: "value" },
+    ),
+    // Versionstamp
+    mixin.createValueMixin(
+      () => result.versionstamp,
+      negate,
+      { valueName: "versionstamp" },
+    ),
+    mixin.createNullishValueMixin(
+      () => result.versionstamp,
+      negate,
+      { valueName: "versionstamp" },
+    ),
+    mixin.createStringValueMixin(
+      () => getNonNull(result.versionstamp, "versionstamp"),
+      negate,
+      { valueName: "versionstamp" },
+    ),
+    // Duration
+    mixin.createValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+  ]);
 }

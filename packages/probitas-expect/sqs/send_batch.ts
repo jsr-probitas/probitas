@@ -1,347 +1,194 @@
-import { buildCountError, createDurationMethods } from "../common.ts";
 import type { SqsSendBatchResult } from "@probitas/client-sqs";
+import * as mixin from "../mixin.ts";
 
+/**
+ * Fluent API for SQS send batch result validation.
+ *
+ * Provides chainable assertions specifically designed for batch message send results
+ * including successful and failed messages arrays.
+ */
 export interface SqsSendBatchResultExpectation {
   /**
    * Negates the next assertion.
    *
    * @example
    * ```ts
-   * expectSqsResult(batchResult).not.toBeSuccessful();
+   * expectSqsResult(batchResult).not.toBeOk();
    * ```
    */
   readonly not: this;
 
   /**
-   * Asserts that the batch send operation completed successfully.
-   *
-   * @example
-   * ```ts
-   * expectSqsResult(batchResult).toBeSuccessful();
-   * ```
+   * Asserts that the result is successful.
    */
-  toBeSuccessful(): this;
+  toBeOk(): this;
+
+  toHaveSuccessful(expected: unknown): this;
+  toHaveSuccessfulEqual(expected: unknown): this;
+  toHaveSuccessfulStrictEqual(expected: unknown): this;
+  toHaveSuccessfulSatisfying(matcher: (value: unknown[]) => void): this;
+  toHaveSuccessfulContaining(item: unknown): this;
+  toHaveSuccessfulContainingEqual(item: unknown): this;
+  toHaveSuccessfulMatching(
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
+  ): this;
+  toHaveSuccessfulEmpty(): this;
+  toHaveSuccessfulCount(expected: unknown): this;
+  toHaveSuccessfulCountEqual(expected: unknown): this;
+  toHaveSuccessfulCountStrictEqual(expected: unknown): this;
+  toHaveSuccessfulCountSatisfying(matcher: (value: number) => void): this;
+  toHaveSuccessfulCountNaN(): this;
+  toHaveSuccessfulCountGreaterThan(expected: number): this;
+  toHaveSuccessfulCountGreaterThanOrEqual(expected: number): this;
+  toHaveSuccessfulCountLessThan(expected: number): this;
+  toHaveSuccessfulCountLessThanOrEqual(expected: number): this;
+  toHaveSuccessfulCountCloseTo(expected: number, numDigits?: number): this;
+
+  toHaveFailed(expected: unknown): this;
+  toHaveFailedEqual(expected: unknown): this;
+  toHaveFailedStrictEqual(expected: unknown): this;
+  toHaveFailedSatisfying(matcher: (value: unknown[]) => void): this;
+  toHaveFailedContaining(item: unknown): this;
+  toHaveFailedContainingEqual(item: unknown): this;
+  toHaveFailedMatching(
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
+  ): this;
+  toHaveFailedEmpty(): this;
+  toHaveFailedCount(expected: unknown): this;
+  toHaveFailedCountEqual(expected: unknown): this;
+  toHaveFailedCountStrictEqual(expected: unknown): this;
+  toHaveFailedCountSatisfying(matcher: (value: number) => void): this;
+  toHaveFailedCountNaN(): this;
+  toHaveFailedCountGreaterThan(expected: number): this;
+  toHaveFailedCountGreaterThanOrEqual(expected: number): this;
+  toHaveFailedCountLessThan(expected: number): this;
+  toHaveFailedCountLessThanOrEqual(expected: number): this;
+  toHaveFailedCountCloseTo(expected: number, numDigits?: number): this;
 
   /**
-   * Asserts that all messages in the batch were sent successfully (no failures).
-   *
-   * @example
-   * ```ts
-   * expectSqsResult(batchResult).toBeAllSuccessful();
-   * ```
+   * Asserts that the duration equals the expected value.
+   * @param expected - The expected duration value
    */
-  toBeAllSuccessful(): this;
+  toHaveDuration(expected: unknown): this;
 
   /**
-   * Asserts that the count of successfully sent messages matches the expected value.
-   *
-   * @param count - The expected number of successful messages
-   * @example
-   * ```ts
-   * expectSqsResult(batchResult).toHaveSuccessfulCount(5);
-   * ```
+   * Asserts that the duration equals the expected value using deep equality.
+   * @param expected - The expected duration value
    */
-  toHaveSuccessfulCount(count: number): this;
+  toHaveDurationEqual(expected: unknown): this;
 
   /**
-   * Asserts that the count of successfully sent messages is greater than the threshold.
-   *
-   * @param count - The threshold value
-   * @example
-   * ```ts
-   * expectSqsResult(batchResult).toHaveSuccessfulCountGreaterThan(3);
-   * ```
+   * Asserts that the duration strictly equals the expected value.
+   * @param expected - The expected duration value
    */
-  toHaveSuccessfulCountGreaterThan(count: number): this;
+  toHaveDurationStrictEqual(expected: unknown): this;
 
   /**
-   * Asserts that the count of successfully sent messages is at least the minimum.
-   *
-   * @param count - The minimum count (inclusive)
-   * @example
-   * ```ts
-   * expectSqsResult(batchResult).toHaveSuccessfulCountGreaterThanOrEqual(5);
-   * ```
+   * Asserts that the duration satisfies the provided matcher function.
+   * @param matcher - A function that receives the duration and performs assertions
    */
-  toHaveSuccessfulCountGreaterThanOrEqual(count: number): this;
+  toHaveDurationSatisfying(matcher: (value: number) => void): this;
 
   /**
-   * Asserts that the count of successfully sent messages is less than the threshold.
-   *
-   * @param count - The threshold value
-   * @example
-   * ```ts
-   * expectSqsResult(batchResult).toHaveSuccessfulCountLessThan(10);
-   * ```
+   * Asserts that the duration is NaN.
    */
-  toHaveSuccessfulCountLessThan(count: number): this;
+  toHaveDurationNaN(): this;
 
   /**
-   * Asserts that the count of successfully sent messages is at most the maximum.
-   *
-   * @param count - The maximum count (inclusive)
-   * @example
-   * ```ts
-   * expectSqsResult(batchResult).toHaveSuccessfulCountLessThanOrEqual(10);
-   * ```
+   * Asserts that the duration is greater than the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveSuccessfulCountLessThanOrEqual(count: number): this;
+  toHaveDurationGreaterThan(expected: number): this;
 
   /**
-   * Asserts that the count of failed messages matches the expected value.
-   *
-   * @param count - The expected number of failed messages
-   * @example
-   * ```ts
-   * expectSqsResult(batchResult).toHaveFailedCount(0);
-   * ```
+   * Asserts that the duration is greater than or equal to the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveFailedCount(count: number): this;
+  toHaveDurationGreaterThanOrEqual(expected: number): this;
 
   /**
-   * Asserts that the count of failed messages is greater than the threshold.
-   *
-   * @param count - The threshold value
-   * @example
-   * ```ts
-   * expectSqsResult(batchResult).toHaveFailedCountGreaterThan(0);
-   * ```
+   * Asserts that the duration is less than the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveFailedCountGreaterThan(count: number): this;
+  toHaveDurationLessThan(expected: number): this;
 
   /**
-   * Asserts that the count of failed messages is at least the minimum.
-   *
-   * @param count - The minimum count (inclusive)
-   * @example
-   * ```ts
-   * expectSqsResult(batchResult).toHaveFailedCountGreaterThanOrEqual(1);
-   * ```
+   * Asserts that the duration is less than or equal to the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveFailedCountGreaterThanOrEqual(count: number): this;
+  toHaveDurationLessThanOrEqual(expected: number): this;
 
   /**
-   * Asserts that the count of failed messages is less than the threshold.
-   *
-   * @param count - The threshold value
-   * @example
-   * ```ts
-   * expectSqsResult(batchResult).toHaveFailedCountLessThan(5);
-   * ```
+   * Asserts that the duration is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
    */
-  toHaveFailedCountLessThan(count: number): this;
-
-  /**
-   * Asserts that the count of failed messages is at most the maximum.
-   *
-   * @param count - The maximum count (inclusive)
-   * @example
-   * ```ts
-   * expectSqsResult(batchResult).toHaveFailedCountLessThanOrEqual(2);
-   * ```
-   */
-  toHaveFailedCountLessThanOrEqual(count: number): this;
-
-  /**
-   * Asserts that the operation duration is less than the specified threshold.
-   *
-   * @param ms - Maximum duration in milliseconds
-   * @example
-   * ```ts
-   * expectSqsResult(batchResult).toHaveDurationLessThan(2000);
-   * ```
-   */
-  toHaveDurationLessThan(ms: number): this;
-
-  /**
-   * Asserts that the operation duration is less than or equal to the specified threshold.
-   *
-   * @param ms - Maximum duration in milliseconds (inclusive)
-   * @example
-   * ```ts
-   * expectSqsResult(batchResult).toHaveDurationLessThanOrEqual(2000);
-   * ```
-   */
-  toHaveDurationLessThanOrEqual(ms: number): this;
-
-  /**
-   * Asserts that the operation duration is greater than the specified threshold.
-   *
-   * @param ms - Minimum duration in milliseconds
-   * @example
-   * ```ts
-   * expectSqsResult(batchResult).toHaveDurationGreaterThan(100);
-   * ```
-   */
-  toHaveDurationGreaterThan(ms: number): this;
-
-  /**
-   * Asserts that the operation duration is greater than or equal to the specified threshold.
-   *
-   * @param ms - Minimum duration in milliseconds (inclusive)
-   * @example
-   * ```ts
-   * expectSqsResult(batchResult).toHaveDurationGreaterThanOrEqual(100);
-   * ```
-   */
-  toHaveDurationGreaterThanOrEqual(ms: number): this;
+  toHaveDurationCloseTo(expected: number, numDigits?: number): this;
 }
 
 export function expectSqsSendBatchResult(
   result: SqsSendBatchResult,
-  negate = false,
 ): SqsSendBatchResultExpectation {
-  const self: SqsSendBatchResultExpectation = {
-    get not(): SqsSendBatchResultExpectation {
-      return expectSqsSendBatchResult(result, !negate);
-    },
-
-    toBeSuccessful() {
-      const isSuccess = result.ok;
-      if (negate ? isSuccess : !isSuccess) {
-        throw new Error(
-          negate
-            ? "Expected not ok result, but ok is true"
-            : "Expected ok result, but ok is false",
-        );
-      }
-      return this;
-    },
-
-    toBeAllSuccessful() {
-      const allSuccess = result.failed.length === 0;
-      if (negate ? allSuccess : !allSuccess) {
-        throw new Error(
-          negate
-            ? "Expected some failures, but all messages were successful"
-            : `Expected all messages successful, but ${result.failed.length} failed`,
-        );
-      }
-      return this;
-    },
-
-    toHaveSuccessfulCount(count: number) {
-      const match = result.successful.length === count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected successful count to not be ${count}, got ${result.successful.length}`
-            : buildCountError(count, result.successful.length, "successful"),
-        );
-      }
-      return this;
-    },
-
-    toHaveSuccessfulCountGreaterThan(count: number) {
-      const match = result.successful.length > count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected successful count to not be > ${count}, got ${result.successful.length}`
-            : `Expected successful count > ${count}, but got ${result.successful.length}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveSuccessfulCountGreaterThanOrEqual(count: number) {
-      const match = result.successful.length >= count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected successful count to not be >= ${count}, got ${result.successful.length}`
-            : `Expected successful count >= ${count}, but got ${result.successful.length}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveSuccessfulCountLessThan(count: number) {
-      const match = result.successful.length < count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected successful count to not be < ${count}, got ${result.successful.length}`
-            : `Expected successful count < ${count}, but got ${result.successful.length}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveSuccessfulCountLessThanOrEqual(count: number) {
-      const match = result.successful.length <= count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected successful count to not be <= ${count}, got ${result.successful.length}`
-            : `Expected successful count <= ${count}, but got ${result.successful.length}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveFailedCount(count: number) {
-      const match = result.failed.length === count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected failed count to not be ${count}, got ${result.failed.length}`
-            : buildCountError(count, result.failed.length, "failed"),
-        );
-      }
-      return this;
-    },
-
-    toHaveFailedCountGreaterThan(count: number) {
-      const match = result.failed.length > count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected failed count to not be > ${count}, got ${result.failed.length}`
-            : `Expected failed count > ${count}, but got ${result.failed.length}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveFailedCountGreaterThanOrEqual(count: number) {
-      const match = result.failed.length >= count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected failed count to not be >= ${count}, got ${result.failed.length}`
-            : `Expected failed count >= ${count}, but got ${result.failed.length}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveFailedCountLessThan(count: number) {
-      const match = result.failed.length < count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected failed count to not be < ${count}, got ${result.failed.length}`
-            : `Expected failed count < ${count}, but got ${result.failed.length}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveFailedCountLessThanOrEqual(count: number) {
-      const match = result.failed.length <= count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected failed count to not be <= ${count}, got ${result.failed.length}`
-            : `Expected failed count <= ${count}, but got ${result.failed.length}`,
-        );
-      }
-      return this;
-    },
-
-    ...createDurationMethods(result.duration, negate),
-  };
-
-  return self;
+  return mixin.defineExpectation((negate) => [
+    mixin.createOkMixin(
+      () => result.ok,
+      negate,
+      { valueName: "send batch result" },
+    ),
+    // Successful
+    mixin.createValueMixin(
+      () => result.successful,
+      negate,
+      { valueName: "successful" },
+    ),
+    mixin.createArrayValueMixin(
+      () => result.successful,
+      negate,
+      { valueName: "successful" },
+    ),
+    // Successful count
+    mixin.createValueMixin(
+      () => result.successful.length,
+      negate,
+      { valueName: "successful count" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.successful.length,
+      negate,
+      { valueName: "successful count" },
+    ),
+    // Failed
+    mixin.createValueMixin(
+      () => result.failed,
+      negate,
+      { valueName: "failed" },
+    ),
+    mixin.createArrayValueMixin(
+      () => result.failed,
+      negate,
+      { valueName: "failed" },
+    ),
+    // Failed count
+    mixin.createValueMixin(
+      () => result.failed.length,
+      negate,
+      { valueName: "failed count" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.failed.length,
+      negate,
+      { valueName: "failed count" },
+    ),
+    // Duration
+    mixin.createValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+  ]);
 }

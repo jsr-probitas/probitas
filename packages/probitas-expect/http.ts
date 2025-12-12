@@ -1,12 +1,6 @@
-import {
-  assertContains,
-  assertMatches,
-  containsSubarray,
-  containsSubset,
-  createDurationMethods,
-  getNonNull,
-} from "./common.ts";
 import type { HttpResponse } from "@probitas/client-http";
+import { getNonNull } from "./common.ts";
+import * as mixin from "./mixin.ts";
 
 /**
  * Fluent API for HTTP response validation.
@@ -17,429 +11,736 @@ export interface HttpResponseExpectation {
    *
    * @example
    * ```ts
-   * expectHttpResponse(response).not.toBeSuccessful();
+   * expectHttpResponse(response).not.toBeOk();
    * expectHttpResponse(response).not.toHaveStatus(404);
    * ```
    */
   readonly not: this;
 
   /**
-   * Asserts that the response status is successful (200-299).
+   * Asserts that the response is successful (status 2xx).
    *
    * @example
    * ```ts
-   * expectHttpResponse(response).toBeSuccessful();
+   * expectHttpResponse(response).toBeOk();
    * ```
    */
-  toBeSuccessful(): this;
+  toBeOk(): this;
 
   /**
-   * Asserts that the response status matches the expected code.
-   *
-   * @param code - The expected HTTP status code
-   * @example
-   * ```ts
-   * expectHttpResponse(response).toHaveStatus(200);
-   * expectHttpResponse(response).toHaveStatus(201);
-   * ```
+   * Asserts that the status equals the expected value.
+   * @param expected - The expected status value
    */
-  toHaveStatus(code: number): this;
+  toHaveStatus(expected: unknown): this;
 
   /**
-   * Asserts that the response status is one of the given values.
-   *
-   * @param statuses - Array of acceptable HTTP status codes
-   * @example
-   * ```ts
-   * expectHttpResponse(response).toHaveStatusOneOf([200, 201, 204]);
-   * ```
+   * Asserts that the status equals the expected value using deep equality.
+   * @param expected - The expected status value
    */
-  toHaveStatusOneOf(statuses: number[]): this;
+  toHaveStatusEqual(expected: unknown): this;
 
   /**
-   * Asserts that a header value matches the expected string or regex.
-   *
-   * @param name - The header name (case-insensitive)
-   * @param expected - The expected value or pattern
-   * @example
-   * ```ts
-   * expectHttpResponse(response).toHaveHeaderValue("content-type", "application/json");
-   * expectHttpResponse(response).toHaveHeaderValue("content-type", /application\/json/);
-   * ```
+   * Asserts that the status strictly equals the expected value.
+   * @param expected - The expected status value
    */
-  toHaveHeaderValue(name: string, expected: string | RegExp): this;
+  toHaveStatusStrictEqual(expected: unknown): this;
 
   /**
-   * Asserts that a header exists in the response.
-   *
-   * @param name - The header name (case-insensitive)
-   * @example
-   * ```ts
-   * expectHttpResponse(response).toHaveHeader("x-request-id");
-   * ```
+   * Asserts that the status satisfies the provided matcher function.
+   * @param matcher - A function that receives the status and performs assertions
    */
-  toHaveHeader(name: string): this;
+  toHaveStatusSatisfying(matcher: (value: number) => void): this;
 
   /**
-   * Asserts that a header value contains the specified substring.
-   *
-   * @param name - The header name (case-insensitive)
-   * @param substring - The substring to search for
-   * @example
-   * ```ts
-   * expectHttpResponse(response).toHaveHeaderContaining("content-type", "json");
-   * ```
+   * Asserts that the status is NaN.
    */
-  toHaveHeaderContaining(name: string, substring: string): this;
+  toHaveStatusNaN(): this;
 
   /**
-   * Asserts a header value using a custom matcher function.
-   *
-   * @param name - The header name (case-insensitive)
-   * @param matcher - Function that receives the header value and should throw if invalid
-   * @example
-   * ```ts
-   * expectHttpResponse(response).toHaveHeaderMatching("x-custom", (value) => {
-   *   assertEquals(value.startsWith("prefix-"), true);
-   * });
-   * ```
+   * Asserts that the status is greater than the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveHeaderMatching(name: string, matcher: (value: string) => void): this;
+  toHaveStatusGreaterThan(expected: number): this;
 
   /**
-   * Asserts that the Content-Type header matches the expected string or regex.
-   *
-   * @param expected - The expected content type or pattern
-   * @example
-   * ```ts
-   * expectHttpResponse(response).toHaveContentType("application/json");
-   * expectHttpResponse(response).toHaveContentType(/application\/json/);
-   * ```
+   * Asserts that the status is greater than or equal to the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveContentType(expected: string | RegExp): this;
+  toHaveStatusGreaterThanOrEqual(expected: number): this;
 
   /**
-   * Asserts that the response body is not null.
-   *
-   * @example
-   * ```ts
-   * expectHttpResponse(response).toHaveContent();
-   * ```
+   * Asserts that the status is less than the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveContent(): this;
+  toHaveStatusLessThan(expected: number): this;
 
   /**
-   * Asserts that the body contains the given byte sequence.
-   *
-   * @param subbody - The byte sequence to search for
-   * @example
-   * ```ts
-   * const expected = new TextEncoder().encode("hello");
-   * expectHttpResponse(response).toHaveBodyContaining(expected);
-   * ```
+   * Asserts that the status is less than or equal to the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveBodyContaining(subbody: Uint8Array): this;
+  toHaveStatusLessThanOrEqual(expected: number): this;
 
   /**
-   * Asserts the JSON data using a custom matcher function.
-   *
-   * @param matcher - Function that receives the parsed JSON and should throw if invalid
-   * @example
-   * ```ts
-   * expectHttpResponse(response).toSatisfy((data) => {
-   *   assertEquals(data.users.length, 3);
-   * });
-   * ```
+   * Asserts that the status is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
    */
-  // deno-lint-ignore no-explicit-any
-  toSatisfy<T = any>(matcher: (data: T) => void): this;
+  toHaveStatusCloseTo(expected: number, numDigits?: number): this;
 
   /**
-   * Asserts the raw body bytes using a custom matcher function.
-   *
-   * @param matcher - Function that receives the raw bytes and should throw if invalid
-   * @example
-   * ```ts
-   * expectHttpResponse(response).toSatisfyBody((body) => {
-   *   assertEquals(body.length > 0, true);
-   * });
-   * ```
+   * Asserts that the status is one of the specified values.
+   * @param values - Array of acceptable values
    */
-  toSatisfyBody(matcher: (body: Uint8Array) => void): this;
+  toHaveStatusOneOf(values: unknown[]): this;
 
   /**
-   * Asserts the text body using a custom matcher function.
-   *
-   * @param matcher - Function that receives the text and should throw if invalid
-   * @example
-   * ```ts
-   * expectHttpResponse(response).toSatisfyText((text) => {
-   *   assertStringIncludes(text, "success");
-   * });
-   * ```
+   * Asserts that the status text equals the expected value.
+   * @param expected - The expected status text
    */
-  toSatisfyText(matcher: (text: string) => void): this;
+  toHaveStatusText(expected: unknown): this;
 
   /**
-   * Asserts that the text body contains the specified substring.
-   *
-   * @param substring - The substring to search for
-   * @example
-   * ```ts
-   * expectHttpResponse(response).toHaveTextContaining("success");
-   * ```
+   * Asserts that the status text equals the expected value using deep equality.
+   * @param expected - The expected status text
    */
-  toHaveTextContaining(substring: string): this;
+  toHaveStatusTextEqual(expected: unknown): this;
 
   /**
-   * Asserts that the JSON body contains the expected properties (deep partial match).
-   *
-   * @param subset - An object containing the expected properties
-   * @example
-   * ```ts
-   * expectHttpResponse(response).toMatchObject({ status: "ok", data: { id: 1 } });
-   * ```
+   * Asserts that the status text strictly equals the expected value.
+   * @param expected - The expected status text
    */
-  // deno-lint-ignore no-explicit-any
-  toMatchObject<T = any>(subset: Partial<T>): this;
+  toHaveStatusTextStrictEqual(expected: unknown): this;
 
   /**
-   * Asserts that the response duration is less than the threshold.
-   *
-   * @param ms - Maximum duration in milliseconds
-   * @example
-   * ```ts
-   * expectHttpResponse(response).toHaveDurationLessThan(1000);
-   * ```
+   * Asserts that the status text satisfies the provided matcher function.
+   * @param matcher - A function that receives the status text and performs assertions
    */
-  toHaveDurationLessThan(ms: number): this;
+  toHaveStatusTextSatisfying(matcher: (value: string) => void): this;
 
   /**
-   * Asserts that the response duration is less than or equal to the threshold.
-   *
-   * @param ms - Maximum duration in milliseconds
-   * @example
-   * ```ts
-   * expectHttpResponse(response).toHaveDurationLessThanOrEqual(1000);
-   * ```
+   * Asserts that the status text contains the specified substring.
+   * @param substr - The substring to search for
    */
-  toHaveDurationLessThanOrEqual(ms: number): this;
+  toHaveStatusTextContaining(substr: string): this;
 
   /**
-   * Asserts that the response duration is greater than the threshold.
-   *
-   * @param ms - Minimum duration in milliseconds
-   * @example
-   * ```ts
-   * expectHttpResponse(response).toHaveDurationGreaterThan(100);
-   * ```
+   * Asserts that the status text matches the specified regular expression.
+   * @param expected - The regular expression to match against
    */
-  toHaveDurationGreaterThan(ms: number): this;
+  toHaveStatusTextMatching(expected: RegExp): this;
 
   /**
-   * Asserts that the response duration is greater than or equal to the threshold.
-   *
-   * @param ms - Minimum duration in milliseconds
-   * @example
-   * ```ts
-   * expectHttpResponse(response).toHaveDurationGreaterThanOrEqual(100);
-   * ```
+   * Asserts that the headers equal the expected value.
+   * @param expected - The expected headers value
    */
-  toHaveDurationGreaterThanOrEqual(ms: number): this;
+  toHaveHeaders(expected: unknown): this;
+
+  /**
+   * Asserts that the headers equal the expected value using deep equality.
+   * @param expected - The expected headers value
+   */
+  toHaveHeadersEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the headers strictly equal the expected value.
+   * @param expected - The expected headers value
+   */
+  toHaveHeadersStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the headers satisfy the provided matcher function.
+   * @param matcher - A function that receives the headers and performs assertions
+   */
+  toHaveHeadersSatisfying(
+    matcher: (value: Record<string, string>) => void,
+  ): this;
+
+  /**
+   * Asserts that the headers match the specified subset.
+   * @param subset - The subset to match against
+   */
+  toHaveHeadersMatching(
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
+  ): this;
+
+  /**
+   * Asserts that the headers have the specified property.
+   * @param keyPath - The key path to check
+   * @param value - Optional expected value at the key path
+   */
+  toHaveHeadersProperty(keyPath: string | string[], value?: unknown): this;
+
+  /**
+   * Asserts that the headers property contains the expected value.
+   * @param keyPath - The key path to check
+   * @param expected - The expected contained value
+   */
+  toHaveHeadersPropertyContaining(
+    keyPath: string | string[],
+    expected: unknown,
+  ): this;
+
+  /**
+   * Asserts that the headers property matches the specified subset.
+   * @param keyPath - The key path to check
+   * @param subset - The subset to match against
+   */
+  toHaveHeadersPropertyMatching(
+    keyPath: string | string[],
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
+  ): this;
+
+  /**
+   * Asserts that the headers property satisfies the provided matcher function.
+   * @param keyPath - The key path to check
+   * @param matcher - A function that receives the property value and performs assertions
+   */
+  toHaveHeadersPropertySatisfying<I>(
+    keyPath: string | string[],
+    matcher: (value: I) => void,
+  ): this;
+
+  /**
+   * Asserts that the URL equals the expected value.
+   * @param expected - The expected URL value
+   */
+  toHaveUrl(expected: unknown): this;
+
+  /**
+   * Asserts that the URL equals the expected value using deep equality.
+   * @param expected - The expected URL value
+   */
+  toHaveUrlEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the URL strictly equals the expected value.
+   * @param expected - The expected URL value
+   */
+  toHaveUrlStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the URL satisfies the provided matcher function.
+   * @param matcher - A function that receives the URL and performs assertions
+   */
+  toHaveUrlSatisfying(matcher: (value: string) => void): this;
+
+  /**
+   * Asserts that the URL contains the specified substring.
+   * @param substr - The substring to search for
+   */
+  toHaveUrlContaining(substr: string): this;
+
+  /**
+   * Asserts that the URL matches the specified regular expression.
+   * @param expected - The regular expression to match against
+   */
+  toHaveUrlMatching(expected: RegExp): this;
+
+  /**
+   * Asserts that the body equals the expected value.
+   * @param expected - The expected body value
+   */
+  toHaveBody(expected: unknown): this;
+
+  /**
+   * Asserts that the body equals the expected value using deep equality.
+   * @param expected - The expected body value
+   */
+  toHaveBodyEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the body strictly equals the expected value.
+   * @param expected - The expected body value
+   */
+  toHaveBodyStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the body satisfies the provided matcher function.
+   * @param matcher - A function that receives the body and performs assertions
+   */
+  toHaveBodySatisfying(matcher: (value: Uint8Array | null) => void): this;
+
+  /**
+   * Asserts that the body is present (not null or undefined).
+   */
+  toHaveBodyPresent(): this;
+
+  /**
+   * Asserts that the body is null.
+   */
+  toHaveBodyNull(): this;
+
+  /**
+   * Asserts that the body is undefined.
+   */
+  toHaveBodyUndefined(): this;
+
+  /**
+   * Asserts that the body is nullish (null or undefined).
+   */
+  toHaveBodyNullish(): this;
+
+  /**
+   * Asserts that the body length equals the expected value.
+   * @param expected - The expected body length
+   */
+  toHaveBodyLength(expected: unknown): this;
+
+  /**
+   * Asserts that the body length equals the expected value using deep equality.
+   * @param expected - The expected body length
+   */
+  toHaveBodyLengthEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the body length strictly equals the expected value.
+   * @param expected - The expected body length
+   */
+  toHaveBodyLengthStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the body length satisfies the provided matcher function.
+   * @param matcher - A function that receives the body length and performs assertions
+   */
+  toHaveBodyLengthSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the body length is NaN.
+   */
+  toHaveBodyLengthNaN(): this;
+
+  /**
+   * Asserts that the body length is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveBodyLengthGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the body length is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveBodyLengthGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the body length is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveBodyLengthLessThan(expected: number): this;
+
+  /**
+   * Asserts that the body length is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveBodyLengthLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the body length is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveBodyLengthCloseTo(expected: number, numDigits?: number): this;
+
+  /**
+   * Asserts that the text equals the expected value.
+   * @param expected - The expected text value
+   */
+  toHaveText(expected: unknown): this;
+
+  /**
+   * Asserts that the text equals the expected value using deep equality.
+   * @param expected - The expected text value
+   */
+  toHaveTextEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the text strictly equals the expected value.
+   * @param expected - The expected text value
+   */
+  toHaveTextStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the text satisfies the provided matcher function.
+   * @param matcher - A function that receives the text and performs assertions
+   */
+  toHaveTextSatisfying(matcher: (value: string) => void): this;
+
+  /**
+   * Asserts that the text contains the specified substring.
+   * @param substr - The substring to search for
+   */
+  toHaveTextContaining(substr: string): this;
+
+  /**
+   * Asserts that the text matches the specified regular expression.
+   * @param expected - The regular expression to match against
+   */
+  toHaveTextMatching(expected: RegExp): this;
+
+  /**
+   * Asserts that the text is present (not null or undefined).
+   */
+  toHaveTextPresent(): this;
+
+  /**
+   * Asserts that the text is null.
+   */
+  toHaveTextNull(): this;
+
+  /**
+   * Asserts that the text is undefined.
+   */
+  toHaveTextUndefined(): this;
+
+  /**
+   * Asserts that the text is nullish (null or undefined).
+   */
+  toHaveTextNullish(): this;
+
+  /**
+   * Asserts that the text length equals the expected value.
+   * @param expected - The expected text length
+   */
+  toHaveTextLength(expected: unknown): this;
+
+  /**
+   * Asserts that the text length equals the expected value using deep equality.
+   * @param expected - The expected text length
+   */
+  toHaveTextLengthEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the text length strictly equals the expected value.
+   * @param expected - The expected text length
+   */
+  toHaveTextLengthStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the text length satisfies the provided matcher function.
+   * @param matcher - A function that receives the text length and performs assertions
+   */
+  toHaveTextLengthSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the text length is NaN.
+   */
+  toHaveTextLengthNaN(): this;
+
+  /**
+   * Asserts that the text length is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveTextLengthGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the text length is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveTextLengthGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the text length is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveTextLengthLessThan(expected: number): this;
+
+  /**
+   * Asserts that the text length is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveTextLengthLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the text length is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveTextLengthCloseTo(expected: number, numDigits?: number): this;
+
+  /**
+   * Asserts that the data equals the expected value.
+   * @param expected - The expected data value
+   */
+  toHaveData(expected: unknown): this;
+
+  /**
+   * Asserts that the data equals the expected value using deep equality.
+   * @param expected - The expected data value
+   */
+  toHaveDataEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the data strictly equals the expected value.
+   * @param expected - The expected data value
+   */
+  toHaveDataStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the data satisfies the provided matcher function.
+   * @param matcher - A function that receives the data and performs assertions
+   */
+  toHaveDataSatisfying(
+    matcher: (value: Record<string, unknown> | null) => void,
+  ): this;
+
+  /**
+   * Asserts that the data is present (not null or undefined).
+   */
+  toHaveDataPresent(): this;
+
+  /**
+   * Asserts that the data is null.
+   */
+  toHaveDataNull(): this;
+
+  /**
+   * Asserts that the data is undefined.
+   */
+  toHaveDataUndefined(): this;
+
+  /**
+   * Asserts that the data is nullish (null or undefined).
+   */
+  toHaveDataNullish(): this;
+
+  /**
+   * Asserts that the data matches the specified subset.
+   * @param subset - The subset to match against
+   */
+  toHaveDataMatching(
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
+  ): this;
+
+  /**
+   * Asserts that the data has the specified property.
+   * @param keyPath - The key path to check
+   * @param value - Optional expected value at the key path
+   */
+  toHaveDataProperty(keyPath: string | string[], value?: unknown): this;
+
+  /**
+   * Asserts that the data property contains the expected value.
+   * @param keyPath - The key path to check
+   * @param expected - The expected contained value
+   */
+  toHaveDataPropertyContaining(
+    keyPath: string | string[],
+    expected: unknown,
+  ): this;
+
+  /**
+   * Asserts that the data property matches the specified subset.
+   * @param keyPath - The key path to check
+   * @param subset - The subset to match against
+   */
+  toHaveDataPropertyMatching(
+    keyPath: string | string[],
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
+  ): this;
+
+  /**
+   * Asserts that the data property satisfies the provided matcher function.
+   * @param keyPath - The key path to check
+   * @param matcher - A function that receives the property value and performs assertions
+   */
+  toHaveDataPropertySatisfying<I>(
+    keyPath: string | string[],
+    matcher: (value: I) => void,
+  ): this;
+
+  /**
+   * Asserts that the duration equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDuration(expected: unknown): this;
+
+  /**
+   * Asserts that the duration equals the expected value using deep equality.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration strictly equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration satisfies the provided matcher function.
+   * @param matcher - A function that receives the duration and performs assertions
+   */
+  toHaveDurationSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the duration is NaN.
+   */
+  toHaveDurationNaN(): this;
+
+  /**
+   * Asserts that the duration is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveDurationCloseTo(expected: number, numDigits?: number): this;
 }
 
-/**
- * Create a fluent expectation chain for HTTP response validation.
- *
- * Returns an expectation object with chainable assertion methods.
- * Each assertion throws an Error if it fails, making it ideal for testing.
- *
- * @param response - The HTTP response to validate
- * @param negate - Whether to negate assertions (used internally by .not)
- * @returns A fluent expectation chain
- *
- * @example Basic assertions
- * ```ts
- * const response = await http.get("/users/123");
- *
- * expectHttpResponse(response)
- *   .toBeSuccessful()
- *   .toHaveContentType("application/json")
- *   .toMatchObject({ id: 123, name: "Alice" });
- * ```
- *
- * @example Error response assertions
- * ```ts
- * const response = await http.get("/not-found", { throwOnError: false });
- *
- * expectHttpResponse(response)
- *   .not.toBeSuccessful()
- *   .toHaveStatus(404);
- * ```
- *
- * @example Performance assertions
- * ```ts
- * expectHttpResponse(response)
- *   .toBeSuccessful()
- *   .toHaveDurationLessThan(1000);  // Must respond within 1 second
- * ```
- */
 export function expectHttpResponse(
   response: HttpResponse,
-  negate = false,
 ): HttpResponseExpectation {
-  const self: HttpResponseExpectation = {
-    get not(): HttpResponseExpectation {
-      return expectHttpResponse(response, !negate);
-    },
-
-    toBeSuccessful() {
-      const isSuccess = response.ok;
-      if (negate ? isSuccess : !isSuccess) {
-        throw new Error(
-          negate
-            ? `Expected non-successful response, got status ${response.status}`
-            : `Expected successful response (200-299), got status ${response.status}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveStatus(code: number) {
-      const match = response.status === code;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected status to not be ${code}`
-            : `Expected status ${code}, got ${response.status}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveStatusOneOf(statuses: number[]) {
-      const match = statuses.includes(response.status);
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected status to not be one of [${
-              statuses.join(", ")
-            }], got ${response.status}`
-            : `Expected status to be one of [${
-              statuses.join(", ")
-            }], got ${response.status}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveHeaderValue(name: string, expected: string | RegExp) {
-      const value = getNonNull(response.headers.get(name), `header "${name}"`);
-      assertMatches(value, expected, `header "${name}"`);
-      return this;
-    },
-
-    toHaveHeader(name: string) {
-      const has = response.headers.has(name);
-      if (negate ? has : !has) {
-        throw new Error(
-          negate
-            ? `Expected header "${name}" to not exist`
-            : `Expected header "${name}" to exist`,
-        );
-      }
-      return this;
-    },
-
-    toHaveHeaderContaining(name: string, substring: string) {
-      const value = getNonNull(response.headers.get(name), `header "${name}"`);
-      assertContains(value, substring, `header "${name}"`);
-      return this;
-    },
-
-    toHaveHeaderMatching(name: string, matcher: (value: string) => void) {
-      const value = getNonNull(response.headers.get(name), `header "${name}"`);
-      matcher(value);
-      return this;
-    },
-
-    toHaveContentType(expected: string | RegExp) {
-      return this.toHaveHeaderValue("Content-Type", expected);
-    },
-
-    toHaveContent() {
-      const hasContent = response.body !== null;
-      if (negate ? hasContent : !hasContent) {
-        throw new Error(
-          negate
-            ? "Expected no content, but body is present"
-            : "Expected content, but body is null",
-        );
-      }
-      return this;
-    },
-
-    toHaveBodyContaining(subbody: Uint8Array) {
-      const body = getNonNull(response.body, "body");
-      const contains = containsSubarray(body, subbody);
-      if (negate ? contains : !contains) {
-        throw new Error(
-          negate
-            ? "Expected body to not contain bytes"
-            : "Body does not contain expected bytes",
-        );
-      }
-      return this;
-    },
-
-    // deno-lint-ignore no-explicit-any
-    toSatisfy<T = any>(matcher: (data: T) => void) {
-      const data = getNonNull(response.data(), "JSON data") as T;
-      matcher(data);
-      return this;
-    },
-
-    toSatisfyBody(matcher: (body: Uint8Array) => void) {
-      const body = getNonNull(response.body, "body");
-      matcher(body);
-      return this;
-    },
-
-    toSatisfyText(matcher: (text: string) => void) {
-      const text = getNonNull(response.text(), "text");
-      matcher(text);
-      return this;
-    },
-
-    toHaveTextContaining(substring: string) {
-      const text = getNonNull(response.text(), "text body");
-      const contains = text.includes(substring);
-      if (negate ? contains : !contains) {
-        throw new Error(
-          negate
-            ? `Expected text to not contain "${substring}"`
-            : `Text does not contain "${substring}"`,
-        );
-      }
-      return this;
-    },
-
-    // deno-lint-ignore no-explicit-any
-    toMatchObject<T = any>(subset: Partial<T>) {
-      const data = getNonNull(response.data(), "JSON data");
-      const matches = containsSubset(data, subset);
-      if (negate ? matches : !matches) {
-        throw new Error(
-          negate
-            ? "Expected data to not contain properties"
-            : "Data does not contain expected properties",
-        );
-      }
-      return this;
-    },
-
-    ...createDurationMethods(response.duration, negate),
-  };
-
-  return self;
+  return mixin.defineExpectation((negate) => [
+    mixin.createOkMixin(
+      () => response.ok,
+      negate,
+      { valueName: "response" },
+    ),
+    // Status
+    mixin.createValueMixin(
+      () => response.status,
+      negate,
+      { valueName: "status" },
+    ),
+    mixin.createNumberValueMixin(
+      () => response.status,
+      negate,
+      { valueName: "status" },
+    ),
+    mixin.createOneOfValueMixin(
+      () => response.status,
+      negate,
+      { valueName: "status" },
+    ),
+    // Status text
+    mixin.createValueMixin(
+      () => response.statusText,
+      negate,
+      { valueName: "status text" },
+    ),
+    mixin.createStringValueMixin(
+      () => response.statusText,
+      negate,
+      { valueName: "status text" },
+    ),
+    // Headers
+    mixin.createValueMixin(
+      () => response.headers,
+      negate,
+      { valueName: "headers" },
+    ),
+    mixin.createObjectValueMixin(
+      () => Object.fromEntries(response.headers.entries()),
+      negate,
+      { valueName: "headers" },
+    ),
+    // URL
+    mixin.createValueMixin(
+      () => response.url,
+      negate,
+      { valueName: "url" },
+    ),
+    mixin.createStringValueMixin(
+      () => response.url,
+      negate,
+      { valueName: "url" },
+    ),
+    // Body
+    mixin.createValueMixin(
+      () => response.body,
+      negate,
+      { valueName: "body" },
+    ),
+    mixin.createNullishValueMixin(
+      () => response.body,
+      negate,
+      { valueName: "body" },
+    ),
+    // Body length
+    mixin.createValueMixin(
+      () => getNonNull(response.body?.length, "body length"),
+      negate,
+      { valueName: "body length" },
+    ),
+    mixin.createNumberValueMixin(
+      () => getNonNull(response.body?.length, "body length"),
+      negate,
+      { valueName: "body length" },
+    ),
+    // Text
+    mixin.createValueMixin(
+      () => response.text(),
+      negate,
+      { valueName: "text" },
+    ),
+    mixin.createNullishValueMixin(
+      () => response.text(),
+      negate,
+      { valueName: "text" },
+    ),
+    mixin.createStringValueMixin(
+      () => getNonNull(response.text(), "text"),
+      negate,
+      { valueName: "text" },
+    ),
+    // Text length
+    mixin.createValueMixin(
+      () => getNonNull(response.text(), "text length").length,
+      negate,
+      { valueName: "text length" },
+    ),
+    mixin.createNumberValueMixin(
+      () => getNonNull(response.text(), "text length").length,
+      negate,
+      { valueName: "text length" },
+    ),
+    // Data
+    mixin.createValueMixin(
+      () => response.data(),
+      negate,
+      { valueName: "data" },
+    ),
+    mixin.createNullishValueMixin(
+      () => response.data(),
+      negate,
+      { valueName: "data" },
+    ),
+    mixin.createObjectValueMixin(
+      () => getNonNull(response.data(), "response data"),
+      negate,
+      { valueName: "data" },
+    ),
+    // Duration
+    mixin.createValueMixin(
+      () => response.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+    mixin.createNumberValueMixin(
+      () => response.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+  ]);
 }

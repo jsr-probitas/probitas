@@ -8,10 +8,6 @@ import type {
   RedisSetResult,
 } from "@probitas/client-redis";
 import {
-  expectRedisResultBase,
-  type RedisResultExpectation,
-} from "./redis/result.ts";
-import {
   expectRedisCountResult,
   type RedisCountResultExpectation,
 } from "./redis/count.ts";
@@ -19,12 +15,31 @@ import {
   expectRedisArrayResult,
   type RedisArrayResultExpectation,
 } from "./redis/array.ts";
+import {
+  expectRedisGetResult,
+  type RedisGetResultExpectation,
+} from "./redis/get.ts";
+import {
+  expectRedisSetResult,
+  type RedisSetResultExpectation,
+} from "./redis/set.ts";
+import {
+  expectRedisCommonResult,
+  type RedisCommonResultExpectation,
+} from "./redis/common.ts";
+import {
+  expectRedisHashResult,
+  type RedisHashResultExpectation,
+} from "./redis/hash.ts";
 
 // Re-export interfaces
 export type {
   RedisArrayResultExpectation,
+  RedisCommonResultExpectation,
   RedisCountResultExpectation,
-  RedisResultExpectation,
+  RedisGetResultExpectation,
+  RedisHashResultExpectation,
+  RedisSetResultExpectation,
 };
 
 /**
@@ -32,11 +47,11 @@ export type {
  */
 export type RedisExpectation<R extends RedisResult> = R extends RedisCountResult
   ? RedisCountResultExpectation
-  : R extends RedisArrayResult<infer T> ? RedisArrayResultExpectation<T>
-  : R extends RedisGetResult ? RedisResultExpectation<string | null>
-  : R extends RedisSetResult ? RedisResultExpectation<"OK">
-  : R extends RedisHashResult ? RedisResultExpectation<Record<string, string>>
-  : R extends RedisCommonResult<infer T> ? RedisResultExpectation<T>
+  : R extends RedisArrayResult ? RedisArrayResultExpectation
+  : R extends RedisGetResult ? RedisGetResultExpectation
+  : R extends RedisSetResult ? RedisSetResultExpectation
+  : R extends RedisHashResult ? RedisHashResultExpectation
+  : R extends RedisCommonResult ? RedisCommonResultExpectation
   : never;
 
 /**
@@ -49,22 +64,22 @@ export type RedisExpectation<R extends RedisResult> = R extends RedisCountResult
  * ```ts
  * // For GET result - returns RedisResultExpectation<string | null>
  * const getResult = await client.get("key");
- * expectRedisResult(getResult).toBeSuccessful().toHaveValue("expected");
+ * expectRedisResult(getResult).toBeOk().toHaveValue("expected");
  *
  * // For COUNT result - returns RedisCountResultExpectation
  * const countResult = await client.del("key");
- * expectRedisResult(countResult).toBeSuccessful().toHaveCount(1);
+ * expectRedisResult(countResult).toBeOk().toHaveCount(1);
  *
  * // For ARRAY result - returns RedisArrayResultExpectation
  * const arrayResult = await client.lrange("list", 0, -1);
- * expectRedisResult(arrayResult).toBeSuccessful().toHaveLength(3).toContain("item");
+ * expectRedisResult(arrayResult).toBeOk().toHaveLength(3).toContain("item");
  * ```
  */
 // deno-lint-ignore no-explicit-any
 export function expectRedisResult<R extends RedisResult<any>>(
   result: R,
 ): RedisExpectation<R> {
-  switch (result.type) {
+  switch (result.kind) {
     case "redis:count":
       return expectRedisCountResult(
         result as RedisCountResult,
@@ -75,15 +90,24 @@ export function expectRedisResult<R extends RedisResult<any>>(
         result as RedisArrayResult<any>,
       ) as unknown as RedisExpectation<R>;
     case "redis:get":
+      return expectRedisGetResult(
+        result as RedisGetResult,
+      ) as unknown as RedisExpectation<R>;
     case "redis:set":
+      return expectRedisSetResult(
+        result as RedisSetResult,
+      ) as unknown as RedisExpectation<R>;
     case "redis:hash":
+      return expectRedisHashResult(
+        result as RedisHashResult,
+      ) as unknown as RedisExpectation<R>;
     case "redis:common":
-      return expectRedisResultBase(
-        result,
+      return expectRedisCommonResult(
+        result as RedisCommonResult<unknown>,
       ) as unknown as RedisExpectation<R>;
     default:
       throw new Error(
-        `Unknown Redis result type: ${(result as { type: string }).type}`,
+        `Unknown Redis result kind: ${(result as { kind: string }).kind}`,
       );
   }
 }

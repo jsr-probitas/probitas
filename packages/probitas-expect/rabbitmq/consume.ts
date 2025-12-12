@@ -1,11 +1,12 @@
-import { containsSubset, createDurationMethods } from "../common.ts";
-import type {
-  RabbitMqConsumeResult,
-  RabbitMqMessageProperties,
-} from "@probitas/client-rabbitmq";
+import type { RabbitMqConsumeResult } from "@probitas/client-rabbitmq";
+import { getNonNull } from "../common.ts";
+import * as mixin from "../mixin.ts";
 
 /**
  * Fluent API for RabbitMQ consume result validation.
+ *
+ * Provides chainable assertions specifically designed for message consumption results
+ * including message content, properties, headers, and metadata.
  */
 export interface RabbitMqConsumeResultExpectation {
   /**
@@ -13,256 +14,327 @@ export interface RabbitMqConsumeResultExpectation {
    *
    * @example
    * ```ts
-   * expectRabbitMqResult(result).not.toBeSuccessful();
+   * expectRabbitMqResult(result).not.toBeOk();
    * ```
    */
   readonly not: this;
 
   /**
-   * Asserts that the result ok is true.
-   *
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toBeSuccessful();
-   * ```
+   * Asserts that the result is successful.
    */
-  toBeSuccessful(): this;
+  toBeOk(): this;
 
   /**
-   * Asserts that the consumed message is not null.
-   *
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toHaveContent();
-   * ```
+   * Asserts that the message equals the expected value.
+   * @param expected - The expected message
    */
-  toHaveContent(): this;
+  toHaveMessage(expected: unknown): this;
 
   /**
-   * Asserts that the message body contains the given subbody.
-   *
-   * @param subbody - The expected subbody as a Uint8Array
-   * @example
-   * ```ts
-   * const expectedBody = new TextEncoder().encode("hello");
-   * expectRabbitMqResult(result).toHaveBodyContaining(expectedBody);
-   * ```
+   * Asserts that the message equals the expected value using deep equality.
+   * @param expected - The expected message
    */
-  toHaveBodyContaining(subbody: Uint8Array): this;
+  toHaveMessageEqual(expected: unknown): this;
 
   /**
-   * Asserts that the message content satisfies the custom matcher function.
-   *
-   * @param matcher - A custom function to validate the message content
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toSatisfy((content) => {
-   *   const text = new TextDecoder().decode(content);
-   *   if (!text.startsWith("prefix")) {
-   *     throw new Error("Expected content to start with 'prefix'");
-   *   }
-   * });
-   * ```
+   * Asserts that the message strictly equals the expected value.
+   * @param expected - The expected message
    */
-  toSatisfy(matcher: (content: Uint8Array) => void): this;
+  toHaveMessageStrictEqual(expected: unknown): this;
 
   /**
-   * Asserts that the message properties contain the given subset.
-   *
-   * @param subset - A partial object of expected message properties
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toHavePropertyContaining({
-   *   contentType: "application/json",
-   *   correlationId: "abc123",
-   * });
-   * ```
+   * Asserts that the message satisfies the provided matcher function.
+   * @param matcher - A function that receives the message and performs assertions
    */
-  toHavePropertyContaining(subset: Partial<RabbitMqMessageProperties>): this;
+  toHaveMessageSatisfying(matcher: (value: unknown) => void): this;
 
   /**
-   * Asserts that the message routing key matches the expected value.
-   *
-   * @param expected - The expected routing key
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toHaveRoutingKey("orders.created");
-   * ```
+   * Asserts that the message is present (not null or undefined).
    */
-  toHaveRoutingKey(expected: string): this;
+  toHaveMessagePresent(): this;
 
   /**
-   * Asserts that the message exchange matches the expected value.
-   *
-   * @param expected - The expected exchange name
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toHaveExchange("my-exchange");
-   * ```
+   * Asserts that the message is null (no message received).
    */
-  toHaveExchange(expected: string): this;
+  toHaveMessageNull(): this;
 
   /**
-   * Asserts that the operation duration is less than the specified threshold.
-   *
-   * @param ms - The threshold in milliseconds
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toHaveDurationLessThan(100);
-   * ```
+   * Asserts that the message is undefined.
    */
-  toHaveDurationLessThan(ms: number): this;
+  toHaveMessageUndefined(): this;
 
   /**
-   * Asserts that the operation duration is less than or equal to the specified threshold.
-   *
-   * @param ms - The threshold in milliseconds
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toHaveDurationLessThanOrEqual(100);
-   * ```
+   * Asserts that the message is nullish (null or undefined).
    */
-  toHaveDurationLessThanOrEqual(ms: number): this;
+  toHaveMessageNullish(): this;
 
   /**
-   * Asserts that the operation duration is greater than the specified threshold.
-   *
-   * @param ms - The threshold in milliseconds
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toHaveDurationGreaterThan(50);
-   * ```
+   * Asserts that the message matches the specified subset.
+   * @param subset - The subset to match against
    */
-  toHaveDurationGreaterThan(ms: number): this;
+  toHaveMessageMatching(
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
+  ): this;
 
   /**
-   * Asserts that the operation duration is greater than or equal to the specified threshold.
-   *
-   * @param ms - The threshold in milliseconds
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toHaveDurationGreaterThanOrEqual(50);
-   * ```
+   * Asserts that the message has the specified property.
+   * @param keyPath - The key path to check
+   * @param value - Optional expected value at the key path
    */
-  toHaveDurationGreaterThanOrEqual(ms: number): this;
+  toHaveMessageProperty(keyPath: string | string[], value?: unknown): this;
+
+  /**
+   * Asserts that the message property contains the expected value.
+   * @param keyPath - The key path to check
+   * @param expected - The expected contained value
+   */
+  toHaveMessagePropertyContaining(
+    keyPath: string | string[],
+    expected: unknown,
+  ): this;
+
+  /**
+   * Asserts that the message property matches the specified subset.
+   * @param keyPath - The key path to check
+   * @param subset - The subset to match against
+   */
+  toHaveMessagePropertyMatching(
+    keyPath: string | string[],
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
+  ): this;
+
+  /**
+   * Asserts that the message property satisfies the provided matcher function.
+   * @param keyPath - The key path to check
+   * @param matcher - A function that receives the property value and performs assertions
+   */
+  toHaveMessagePropertySatisfying<I>(
+    keyPath: string | string[],
+    matcher: (value: I) => void,
+  ): this;
+
+  /**
+   * Asserts that the content equals the expected value.
+   * @param expected - The expected content
+   */
+  toHaveContent(expected: unknown): this;
+
+  /**
+   * Asserts that the content equals the expected value using deep equality.
+   * @param expected - The expected content
+   */
+  toHaveContentEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the content strictly equals the expected value.
+   * @param expected - The expected content
+   */
+  toHaveContentStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the content satisfies the provided matcher function.
+   * @param matcher - A function that receives the content and performs assertions
+   */
+  toHaveContentSatisfying(matcher: (value: unknown) => void): this;
+
+  /**
+   * Asserts that the content is present (not null or undefined).
+   */
+  toHaveContentPresent(): this;
+
+  /**
+   * Asserts that the content is null.
+   */
+  toHaveContentNull(): this;
+
+  /**
+   * Asserts that the content is undefined.
+   */
+  toHaveContentUndefined(): this;
+
+  /**
+   * Asserts that the content is nullish (null or undefined).
+   */
+  toHaveContentNullish(): this;
+
+  /**
+   * Asserts that the content length equals the expected value.
+   * @param expected - The expected content length
+   */
+  toHaveContentLength(expected: unknown): this;
+
+  /**
+   * Asserts that the content length equals the expected value using deep equality.
+   * @param expected - The expected content length
+   */
+  toHaveContentLengthEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the content length strictly equals the expected value.
+   * @param expected - The expected content length
+   */
+  toHaveContentLengthStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the content length satisfies the provided matcher function.
+   * @param matcher - A function that receives the content length and performs assertions
+   */
+  toHaveContentLengthSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the content length is NaN.
+   */
+  toHaveContentLengthNaN(): this;
+
+  /**
+   * Asserts that the content length is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveContentLengthGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the content length is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveContentLengthGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the content length is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveContentLengthLessThan(expected: number): this;
+
+  /**
+   * Asserts that the content length is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveContentLengthLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the content length is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveContentLengthCloseTo(expected: number, numDigits?: number): this;
+
+  /**
+   * Asserts that the duration equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDuration(expected: unknown): this;
+
+  /**
+   * Asserts that the duration equals the expected value using deep equality.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration strictly equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration satisfies the provided matcher function.
+   * @param matcher - A function that receives the duration and performs assertions
+   */
+  toHaveDurationSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the duration is NaN.
+   */
+  toHaveDurationNaN(): this;
+
+  /**
+   * Asserts that the duration is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveDurationCloseTo(expected: number, numDigits?: number): this;
 }
 
 export function expectRabbitMqConsumeResult(
   result: RabbitMqConsumeResult,
-  negate = false,
 ): RabbitMqConsumeResultExpectation {
-  const self: RabbitMqConsumeResultExpectation = {
-    get not(): RabbitMqConsumeResultExpectation {
-      return expectRabbitMqConsumeResult(result, !negate);
-    },
-
-    toBeSuccessful() {
-      const isSuccess = result.ok;
-      if (negate ? isSuccess : !isSuccess) {
-        throw new Error(
-          negate
-            ? "Expected not ok result, but ok is true"
-            : "Expected ok result, but ok is false",
-        );
-      }
-      return this;
-    },
-
-    toHaveContent() {
-      const hasContent = result.message !== null;
-      if (negate ? hasContent : !hasContent) {
-        throw new Error(
-          negate
-            ? "Expected no message, but message exists"
-            : "Expected message, but message is null",
-        );
-      }
-      return this;
-    },
-
-    toHaveBodyContaining(subbody: Uint8Array) {
-      if (result.message === null) {
-        throw new Error("Expected message, but message is null");
-      }
-
-      const content = result.message.content;
-      const subbodyStr = new TextDecoder().decode(subbody);
-      const contentStr = new TextDecoder().decode(content);
-
-      const contains = contentStr.includes(subbodyStr);
-      if (negate ? contains : !contains) {
-        throw new Error(
-          negate
-            ? `Expected data to not contain ${subbodyStr}, but it did`
-            : `Expected data to contain ${subbodyStr}, but got ${contentStr}`,
-        );
-      }
-      return this;
-    },
-
-    toSatisfy(matcher: (content: Uint8Array) => void) {
-      if (result.message === null) {
-        throw new Error("Expected message, but message is null");
-      }
-      matcher(result.message.content);
-      return this;
-    },
-
-    toHavePropertyContaining(subset: Partial<RabbitMqMessageProperties>) {
-      if (result.message === null) {
-        throw new Error("Expected message, but message is null");
-      }
-
-      const props = result.message.properties;
-      const matches = containsSubset(props, subset);
-      if (negate ? matches : !matches) {
-        throw new Error(
-          negate
-            ? `Expected properties to not contain ${
-              JSON.stringify(subset)
-            }, got ${JSON.stringify(props)}`
-            : `Expected properties to contain ${JSON.stringify(subset)}, got ${
-              JSON.stringify(props)
-            }`,
-        );
-      }
-      return this;
-    },
-
-    toHaveRoutingKey(expected: string) {
-      if (result.message === null) {
-        throw new Error("Expected message, but message is null");
-      }
-
-      const match = result.message.fields.routingKey === expected;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected routing key to not be ${expected}, got ${result.message.fields.routingKey}`
-            : `Expected routing key ${expected}, got ${result.message.fields.routingKey}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveExchange(expected: string) {
-      if (result.message === null) {
-        throw new Error("Expected message, but message is null");
-      }
-
-      const match = result.message.fields.exchange === expected;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected exchange to not be ${expected}, got ${result.message.fields.exchange}`
-            : `Expected exchange ${expected}, got ${result.message.fields.exchange}`,
-        );
-      }
-      return this;
-    },
-
-    ...createDurationMethods(result.duration, negate),
-  };
-
-  return self;
+  return mixin.defineExpectation((negate) => [
+    mixin.createOkMixin(
+      () => result.ok,
+      negate,
+      { valueName: "consume result" },
+    ),
+    // Message
+    mixin.createValueMixin(
+      () => result.message,
+      negate,
+      { valueName: "message" },
+    ),
+    mixin.createNullishValueMixin(
+      () => result.message,
+      negate,
+      { valueName: "message" },
+    ),
+    mixin.createObjectValueMixin(
+      () => getNonNull(result.message, "message"),
+      negate,
+      { valueName: "message" },
+    ),
+    // Content
+    mixin.createValueMixin(
+      () => result.message?.content,
+      negate,
+      { valueName: "content" },
+    ),
+    mixin.createNullishValueMixin(
+      () => result.message?.content,
+      negate,
+      { valueName: "content" },
+    ),
+    // Content length
+    mixin.createValueMixin(
+      () => result.message?.content.length ?? 0,
+      negate,
+      { valueName: "content length" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.message?.content.length ?? 0,
+      negate,
+      { valueName: "content length" },
+    ),
+    // Duration
+    mixin.createValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+  ]);
 }

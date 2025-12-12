@@ -8,12 +8,8 @@
  */
 
 import type { GrpcResponse } from "@probitas/client-grpc";
-import {
-  buildErrorMessage,
-  containsSubset,
-  createDurationMethods,
-  formatDifferences,
-} from "./common.ts";
+import { getNonNull } from "./common.ts";
+import * as mixin from "./mixin.ts";
 
 /**
  * Fluent expectation interface for gRPC responses.
@@ -21,381 +17,530 @@ import {
 export interface GrpcResponseExpectation {
   /**
    * Negates the next assertion.
+   *
+   * @example
+   * ```ts
+   * expectGrpcResponse(response).not.toBeOk();
+   * expectGrpcResponse(response).not.toHaveStatusCode(0);
+   * ```
    */
   readonly not: this;
 
   /**
-   * Assert that the response is successful (status code 0/OK).
-   */
-  toBeSuccessful(): this;
-
-  /**
-   * Assert that the response has a specific status code.
+   * Asserts that the response is successful (code 0).
    *
-   * @param expected - Expected gRPC status code
+   * @example
+   * ```ts
+   * expectGrpcResponse(response).toBeOk();
+   * ```
    */
-  toHaveCode(expected: number): this;
+  toBeOk(): this;
 
   /**
-   * Assert that the response status code is one of the specified codes.
-   *
-   * @param codes - Array of acceptable status codes
+   * Asserts that the code equals the expected value.
+   * @param expected - The expected code value
    */
-  toHaveCodeOneOf(codes: number[]): this;
+  toHaveStatusCode(expected: unknown): this;
 
   /**
-   * Assert that the response has a specific status message.
-   *
-   * @param expected - Expected status message
+   * Asserts that the code equals the expected value using deep equality.
+   * @param expected - The expected code value
    */
-  toHaveMessage(expected: string): this;
+  toHaveStatusCodeEqual(expected: unknown): this;
 
   /**
-   * Assert that the status message contains a substring.
-   *
-   * @param substring - Expected substring
+   * Asserts that the code strictly equals the expected value.
+   * @param expected - The expected code value
    */
-  toHaveMessageContaining(substring: string): this;
+  toHaveStatusCodeStrictEqual(expected: unknown): this;
 
   /**
-   * Assert that the status message matches a pattern.
-   *
-   * @param pattern - RegExp pattern
+   * Asserts that the code satisfies the provided matcher function.
+   * @param matcher - A function that receives the code and performs assertions
    */
-  toHaveMessageMatching(pattern: RegExp): this;
+  toHaveStatusCodeSatisfying(matcher: (value: number) => void): this;
 
   /**
-   * Assert that a specific trailer has the expected value.
-   *
-   * @param name - Trailer name
-   * @param value - Expected trailer value
+   * Asserts that the code is NaN.
    */
-  toHaveTrailerValue(name: string, value: string): this;
+  toHaveStatusCodeNaN(): this;
 
   /**
-   * Assert that a specific trailer exists.
-   *
-   * @param name - Trailer name
+   * Asserts that the code is greater than the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveTrailer(name: string): this;
+  toHaveStatusCodeGreaterThan(expected: number): this;
 
   /**
-   * Assert that the response has content (non-null data).
+   * Asserts that the code is greater than or equal to the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveContent(): this;
+  toHaveStatusCodeGreaterThanOrEqual(expected: number): this;
 
   /**
-   * Assert that the response body (for streaming) contains specific properties.
-   *
-   * @param subset - Expected properties
+   * Asserts that the code is less than the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveBodyContaining<T>(subset: Partial<T>): this;
+  toHaveStatusCodeLessThan(expected: number): this;
 
   /**
-   * Assert that the body matches a predicate.
-   * The predicate should throw an error if the assertion fails.
-   *
-   * @param fn - Predicate function
+   * Asserts that the code is less than or equal to the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveBodyMatching(fn: (body: unknown) => void): this;
+  toHaveStatusCodeLessThanOrEqual(expected: number): this;
 
   /**
-   * Assert that the response data contains specific properties.
-   * Uses deep comparison with formatted diffs on mismatch.
-   *
-   * @param subset - Expected data properties
+   * Asserts that the code is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
    */
-  toHaveDataContaining<T>(subset: Partial<T>): this;
+  toHaveStatusCodeCloseTo(expected: number, numDigits?: number): this;
 
   /**
-   * Assert that the response data matches a predicate function.
-   * The predicate should throw an error if the assertion fails.
-   *
-   * @param fn - Predicate function
+   * Asserts that the code is one of the specified values.
+   * @param values - Array of acceptable values
    */
-  toHaveDataMatching(fn: (data: unknown) => void): this;
+  toHaveStatusCodeOneOf(values: unknown[]): this;
 
   /**
-   * Assert that the request duration is less than a threshold.
-   *
-   * @param ms - Maximum duration in milliseconds
+   * Asserts that the message equals the expected value.
+   * @param expected - The expected message value
    */
-  toHaveDurationLessThan(ms: number): this;
+  toHaveStatusMessage(expected: unknown): this;
 
   /**
-   * Assert that the request duration is less than or equal to a threshold.
-   *
-   * @param ms - Maximum duration in milliseconds
+   * Asserts that the message equals the expected value using deep equality.
+   * @param expected - The expected message value
    */
-  toHaveDurationLessThanOrEqual(ms: number): this;
+  toHaveStatusMessageEqual(expected: unknown): this;
 
   /**
-   * Assert that the request duration is greater than a threshold.
-   *
-   * @param ms - Minimum duration in milliseconds
+   * Asserts that the message strictly equals the expected value.
+   * @param expected - The expected message value
    */
-  toHaveDurationGreaterThan(ms: number): this;
+  toHaveStatusMessageStrictEqual(expected: unknown): this;
 
   /**
-   * Assert that the request duration is greater than or equal to a threshold.
-   *
-   * @param ms - Minimum duration in milliseconds
+   * Asserts that the message satisfies the provided matcher function.
+   * @param matcher - A function that receives the message and performs assertions
    */
-  toHaveDurationGreaterThanOrEqual(ms: number): this;
+  toHaveStatusMessageSatisfying(matcher: (value: string) => void): this;
+
+  /**
+   * Asserts that the message contains the specified substring.
+   * @param substr - The substring to search for
+   */
+  toHaveStatusMessageContaining(substr: string): this;
+
+  /**
+   * Asserts that the message matches the specified regular expression.
+   * @param expected - The regular expression to match against
+   */
+  toHaveStatusMessageMatching(expected: RegExp): this;
+
+  /**
+   * Asserts that the message is present (not null or undefined).
+   */
+  toHaveStatusMessagePresent(): this;
+
+  /**
+   * Asserts that the message is null.
+   */
+  toHaveStatusMessageNull(): this;
+
+  /**
+   * Asserts that the message is undefined.
+   */
+  toHaveStatusMessageUndefined(): this;
+
+  /**
+   * Asserts that the message is nullish (null or undefined).
+   */
+  toHaveStatusMessageNullish(): this;
+
+  /**
+   * Asserts that the headers equal the expected value.
+   * @param expected - The expected headers value
+   */
+  toHaveHeaders(expected: unknown): this;
+
+  /**
+   * Asserts that the headers equal the expected value using deep equality.
+   * @param expected - The expected headers value
+   */
+  toHaveHeadersEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the headers strictly equal the expected value.
+   * @param expected - The expected headers value
+   */
+  toHaveHeadersStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the headers satisfy the provided matcher function.
+   * @param matcher - A function that receives the headers and performs assertions
+   */
+  toHaveHeadersSatisfying(
+    matcher: (value: Record<string, unknown>) => void,
+  ): this;
+
+  /**
+   * Asserts that the headers match the specified subset.
+   * @param subset - The subset to match against
+   */
+  toHaveHeadersMatching(
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
+  ): this;
+
+  /**
+   * Asserts that the headers have the specified property.
+   * @param keyPath - The key path to check
+   * @param value - Optional expected value at the key path
+   */
+  toHaveHeadersProperty(keyPath: string | string[], value?: unknown): this;
+
+  /**
+   * Asserts that the headers property contains the expected value.
+   * @param keyPath - The key path to check
+   * @param expected - The expected contained value
+   */
+  toHaveHeadersPropertyContaining(
+    keyPath: string | string[],
+    expected: unknown,
+  ): this;
+
+  /**
+   * Asserts that the headers property matches the specified subset.
+   * @param keyPath - The key path to check
+   * @param subset - The subset to match against
+   */
+  toHaveHeadersPropertyMatching(
+    keyPath: string | string[],
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
+  ): this;
+
+  /**
+   * Asserts that the headers property satisfies the provided matcher function.
+   * @param keyPath - The key path to check
+   * @param matcher - A function that receives the property value and performs assertions
+   */
+  toHaveHeadersPropertySatisfying<I>(
+    keyPath: string | string[],
+    matcher: (value: I) => void,
+  ): this;
+
+  /**
+   * Asserts that the trailers equal the expected value.
+   * @param expected - The expected trailers value
+   */
+  toHaveTrailers(expected: unknown): this;
+
+  /**
+   * Asserts that the trailers equal the expected value using deep equality.
+   * @param expected - The expected trailers value
+   */
+  toHaveTrailersEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the trailers strictly equal the expected value.
+   * @param expected - The expected trailers value
+   */
+  toHaveTrailersStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the trailers satisfy the provided matcher function.
+   * @param matcher - A function that receives the trailers and performs assertions
+   */
+  toHaveTrailersSatisfying(
+    matcher: (value: Record<string, unknown>) => void,
+  ): this;
+
+  /**
+   * Asserts that the trailers match the specified subset.
+   * @param subset - The subset to match against
+   */
+  toHaveTrailersMatching(
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
+  ): this;
+
+  /**
+   * Asserts that the trailers have the specified property.
+   * @param keyPath - The key path to check
+   * @param value - Optional expected value at the key path
+   */
+  toHaveTrailersProperty(keyPath: string | string[], value?: unknown): this;
+
+  /**
+   * Asserts that the trailers property contains the expected value.
+   * @param keyPath - The key path to check
+   * @param expected - The expected contained value
+   */
+  toHaveTrailersPropertyContaining(
+    keyPath: string | string[],
+    expected: unknown,
+  ): this;
+
+  /**
+   * Asserts that the trailers property matches the specified subset.
+   * @param keyPath - The key path to check
+   * @param subset - The subset to match against
+   */
+  toHaveTrailersPropertyMatching(
+    keyPath: string | string[],
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
+  ): this;
+
+  /**
+   * Asserts that the trailers property satisfies the provided matcher function.
+   * @param keyPath - The key path to check
+   * @param matcher - A function that receives the property value and performs assertions
+   */
+  toHaveTrailersPropertySatisfying<I>(
+    keyPath: string | string[],
+    matcher: (value: I) => void,
+  ): this;
+
+  /**
+   * Asserts that the data equals the expected value.
+   * @param expected - The expected data value
+   */
+  toHaveData(expected: unknown): this;
+
+  /**
+   * Asserts that the data equals the expected value using deep equality.
+   * @param expected - The expected data value
+   */
+  toHaveDataEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the data strictly equals the expected value.
+   * @param expected - The expected data value
+   */
+  toHaveDataStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the data satisfies the provided matcher function.
+   * @param matcher - A function that receives the data and performs assertions
+   */
+  toHaveDataSatisfying(
+    matcher: (value: Record<string, unknown> | null) => void,
+  ): this;
+
+  /**
+   * Asserts that the data is present (not null or undefined).
+   */
+  toHaveDataPresent(): this;
+
+  /**
+   * Asserts that the data is null.
+   */
+  toHaveDataNull(): this;
+
+  /**
+   * Asserts that the data is undefined.
+   */
+  toHaveDataUndefined(): this;
+
+  /**
+   * Asserts that the data is nullish (null or undefined).
+   */
+  toHaveDataNullish(): this;
+
+  /**
+   * Asserts that the data matches the specified subset.
+   * @param subset - The subset to match against
+   */
+  toHaveDataMatching(
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
+  ): this;
+
+  /**
+   * Asserts that the data has the specified property.
+   * @param keyPath - The key path to check
+   * @param value - Optional expected value at the key path
+   */
+  toHaveDataProperty(keyPath: string | string[], value?: unknown): this;
+
+  /**
+   * Asserts that the data property contains the expected value.
+   * @param keyPath - The key path to check
+   * @param expected - The expected contained value
+   */
+  toHaveDataPropertyContaining(
+    keyPath: string | string[],
+    expected: unknown,
+  ): this;
+
+  /**
+   * Asserts that the data property matches the specified subset.
+   * @param keyPath - The key path to check
+   * @param subset - The subset to match against
+   */
+  toHaveDataPropertyMatching(
+    keyPath: string | string[],
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
+  ): this;
+
+  /**
+   * Asserts that the data property satisfies the provided matcher function.
+   * @param keyPath - The key path to check
+   * @param matcher - A function that receives the property value and performs assertions
+   */
+  toHaveDataPropertySatisfying<I>(
+    keyPath: string | string[],
+    matcher: (value: I) => void,
+  ): this;
+
+  /**
+   * Asserts that the duration equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDuration(expected: unknown): this;
+
+  /**
+   * Asserts that the duration equals the expected value using deep equality.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration strictly equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration satisfies the provided matcher function.
+   * @param matcher - A function that receives the duration and performs assertions
+   */
+  toHaveDurationSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the duration is NaN.
+   */
+  toHaveDurationNaN(): this;
+
+  /**
+   * Asserts that the duration is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveDurationCloseTo(expected: number, numDigits?: number): this;
 }
 
-/**
- * Creates an expectation for a gRPC response.
- *
- * @param response - gRPC response to test
- * @param negate - Whether to negate assertions (used internally by .not)
- * @returns Fluent expectation interface
- *
- * @example
- * ```ts
- * import { expectGrpcResponse } from "@probitas/expect/grpc";
- *
- * const response = await client.call("GetUser", { id: "1" });
- * expectGrpcResponse(response)
- *   .toBeSuccessful()
- *   .toHaveCode(0)
- *   .toHaveContent()
- *   .toHaveDataContaining({ id: "1", name: "Alice" });
- * ```
- */
 export function expectGrpcResponse(
   response: GrpcResponse,
-  negate = false,
 ): GrpcResponseExpectation {
-  const self: GrpcResponseExpectation = {
-    get not(): GrpcResponseExpectation {
-      return expectGrpcResponse(response, !negate);
-    },
-
-    toBeSuccessful() {
-      const isOk = response.ok;
-      if (negate ? isOk : !isOk) {
-        const code = response.code;
-        const message = response.message ?? "";
-        throw new Error(
-          negate
-            ? `Expected response to not be successful, but got code 0 (OK)`
-            : `Expected response to be successful (code 0), but got code ${code}: ${message}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveCode(expected: number) {
-      const matches = response.code === expected;
-      if (negate ? matches : !matches) {
-        throw new Error(
-          negate
-            ? `Expected code to not be ${expected}, but got ${response.code}`
-            : `Expected code ${expected}, but got ${response.code}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveCodeOneOf(codes: number[]) {
-      const matches = codes.includes(response.code);
-      if (negate ? matches : !matches) {
-        throw new Error(
-          negate
-            ? `Expected code to not be one of [${
-              codes.join(", ")
-            }], but got ${response.code}`
-            : `Expected code to be one of [${
-              codes.join(", ")
-            }], but got ${response.code}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveMessage(expected: string) {
-      const matches = response.message === expected;
-      if (negate ? matches : !matches) {
-        throw new Error(
-          negate
-            ? `Expected message to not be "${expected}", but got "${response.message}"`
-            : `Expected message "${expected}", but got "${response.message}"`,
-        );
-      }
-      return this;
-    },
-
-    toHaveMessageContaining(substring: string) {
-      const message = response.message ?? "";
-      const contains = message.includes(substring);
-      if (negate ? contains : !contains) {
-        throw new Error(
-          negate
-            ? `Expected message to not contain "${substring}", but got "${message}"`
-            : `Expected message to contain "${substring}", but got "${message}"`,
-        );
-      }
-      return this;
-    },
-
-    toHaveMessageMatching(pattern: RegExp) {
-      const message = response.message ?? "";
-      const matches = pattern.test(message);
-      if (negate ? matches : !matches) {
-        throw new Error(
-          negate
-            ? `Expected message to not match ${pattern}, but got "${message}"`
-            : `Expected message to match ${pattern}, but got "${message}"`,
-        );
-      }
-      return this;
-    },
-
-    toHaveTrailerValue(name: string, value: string) {
-      const trailers = response.trailers as
-        | Record<string, string>
-        | undefined;
-      const matches = trailers?.[name] === value;
-      if (negate ? matches : !matches) {
-        throw new Error(
-          negate
-            ? `Expected trailer "${name}" to not be "${value}", but got "${
-              trailers?.[name]
-            }"`
-            : `Expected trailer "${name}" to be "${value}", but got "${
-              trailers?.[name]
-            }"`,
-        );
-      }
-      return this;
-    },
-
-    toHaveTrailer(name: string) {
-      const trailers = response.trailers as
-        | Record<string, string>
-        | undefined;
-      const exists = trailers && (name in trailers);
-      if (negate ? exists : !exists) {
-        throw new Error(
-          negate
-            ? `Expected trailer "${name}" to not exist, but it was present`
-            : `Expected trailer "${name}" to exist, but it was missing`,
-        );
-      }
-      return this;
-    },
-
-    toHaveContent() {
-      const data = response.data();
-      const hasContent = data !== null && data !== undefined;
-      if (negate ? hasContent : !hasContent) {
-        throw new Error(
-          negate
-            ? `Expected response to not have content, but got: ${
-              JSON.stringify(data)
-            }`
-            : `Expected response to have content, but data is ${
-              data === null ? "null" : "undefined"
-            }`,
-        );
-      }
-      return this;
-    },
-
-    toHaveBodyContaining<T>(subset: Partial<T>) {
-      const data = response.data();
-      const contains = containsSubset(data, subset);
-
-      if (negate ? contains : !contains) {
-        const diffs = formatDifferences(data, subset);
-        const message = negate
-          ? `Expected body to not contain ${JSON.stringify(subset)}, but it did`
-          : buildErrorMessage(
-            "toHaveBodyContaining",
-            diffs,
-            subset,
-            data,
-          );
-        throw new Error(message);
-      }
-
-      return this;
-    },
-
-    toHaveBodyMatching(fn: (body: unknown) => void) {
-      const data = response.data();
-      try {
-        fn(data);
-        if (negate) {
-          throw new Error(
-            `Expected body to not match predicate, but it did. Body: ${
-              JSON.stringify(data)
-            }`,
-          );
-        }
-      } catch (error) {
-        if (negate) {
-          return this;
-        }
-        throw new Error(
-          `Body does not match predicate. Body: ${
-            JSON.stringify(data)
-          }. Error: ${error instanceof Error ? error.message : String(error)}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveDataContaining<T>(subset: Partial<T>) {
-      const data = response.data();
-      const contains = containsSubset(data, subset);
-
-      if (negate ? contains : !contains) {
-        const diffs = formatDifferences(data, subset);
-        const message = negate
-          ? `Expected data to not contain ${JSON.stringify(subset)}, but it did`
-          : buildErrorMessage(
-            "toHaveDataContaining",
-            diffs,
-            subset,
-            data,
-          );
-        throw new Error(message);
-      }
-
-      return this;
-    },
-
-    toHaveDataMatching(fn: (data: unknown) => void) {
-      const data = response.data();
-      try {
-        fn(data);
-        if (negate) {
-          throw new Error(
-            `Expected data to not match predicate, but it did. Data: ${
-              JSON.stringify(data)
-            }`,
-          );
-        }
-      } catch (error) {
-        if (negate) {
-          return this;
-        }
-        throw new Error(
-          `Data does not match predicate. Data: ${
-            JSON.stringify(data)
-          }. Error: ${error instanceof Error ? error.message : String(error)}`,
-        );
-      }
-      return this;
-    },
-
-    ...createDurationMethods(response.duration, negate),
-  };
-
-  return self;
+  return mixin.defineExpectation((negate) => [
+    mixin.createOkMixin(
+      () => response.ok,
+      negate,
+      { valueName: "response" },
+    ),
+    // Status code
+    mixin.createValueMixin(
+      () => response.statusCode,
+      negate,
+      { valueName: "status code" },
+    ),
+    mixin.createNumberValueMixin(
+      () => response.statusCode,
+      negate,
+      { valueName: "status code" },
+    ),
+    mixin.createOneOfValueMixin(
+      () => response.statusCode,
+      negate,
+      { valueName: "status code" },
+    ),
+    // Status message
+    mixin.createValueMixin(
+      () => response.statusMessage,
+      negate,
+      { valueName: "status message" },
+    ),
+    mixin.createNullishValueMixin(
+      () => response.statusMessage,
+      negate,
+      { valueName: "status message" },
+    ),
+    mixin.createStringValueMixin(
+      () => getNonNull(response.statusMessage, "status message"),
+      negate,
+      { valueName: "status message" },
+    ),
+    // Headers
+    mixin.createValueMixin(
+      () => response.headers,
+      negate,
+      { valueName: "headers" },
+    ),
+    mixin.createObjectValueMixin(
+      () => Object.fromEntries(response.headers.entries()),
+      negate,
+      { valueName: "headers" },
+    ),
+    // Trailers
+    mixin.createValueMixin(
+      () => response.trailers,
+      negate,
+      { valueName: "trailers" },
+    ),
+    mixin.createObjectValueMixin(
+      () => Object.fromEntries(response.trailers.entries()),
+      negate,
+      { valueName: "trailers" },
+    ),
+    // Data
+    mixin.createValueMixin(
+      () => response.data(),
+      negate,
+      { valueName: "data" },
+    ),
+    mixin.createNullishValueMixin(
+      () => response.data(),
+      negate,
+      { valueName: "data" },
+    ),
+    mixin.createObjectValueMixin(
+      () => getNonNull(response.data(), "data"),
+      negate,
+      { valueName: "data" },
+    ),
+    // Duration
+    mixin.createValueMixin(
+      () => response.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+    mixin.createNumberValueMixin(
+      () => response.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+  ]);
 }
-
-// Re-export types for convenience
-export type { GrpcResponse };

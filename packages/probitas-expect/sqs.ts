@@ -44,8 +44,8 @@ export type {
   SqsSendResultExpectation,
 };
 
-// Re-export message expectation
-export { expectSqsMessage, type SqsMessageExpectation } from "./sqs/message.ts";
+// Note: expectSqsMessage is not yet implemented in this refactoring phase
+// export { expectSqsMessage, type SqsMessageExpectation } from "./sqs/message.ts";
 
 /**
  * Expectation type returned by expectSqsResult based on the result type.
@@ -74,7 +74,7 @@ export type SqsExpectation<R extends SqsResult> = R extends SqsSendResult
  * ```ts
  * const sendResult = await sqs.send(JSON.stringify({ orderId: "123" }));
  * expectSqsResult(sendResult)
- *   .toBeSuccessful()
+ *   .toBeOk()
  *   .hasMessageId()
  *   .toHaveDurationLessThan(1000);
  * ```
@@ -83,7 +83,7 @@ export type SqsExpectation<R extends SqsResult> = R extends SqsSendResult
  * ```ts
  * const receiveResult = await sqs.receive({ maxMessages: 10 });
  * expectSqsResult(receiveResult)
- *   .toBeSuccessful()
+ *   .toBeOk()
  *   .toHaveContent()
  *   .countAtLeast(1)
  *   .toMatchObject({ body: "orderId" });
@@ -97,14 +97,14 @@ export type SqsExpectation<R extends SqsResult> = R extends SqsSendResult
  *   { id: "2", body: "msg2" },
  * ]);
  * expectSqsResult(batchResult)
- *   .toBeSuccessful()
+ *   .toBeOk()
  *   .allSuccessful()
  *   .noFailures();
  *
  * // Delete batch
  * const deleteResult = await sqs.deleteBatch(receiptHandles);
  * expectSqsResult(deleteResult)
- *   .toBeSuccessful()
+ *   .toBeOk()
  *   .successfulCount(2);
  * ```
  *
@@ -113,13 +113,13 @@ export type SqsExpectation<R extends SqsResult> = R extends SqsSendResult
  * // Ensure queue exists
  * const ensureResult = await sqs.ensureQueue("test-queue");
  * expectSqsResult(ensureResult)
- *   .toBeSuccessful()
+ *   .toBeOk()
  *   .hasQueueUrl()
  *   .queueUrlContains("test-queue");
  *
  * // Delete queue
  * const deleteResult = await sqs.deleteQueue(queueUrl);
- * expectSqsResult(deleteResult).toBeSuccessful();
+ * expectSqsResult(deleteResult).toBeOk();
  * ```
  *
  * @example Individual message validation
@@ -135,7 +135,7 @@ export type SqsExpectation<R extends SqsResult> = R extends SqsSendResult
 export function expectSqsResult<R extends SqsResult>(
   result: R,
 ): SqsExpectation<R> {
-  switch (result.type) {
+  switch (result.kind) {
     case "sqs:send":
       return expectSqsSendResult(
         result as SqsSendResult,
@@ -166,7 +166,7 @@ export function expectSqsResult<R extends SqsResult>(
       ) as unknown as SqsExpectation<R>;
     default:
       throw new Error(
-        `Unknown SQS result type: ${(result as { type: string }).type}`,
+        `Unknown SQS result kind: ${(result as { kind: string }).kind}`,
       );
   }
 }

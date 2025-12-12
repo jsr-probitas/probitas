@@ -1,12 +1,5 @@
-import {
-  buildCountAtLeastError,
-  buildCountAtMostError,
-  buildCountError,
-  containsSubset,
-  createDurationMethods,
-} from "../common.ts";
-import type { DenoKvEntries, DenoKvListResult } from "@probitas/client-deno-kv";
-import { keysEqual } from "./utils.ts";
+import type { DenoKvListResult } from "@probitas/client-deno-kv";
+import * as mixin from "../mixin.ts";
 
 /**
  * Fluent API for validating DenoKvListResult.
@@ -14,141 +7,191 @@ import { keysEqual } from "./utils.ts";
  * Provides chainable assertions specifically designed for Deno KV list operation results.
  * All assertion methods return `this` to enable method chaining.
  */
-export interface DenoKvListResultExpectation<T> {
+export interface DenoKvListResultExpectation<_T = unknown> {
   /**
    * Negates the next assertion.
    *
    * @example
    * ```ts
-   * expectDenoKvResult(result).not.toBeSuccessful();
+   * expectDenoKvResult(result).not.toBeOk();
    * expectDenoKvResult(result).not.toHaveContent();
    * ```
    */
   readonly not: this;
 
   /**
-   * Asserts that the list operation succeeded.
-   *
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toBeSuccessful();
-   * ```
+   * Asserts that the result is successful.
    */
-  toBeSuccessful(): this;
+  toBeOk(): this;
 
   /**
-   * Asserts that the result contains at least one entry.
-   *
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveContent();
-   * ```
+   * Asserts that the entries equal the expected value.
+   * @param expected - The expected entries value
    */
-  toHaveContent(): this;
+  toHaveEntries(expected: unknown): this;
 
   /**
-   * Asserts that the number of entries equals the expected count.
-   *
-   * @param expected - The expected number of entries
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveLength(3);
-   * ```
+   * Asserts that the entries equal the expected value using deep equality.
+   * @param expected - The expected entries value
    */
-  toHaveLength(expected: number): this;
+  toHaveEntriesEqual(expected: unknown): this;
 
   /**
-   * Asserts that the number of entries is at least the specified minimum.
-   *
-   * @param min - The minimum number of entries (inclusive)
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveLengthGreaterThanOrEqual(5);
-   * ```
+   * Asserts that the entries strictly equal the expected value.
+   * @param expected - The expected entries value
    */
-  toHaveLengthGreaterThanOrEqual(min: number): this;
+  toHaveEntriesStrictEqual(expected: unknown): this;
 
   /**
-   * Asserts that the number of entries is at most the specified maximum.
-   *
-   * @param max - The maximum number of entries (inclusive)
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveLengthLessThanOrEqual(10);
-   * ```
+   * Asserts that the entries satisfy the provided matcher function.
+   * @param matcher - A function that receives the entries and performs assertions
    */
-  toHaveLengthLessThanOrEqual(max: number): this;
+  toHaveEntriesSatisfying(matcher: (value: unknown[]) => void): this;
 
   /**
-   * Asserts that at least one entry matches the specified criteria.
-   *
-   * @param subset - An object containing optional key and/or value properties to match
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveEntryContaining({ key: ["users", "1"] });
-   * expectDenoKvResult(result).toHaveEntryContaining({ value: { name: "Alice" } });
-   * expectDenoKvResult(result).toHaveEntryContaining({ key: ["users", "1"], value: { active: true } });
-   * ```
+   * Asserts that the entries array contains the specified item.
+   * @param item - The item to search for
    */
-  toHaveEntryContaining(subset: { key?: Deno.KvKey; value?: Partial<T> }): this;
+  toHaveEntriesContaining(item: unknown): this;
 
   /**
-   * Asserts that the entries satisfy a custom matcher function.
-   *
-   * @param matcher - A function that receives the entries array and should throw if the assertion fails
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toSatisfy((entries) => {
-   *   const activeCount = entries.filter(e => e.value.active).length;
-   *   if (activeCount < 3) throw new Error("Expected at least 3 active entries");
-   * });
-   * ```
+   * Asserts that the entries array contains an item equal to the specified value.
+   * @param item - The item to search for using deep equality
    */
-  toSatisfy(matcher: (entries: DenoKvEntries<T>) => void): this;
+  toHaveEntriesContainingEqual(item: unknown): this;
 
   /**
-   * Asserts that the operation duration is less than the specified threshold.
-   *
-   * @param ms - The maximum duration in milliseconds (exclusive)
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveDurationLessThan(100);
-   * ```
+   * Asserts that the entries array matches the specified subset.
+   * @param subset - The subset to match against
    */
-  toHaveDurationLessThan(ms: number): this;
+  toHaveEntriesMatching(
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
+  ): this;
 
   /**
-   * Asserts that the operation duration is less than or equal to the specified threshold.
-   *
-   * @param ms - The maximum duration in milliseconds (inclusive)
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveDurationLessThanOrEqual(100);
-   * ```
+   * Asserts that the entries array is empty.
    */
-  toHaveDurationLessThanOrEqual(ms: number): this;
+  toHaveEntriesEmpty(): this;
 
   /**
-   * Asserts that the operation duration is greater than the specified threshold.
-   *
-   * @param ms - The minimum duration in milliseconds (exclusive)
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveDurationGreaterThan(10);
-   * ```
+   * Asserts that the entry count equals the expected value.
+   * @param expected - The expected entry count
    */
-  toHaveDurationGreaterThan(ms: number): this;
+  toHaveEntryCount(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is greater than or equal to the specified threshold.
-   *
-   * @param ms - The minimum duration in milliseconds (inclusive)
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveDurationGreaterThanOrEqual(10);
-   * ```
+   * Asserts that the entry count equals the expected value using deep equality.
+   * @param expected - The expected entry count
    */
-  toHaveDurationGreaterThanOrEqual(ms: number): this;
+  toHaveEntryCountEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the entry count strictly equals the expected value.
+   * @param expected - The expected entry count
+   */
+  toHaveEntryCountStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the entry count satisfies the provided matcher function.
+   * @param matcher - A function that receives the entry count and performs assertions
+   */
+  toHaveEntryCountSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the entry count is NaN.
+   */
+  toHaveEntryCountNaN(): this;
+
+  /**
+   * Asserts that the entry count is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveEntryCountGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the entry count is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveEntryCountGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the entry count is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveEntryCountLessThan(expected: number): this;
+
+  /**
+   * Asserts that the entry count is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveEntryCountLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the entry count is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveEntryCountCloseTo(expected: number, numDigits?: number): this;
+
+  /**
+   * Asserts that the duration equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDuration(expected: unknown): this;
+
+  /**
+   * Asserts that the duration equals the expected value using deep equality.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration strictly equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration satisfies the provided matcher function.
+   * @param matcher - A function that receives the duration and performs assertions
+   */
+  toHaveDurationSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the duration is NaN.
+   */
+  toHaveDurationNaN(): this;
+
+  /**
+   * Asserts that the duration is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveDurationCloseTo(expected: number, numDigits?: number): this;
 }
 
 /**
@@ -156,102 +199,45 @@ export interface DenoKvListResultExpectation<T> {
  */
 export function expectDenoKvListResult<T>(
   result: DenoKvListResult<T>,
-  negate = false,
-): DenoKvListResultExpectation<T> {
-  const self: DenoKvListResultExpectation<T> = {
-    get not(): DenoKvListResultExpectation<T> {
-      return expectDenoKvListResult(result, !negate);
-    },
-
-    toBeSuccessful() {
-      const isSuccess = result.ok;
-      if (negate ? isSuccess : !isSuccess) {
-        throw new Error(
-          negate ? "Expected not ok result" : "Expected ok result",
-        );
-      }
-      return this;
-    },
-
-    toHaveContent() {
-      const hasContent = result.entries.length > 0;
-      if (negate ? hasContent : !hasContent) {
-        throw new Error(
-          negate
-            ? `Expected no entries, but found ${result.entries.length}`
-            : "Expected entries, but none found",
-        );
-      }
-      return this;
-    },
-
-    toHaveLength(expected: number) {
-      const match = result.entries.length === expected;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected entry count to not be ${expected}, got ${result.entries.length}`
-            : buildCountError(expected, result.entries.length, "entries"),
-        );
-      }
-      return this;
-    },
-
-    toHaveLengthGreaterThanOrEqual(min: number) {
-      const match = result.entries.length >= min;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected entry count to not be >= ${min}, got ${result.entries.length}`
-            : buildCountAtLeastError(min, result.entries.length, "entries"),
-        );
-      }
-      return this;
-    },
-
-    toHaveLengthLessThanOrEqual(max: number) {
-      const match = result.entries.length <= max;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected entry count to not be <= ${max}, got ${result.entries.length}`
-            : buildCountAtMostError(max, result.entries.length, "entries"),
-        );
-      }
-      return this;
-    },
-
-    toHaveEntryContaining(subset: { key?: Deno.KvKey; value?: Partial<T> }) {
-      const found = result.entries.some((entry) => {
-        if (subset.key !== undefined && !keysEqual(entry.key, subset.key)) {
-          return false;
-        }
-        if (
-          subset.value !== undefined &&
-          !containsSubset(entry.value, subset.value)
-        ) {
-          return false;
-        }
-        return true;
-      });
-
-      if (negate ? found : !found) {
-        throw new Error(
-          negate
-            ? "Expected no entry to match the criteria, but found one"
-            : "No entry matches the expected criteria",
-        );
-      }
-      return this;
-    },
-
-    toSatisfy(matcher: (entries: DenoKvEntries<T>) => void) {
-      matcher(result.entries);
-      return this;
-    },
-
-    ...createDurationMethods(result.duration, negate),
-  };
-
-  return self;
+): DenoKvListResultExpectation {
+  return mixin.defineExpectation((negate) => [
+    mixin.createOkMixin(
+      () => result.ok,
+      negate,
+      { valueName: "result" },
+    ),
+    // Entries
+    mixin.createValueMixin(
+      () => result.entries,
+      negate,
+      { valueName: "entries" },
+    ),
+    mixin.createArrayValueMixin(
+      () => result.entries,
+      negate,
+      { valueName: "entries" },
+    ),
+    // Entry count
+    mixin.createValueMixin(
+      () => result.entries?.length ?? 0,
+      negate,
+      { valueName: "entry count" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.entries?.length ?? 0,
+      negate,
+      { valueName: "entry count" },
+    ),
+    // Duration
+    mixin.createValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+  ]);
 }

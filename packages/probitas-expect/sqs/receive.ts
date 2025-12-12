@@ -1,11 +1,12 @@
-import {
-  buildCountAtLeastError,
-  buildCountAtMostError,
-  buildCountError,
-  createDurationMethods,
-} from "../common.ts";
-import type { SqsMessages, SqsReceiveResult } from "@probitas/client-sqs";
+import type { SqsReceiveResult } from "@probitas/client-sqs";
+import * as mixin from "../mixin.ts";
 
+/**
+ * Fluent API for SQS receive result validation.
+ *
+ * Provides chainable assertions specifically designed for message receive results
+ * including messages array and message count.
+ */
 export interface SqsReceiveResultExpectation {
   /**
    * Negates the next assertion.
@@ -18,240 +19,221 @@ export interface SqsReceiveResultExpectation {
   readonly not: this;
 
   /**
-   * Asserts that the receive operation completed successfully.
-   *
-   * @example
-   * ```ts
-   * expectSqsResult(receiveResult).toBeSuccessful();
-   * ```
+   * Asserts that the result is successful.
    */
-  toBeSuccessful(): this;
+  toBeOk(): this;
 
   /**
-   * Asserts that at least one message was received.
-   *
-   * @example
-   * ```ts
-   * expectSqsResult(receiveResult).toHaveContent();
-   * ```
+   * Asserts that the messages equals the expected value.
+   * @param expected - The expected messages
    */
-  toHaveContent(): this;
+  toHaveMessages(expected: unknown): this;
 
   /**
-   * Asserts that the message count matches the expected value.
-   *
-   * @param expected - The expected number of messages
-   * @example
-   * ```ts
-   * expectSqsResult(receiveResult).toHaveLength(5);
-   * ```
+   * Asserts that the messages equals the expected value using deep equality.
+   * @param expected - The expected messages
    */
-  toHaveLength(expected: number): this;
+  toHaveMessagesEqual(expected: unknown): this;
 
   /**
-   * Asserts that the message count is at least the minimum.
-   *
-   * @param min - The minimum count (inclusive)
-   * @example
-   * ```ts
-   * expectSqsResult(receiveResult).toHaveLengthGreaterThanOrEqual(1);
-   * ```
+   * Asserts that the messages strictly equals the expected value.
+   * @param expected - The expected messages
    */
-  toHaveLengthGreaterThanOrEqual(min: number): this;
+  toHaveMessagesStrictEqual(expected: unknown): this;
 
   /**
-   * Asserts that the message count is at most the maximum.
-   *
-   * @param max - The maximum count (inclusive)
-   * @example
-   * ```ts
-   * expectSqsResult(receiveResult).toHaveLengthLessThanOrEqual(10);
-   * ```
+   * Asserts that the messages satisfies the provided matcher function.
+   * @param matcher - A function that receives the messages and performs assertions
    */
-  toHaveLengthLessThanOrEqual(max: number): this;
+  toHaveMessagesSatisfying(matcher: (value: unknown[]) => void): this;
 
   /**
-   * Asserts that at least one message contains the given subset of properties.
-   *
-   * @param subset - Object containing optional body and attributes to match
-   * @example
-   * ```ts
-   * expectSqsResult(receiveResult).toMatchObject({
-   *   body: "orderId",
-   *   attributes: { type: "ORDER" },
-   * });
-   * ```
+   * Asserts that the messages contains the specified item.
+   * @param item - The item to search for
    */
-  toMatchObject(
-    subset: { body?: string; attributes?: Record<string, string> },
+  toHaveMessagesContaining(item: unknown): this;
+
+  /**
+   * Asserts that the messages contains an item equal to the specified value.
+   * @param item - The item to search for using deep equality
+   */
+  toHaveMessagesContainingEqual(item: unknown): this;
+
+  /**
+   * Asserts that the messages matches the specified subset.
+   * @param subset - The subset to match against
+   */
+  toHaveMessagesMatching(
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
   ): this;
 
   /**
-   * Asserts messages using a custom matcher function.
-   *
-   * @param matcher - Custom function to validate the messages array
-   * @example
-   * ```ts
-   * expectSqsResult(receiveResult).toSatisfy((messages) => {
-   *   if (messages.length === 0) throw new Error("No messages");
-   *   if (!messages[0].body.includes("order")) throw new Error("Missing order");
-   * });
-   * ```
+   * Asserts that the messages is empty.
    */
-  toSatisfy(matcher: (messages: SqsMessages) => void): this;
+  toHaveMessagesEmpty(): this;
 
   /**
-   * Asserts that the operation duration is less than the specified threshold.
-   *
-   * @param ms - Maximum duration in milliseconds
-   * @example
-   * ```ts
-   * expectSqsResult(receiveResult).toHaveDurationLessThan(5000);
-   * ```
+   * Asserts that the messages count equals the expected value.
+   * @param expected - The expected messages count
    */
-  toHaveDurationLessThan(ms: number): this;
+  toHaveMessagesCount(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is less than or equal to the specified threshold.
-   *
-   * @param ms - Maximum duration in milliseconds (inclusive)
-   * @example
-   * ```ts
-   * expectSqsResult(receiveResult).toHaveDurationLessThanOrEqual(5000);
-   * ```
+   * Asserts that the messages count equals the expected value using deep equality.
+   * @param expected - The expected messages count
    */
-  toHaveDurationLessThanOrEqual(ms: number): this;
+  toHaveMessagesCountEqual(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is greater than the specified threshold.
-   *
-   * @param ms - Minimum duration in milliseconds
-   * @example
-   * ```ts
-   * expectSqsResult(receiveResult).toHaveDurationGreaterThan(100);
-   * ```
+   * Asserts that the messages count strictly equals the expected value.
+   * @param expected - The expected messages count
    */
-  toHaveDurationGreaterThan(ms: number): this;
+  toHaveMessagesCountStrictEqual(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is greater than or equal to the specified threshold.
-   *
-   * @param ms - Minimum duration in milliseconds (inclusive)
-   * @example
-   * ```ts
-   * expectSqsResult(receiveResult).toHaveDurationGreaterThanOrEqual(100);
-   * ```
+   * Asserts that the messages count satisfies the provided matcher function.
+   * @param matcher - A function that receives the messages count and performs assertions
    */
-  toHaveDurationGreaterThanOrEqual(ms: number): this;
+  toHaveMessagesCountSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the messages count is NaN.
+   */
+  toHaveMessagesCountNaN(): this;
+
+  /**
+   * Asserts that the messages count is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveMessagesCountGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the messages count is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveMessagesCountGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the messages count is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveMessagesCountLessThan(expected: number): this;
+
+  /**
+   * Asserts that the messages count is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveMessagesCountLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the messages count is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveMessagesCountCloseTo(expected: number, numDigits?: number): this;
+
+  /**
+   * Asserts that the duration equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDuration(expected: unknown): this;
+
+  /**
+   * Asserts that the duration equals the expected value using deep equality.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration strictly equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration satisfies the provided matcher function.
+   * @param matcher - A function that receives the duration and performs assertions
+   */
+  toHaveDurationSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the duration is NaN.
+   */
+  toHaveDurationNaN(): this;
+
+  /**
+   * Asserts that the duration is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveDurationCloseTo(expected: number, numDigits?: number): this;
 }
 
 export function expectSqsReceiveResult(
   result: SqsReceiveResult,
-  negate = false,
 ): SqsReceiveResultExpectation {
-  const self: SqsReceiveResultExpectation = {
-    get not(): SqsReceiveResultExpectation {
-      return expectSqsReceiveResult(result, !negate);
-    },
-
-    toBeSuccessful() {
-      const isSuccess = result.ok;
-      if (negate ? isSuccess : !isSuccess) {
-        throw new Error(
-          negate
-            ? "Expected not ok result, but ok is true"
-            : "Expected ok result, but ok is false",
-        );
-      }
-      return this;
-    },
-
-    toHaveContent() {
-      const hasContent = result.messages.length > 0;
-      if (negate ? hasContent : !hasContent) {
-        throw new Error(
-          negate
-            ? `Expected no messages, but got ${result.messages.length} messages`
-            : "Expected messages, but messages array is empty",
-        );
-      }
-      return this;
-    },
-
-    toHaveLength(expected: number) {
-      const match = result.messages.length === expected;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected message count to not be ${expected}, got ${result.messages.length}`
-            : buildCountError(expected, result.messages.length, "messages"),
-        );
-      }
-      return this;
-    },
-
-    toHaveLengthGreaterThanOrEqual(min: number) {
-      const match = result.messages.length >= min;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected message count to not be >= ${min}, got ${result.messages.length}`
-            : buildCountAtLeastError(min, result.messages.length, "messages"),
-        );
-      }
-      return this;
-    },
-
-    toHaveLengthLessThanOrEqual(max: number) {
-      const match = result.messages.length <= max;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected message count to not be <= ${max}, got ${result.messages.length}`
-            : buildCountAtMostError(max, result.messages.length, "messages"),
-        );
-      }
-      return this;
-    },
-
-    toMatchObject(
-      subset: { body?: string; attributes?: Record<string, string> },
-    ) {
-      const found = result.messages.some((msg) => {
-        if (subset.body !== undefined && !msg.body.includes(subset.body)) {
-          return false;
-        }
-        if (subset.attributes !== undefined) {
-          for (const [key, value] of Object.entries(subset.attributes)) {
-            if (msg.attributes[key] !== value) {
-              return false;
-            }
-          }
-        }
-        return true;
-      });
-
-      if (negate ? found : !found) {
-        throw new Error(
-          negate
-            ? `Expected no message to contain ${
-              JSON.stringify(subset)
-            }, but found one`
-            : `Expected at least one message to contain ${
-              JSON.stringify(subset)
-            }`,
-        );
-      }
-      return this;
-    },
-
-    toSatisfy(matcher: (messages: SqsMessages) => void) {
-      matcher(result.messages);
-      return this;
-    },
-
-    ...createDurationMethods(result.duration, negate),
-  };
-
-  return self;
+  return mixin.defineExpectation((negate) => [
+    mixin.createOkMixin(
+      () => result.ok,
+      negate,
+      { valueName: "receive result" },
+    ),
+    // Messages
+    mixin.createValueMixin(
+      () => result.messages,
+      negate,
+      { valueName: "messages" },
+    ),
+    mixin.createArrayValueMixin(
+      () => result.messages,
+      negate,
+      { valueName: "messages" },
+    ),
+    // Message count
+    mixin.createValueMixin(
+      () => result.messages.length,
+      negate,
+      { valueName: "messages count" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.messages.length,
+      negate,
+      { valueName: "messages count" },
+    ),
+    // Duration
+    mixin.createValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+  ]);
 }

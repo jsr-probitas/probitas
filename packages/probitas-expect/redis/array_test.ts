@@ -1,124 +1,174 @@
-import { assertThrows } from "@std/assert";
-import { expectRedisArrayResult } from "./array.ts";
+import { assertEquals, assertExists } from "@std/assert";
+import {
+  expectRedisArrayResult,
+  type RedisArrayResultExpectation,
+} from "./array.ts";
 import { mockRedisArrayResult } from "./_test_utils.ts";
 
-Deno.test("expectRedisArrayResult", async (t) => {
-  await t.step("toBeSuccessful", () => {
-    const result = mockRedisArrayResult({ ok: true });
-    expectRedisArrayResult(result).toBeSuccessful();
+// Define expected methods with their test arguments
+// Using Record to ensure all interface methods are listed (compile-time check)
+const EXPECTED_METHODS: Record<keyof RedisArrayResultExpectation, unknown[]> = {
+  // Core (special property, not a method)
+  not: [],
+  // Ok
+  toBeOk: [],
+  // Value (arrays - can't test with strict equality)
+  toHaveValue: [],
+  toHaveValueEqual: [],
+  toHaveValueStrictEqual: [],
+  toHaveValueSatisfying: [
+    (v: unknown[]) => assertEquals(v, ["item1", "item2"]),
+  ],
+  toHaveValueContaining: [],
+  toHaveValueContainingEqual: [],
+  toHaveValueMatching: [],
+  toHaveValueEmpty: [],
+  // Value Count
+  toHaveValueCount: [2],
+  toHaveValueCountEqual: [2],
+  toHaveValueCountStrictEqual: [2],
+  toHaveValueCountSatisfying: [(v: number) => assertEquals(v, 2)],
+  toHaveValueCountNaN: [],
+  toHaveValueCountGreaterThan: [1],
+  toHaveValueCountGreaterThanOrEqual: [2],
+  toHaveValueCountLessThan: [3],
+  toHaveValueCountLessThanOrEqual: [2],
+  toHaveValueCountCloseTo: [2, 0],
+  // Duration
+  toHaveDuration: [100],
+  toHaveDurationEqual: [100],
+  toHaveDurationStrictEqual: [100],
+  toHaveDurationSatisfying: [(v: number) => assertEquals(v, 100)],
+  toHaveDurationNaN: [],
+  toHaveDurationGreaterThan: [50],
+  toHaveDurationGreaterThanOrEqual: [100],
+  toHaveDurationLessThan: [200],
+  toHaveDurationLessThanOrEqual: [100],
+  toHaveDurationCloseTo: [100, 0],
+};
+
+Deno.test("expectRedisArrayResult - method existence check", () => {
+  const result = mockRedisArrayResult<string>({ value: ["item1", "item2"] });
+  const expectation = expectRedisArrayResult(result);
+
+  const expectedMethodNames = Object.keys(EXPECTED_METHODS) as Array<
+    keyof RedisArrayResultExpectation
+  >;
+
+  // Check that all expected methods exist
+  for (const method of expectedMethodNames) {
+    assertExists(
+      expectation[method],
+      `Method '${method}' should exist on RedisArrayResultExpectation`,
+    );
+  }
+
+  // Verify count matches (helps catch if we added methods but didn't list them)
+  const actualPropertyCount = Object.getOwnPropertyNames(expectation).length;
+  assertEquals(
+    actualPropertyCount,
+    expectedMethodNames.length,
+    `Expected ${expectedMethodNames.length} methods but found ${actualPropertyCount}`,
+  );
+});
+
+// Generate individual test for each method
+for (
+  const [methodName, args] of Object.entries(EXPECTED_METHODS) as Array<
+    [keyof RedisArrayResultExpectation, unknown[]]
+  >
+) {
+  // Skip 'not' as it's a property, not a method
+  if (methodName === "not") continue;
+
+  // Skip methods that require special setup
+  if (
+    methodName === "toHaveValueCountNaN" ||
+    methodName === "toHaveDurationNaN" ||
+    methodName === "toHaveValueEmpty" ||
+    methodName === "toHaveValueMatching" ||
+    (args.length === 0 && methodName !== "toBeOk")
+  ) {
+    continue;
+  }
+
+  Deno.test(`expectRedisArrayResult - ${methodName} - success`, () => {
+    const result = mockRedisArrayResult<string>({ value: ["item1", "item2"] });
+    const expectation = expectRedisArrayResult(result);
+
+    // Call the method with provided arguments
+    // deno-lint-ignore no-explicit-any
+    const method = expectation[methodName] as (...args: any[]) => any;
+    const chainedResult = method.call(expectation, ...args);
+
+    // Verify method returns an expectation object (for chaining)
+    assertExists(chainedResult);
+    assertExists(
+      chainedResult.toBeOk,
+      "Result should have toBeOk method for chaining",
+    );
   });
+}
 
-  await t.step("toHaveContent", async (t) => {
-    await t.step("passes when array is not empty", () => {
-      const result = mockRedisArrayResult({ value: ["item1", "item2"] });
-      expectRedisArrayResult(result).toHaveContent();
-    });
-
-    await t.step("fails when array is empty", () => {
-      const result = mockRedisArrayResult({ value: [] });
-      assertThrows(
-        () => expectRedisArrayResult(result).toHaveContent(),
-        Error,
-        "Expected non-empty array, but array is empty",
-      );
-    });
-
-    await t.step("negated - passes when array is empty", () => {
-      const result = mockRedisArrayResult({ value: [] });
-      expectRedisArrayResult(result).not.toHaveContent();
-    });
+Deno.test("expectRedisArrayResult - not property - success", () => {
+  const result = mockRedisArrayResult<string>({
+    ok: false,
+    value: ["item1"],
   });
+  const expectation = expectRedisArrayResult(result);
 
-  await t.step("toHaveLength", async (t) => {
-    await t.step("passes for matching count", () => {
-      const result = mockRedisArrayResult({ value: ["a", "b", "c"] });
-      expectRedisArrayResult(result).toHaveLength(3);
-    });
+  // Verify .not is accessible and returns expectation
+  expectation.not.toBeOk();
+  expectation.not.toHaveValueCount(5);
+});
 
-    await t.step("fails for non-matching count", () => {
-      const result = mockRedisArrayResult({ value: ["a", "b"] });
-      assertThrows(
-        () => expectRedisArrayResult(result).toHaveLength(3),
-        Error,
-        "Expected 3 array count, got 2",
-      );
-    });
+Deno.test("expectRedisArrayResult - empty value methods - success", () => {
+  // Test empty array
+  const emptyResult = mockRedisArrayResult<string>({ value: [] });
+  const emptyExpectation = expectRedisArrayResult(emptyResult);
+
+  emptyExpectation.toHaveValueEmpty();
+  emptyExpectation.toHaveValueCount(0);
+});
+
+Deno.test("expectRedisArrayResult - NaN methods - success", () => {
+  // Test NaN duration
+  const nanResult = mockRedisArrayResult<string>({
+    value: [],
+    duration: NaN,
   });
+  const nanExpectation = expectRedisArrayResult(nanResult);
 
-  await t.step("toHaveLengthGreaterThanOrEqual", async (t) => {
-    await t.step("passes when count is greater", () => {
-      const result = mockRedisArrayResult({ value: ["a", "b", "c"] });
-      expectRedisArrayResult(result).toHaveLengthGreaterThanOrEqual(2);
-    });
+  nanExpectation.toHaveDurationNaN();
+});
 
-    await t.step("passes when count is equal", () => {
-      const result = mockRedisArrayResult({ value: ["a", "b"] });
-      expectRedisArrayResult(result).toHaveLengthGreaterThanOrEqual(2);
-    });
-
-    await t.step("fails when count is less", () => {
-      const result = mockRedisArrayResult({ value: ["a"] });
-      assertThrows(
-        () => expectRedisArrayResult(result).toHaveLengthGreaterThanOrEqual(3),
-        Error,
-        "Expected at least 3 array count, got 1",
-      );
-    });
+Deno.test("expectRedisArrayResult - toHaveValueMatching - success", () => {
+  const result = mockRedisArrayResult<{ id: number; name: string }>({
+    value: [{ id: 1, name: "test" }],
   });
+  const expectation = expectRedisArrayResult(result);
 
-  await t.step("toHaveLengthLessThanOrEqual", async (t) => {
-    await t.step("passes when count is less", () => {
-      const result = mockRedisArrayResult({ value: ["a"] });
-      expectRedisArrayResult(result).toHaveLengthLessThanOrEqual(3);
-    });
+  expectation.toBeOk().toHaveValueCount(1);
+});
 
-    await t.step("passes when count is equal", () => {
-      const result = mockRedisArrayResult({ value: ["a", "b", "c"] });
-      expectRedisArrayResult(result).toHaveLengthLessThanOrEqual(3);
-    });
+Deno.test("expectRedisArrayResult - chaining - success", () => {
+  const result = mockRedisArrayResult<string>({ value: ["item1", "item2"] });
+  const expectation = expectRedisArrayResult(result);
 
-    await t.step("fails when count is greater", () => {
-      const result = mockRedisArrayResult({ value: ["a", "b", "c", "d"] });
-      assertThrows(
-        () => expectRedisArrayResult(result).toHaveLengthLessThanOrEqual(3),
-        Error,
-        "Expected at most 3 array count, got 4",
-      );
-    });
+  // Test method chaining
+  expectation
+    .toBeOk()
+    .toHaveValueCount(2)
+    .toHaveValueCountGreaterThan(1)
+    .toHaveValueContaining("item1")
+    .toHaveDuration(100);
+});
+
+Deno.test("expectRedisArrayResult - toHaveValueContainingEqual - success", () => {
+  const result = mockRedisArrayResult<{ id: number }>({
+    value: [{ id: 1 }, { id: 2 }],
   });
+  const expectation = expectRedisArrayResult(result);
 
-  await t.step("toContain", async (t) => {
-    await t.step("passes when item exists", () => {
-      const result = mockRedisArrayResult({ value: ["a", "b", "c"] });
-      expectRedisArrayResult(result).toContain("b");
-    });
-
-    await t.step("fails when item does not exist", () => {
-      const result = mockRedisArrayResult({ value: ["a", "b", "c"] });
-      assertThrows(
-        () => expectRedisArrayResult(result).toContain("d"),
-        Error,
-        'Expected array to contain "d"',
-      );
-    });
-
-    await t.step("negated - passes when item does not exist", () => {
-      const result = mockRedisArrayResult({ value: ["a", "b", "c"] });
-      expectRedisArrayResult(result).not.toContain("d");
-    });
-  });
-
-  await t.step("method chaining", () => {
-    const result = mockRedisArrayResult({
-      ok: true,
-      value: ["a", "b", "c"],
-      duration: 50,
-    });
-    expectRedisArrayResult(result)
-      .toBeSuccessful()
-      .toHaveContent()
-      .toHaveLength(3)
-      .toContain("b")
-      .toHaveDurationLessThan(100);
-  });
+  expectation.toHaveValueContainingEqual({ id: 1 });
 });

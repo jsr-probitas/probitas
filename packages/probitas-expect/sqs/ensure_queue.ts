@@ -1,164 +1,155 @@
-import { createDurationMethods } from "../common.ts";
 import type { SqsEnsureQueueResult } from "@probitas/client-sqs";
+import * as mixin from "../mixin.ts";
 
+/**
+ * Fluent API for SQS ensure queue result validation.
+ *
+ * Provides chainable assertions for queue creation/retrieval results
+ * including queue URL.
+ */
 export interface SqsEnsureQueueResultExpectation {
   /**
    * Negates the next assertion.
    *
    * @example
    * ```ts
-   * expectSqsResult(ensureQueueResult).not.toBeSuccessful();
+   * expectSqsResult(ensureQueueResult).not.toBeOk();
    * ```
    */
   readonly not: this;
 
   /**
-   * Asserts that the ensure queue operation completed successfully.
-   *
-   * @example
-   * ```ts
-   * expectSqsResult(ensureQueueResult).toBeSuccessful();
-   * ```
+   * Asserts that the result is successful.
    */
-  toBeSuccessful(): this;
+  toBeOk(): this;
 
   /**
-   * Asserts that the queue URL is present in the result.
-   *
-   * @example
-   * ```ts
-   * expectSqsResult(ensureQueueResult).toHaveQueueUrl();
-   * ```
-   */
-  toHaveQueueUrl(): this;
-
-  /**
-   * Asserts that the queue URL matches the expected value.
-   *
+   * Asserts that the queue URL equals the expected value.
    * @param expected - The expected queue URL
-   * @example
-   * ```ts
-   * expectSqsResult(ensureQueueResult).toHaveQueueUrl(
-   *   "http://localhost:4566/000000000000/my-queue"
-   * );
-   * ```
    */
-  toHaveQueueUrl(expected: string): this;
+  toHaveQueueUrl(expected: unknown): this;
 
   /**
-   * Asserts that the queue URL contains the given substring.
-   *
-   * @param substring - The substring to search for in the queue URL
-   * @example
-   * ```ts
-   * expectSqsResult(ensureQueueResult).toHaveQueueUrlContaining("my-queue");
-   * ```
+   * Asserts that the queue URL equals the expected value using deep equality.
+   * @param expected - The expected queue URL
    */
-  toHaveQueueUrlContaining(substring: string): this;
+  toHaveQueueUrlEqual(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is less than the specified threshold.
-   *
-   * @param ms - Maximum duration in milliseconds
-   * @example
-   * ```ts
-   * expectSqsResult(ensureQueueResult).toHaveDurationLessThan(2000);
-   * ```
+   * Asserts that the queue URL strictly equals the expected value.
+   * @param expected - The expected queue URL
    */
-  toHaveDurationLessThan(ms: number): this;
+  toHaveQueueUrlStrictEqual(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is less than or equal to the specified threshold.
-   *
-   * @param ms - Maximum duration in milliseconds (inclusive)
-   * @example
-   * ```ts
-   * expectSqsResult(ensureQueueResult).toHaveDurationLessThanOrEqual(2000);
-   * ```
+   * Asserts that the queue URL satisfies the provided matcher function.
+   * @param matcher - A function that receives the queue URL and performs assertions
    */
-  toHaveDurationLessThanOrEqual(ms: number): this;
+  toHaveQueueUrlSatisfying(matcher: (value: string) => void): this;
 
   /**
-   * Asserts that the operation duration is greater than the specified threshold.
-   *
-   * @param ms - Minimum duration in milliseconds
-   * @example
-   * ```ts
-   * expectSqsResult(ensureQueueResult).toHaveDurationGreaterThan(100);
-   * ```
+   * Asserts that the queue URL contains the specified substring.
+   * @param substr - The substring to search for
    */
-  toHaveDurationGreaterThan(ms: number): this;
+  toHaveQueueUrlContaining(substr: string): this;
 
   /**
-   * Asserts that the operation duration is greater than or equal to the specified threshold.
-   *
-   * @param ms - Minimum duration in milliseconds (inclusive)
-   * @example
-   * ```ts
-   * expectSqsResult(ensureQueueResult).toHaveDurationGreaterThanOrEqual(100);
-   * ```
+   * Asserts that the queue URL matches the specified regular expression.
+   * @param expected - The regular expression to match against
    */
-  toHaveDurationGreaterThanOrEqual(ms: number): this;
+  toHaveQueueUrlMatching(expected: RegExp): this;
+
+  /**
+   * Asserts that the duration equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDuration(expected: unknown): this;
+
+  /**
+   * Asserts that the duration equals the expected value using deep equality.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration strictly equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration satisfies the provided matcher function.
+   * @param matcher - A function that receives the duration and performs assertions
+   */
+  toHaveDurationSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the duration is NaN.
+   */
+  toHaveDurationNaN(): this;
+
+  /**
+   * Asserts that the duration is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveDurationCloseTo(expected: number, numDigits?: number): this;
 }
 
 export function expectSqsEnsureQueueResult(
   result: SqsEnsureQueueResult,
-  negate = false,
 ): SqsEnsureQueueResultExpectation {
-  const self: SqsEnsureQueueResultExpectation = {
-    get not(): SqsEnsureQueueResultExpectation {
-      return expectSqsEnsureQueueResult(result, !negate);
-    },
-
-    toBeSuccessful() {
-      const isSuccess = result.ok;
-      if (negate ? isSuccess : !isSuccess) {
-        throw new Error(
-          negate
-            ? "Expected not ok result, but ok is true"
-            : "Expected ok result, but ok is false",
-        );
-      }
-      return this;
-    },
-
-    toHaveQueueUrl(expected?: string) {
-      if (expected !== undefined) {
-        const match = result.queueUrl === expected;
-        if (negate ? match : !match) {
-          throw new Error(
-            negate
-              ? `Expected queueUrl to not be "${expected}", got "${result.queueUrl}"`
-              : `Expected queueUrl "${expected}", got "${result.queueUrl}"`,
-          );
-        }
-      } else {
-        const hasUrl = !!result.queueUrl;
-        if (negate ? hasUrl : !hasUrl) {
-          throw new Error(
-            negate
-              ? "Expected no queueUrl, but queueUrl exists"
-              : "Expected queueUrl, but queueUrl is empty",
-          );
-        }
-      }
-      return this;
-    },
-
-    toHaveQueueUrlContaining(substring: string) {
-      const contains = result.queueUrl.includes(substring);
-      if (negate ? contains : !contains) {
-        throw new Error(
-          negate
-            ? `Expected queueUrl to not contain "${substring}", got "${result.queueUrl}"`
-            : `Expected queueUrl to contain "${substring}", got "${result.queueUrl}"`,
-        );
-      }
-      return this;
-    },
-
-    ...createDurationMethods(result.duration, negate),
-  };
-
-  return self;
+  return mixin.defineExpectation((negate) => [
+    mixin.createOkMixin(
+      () => result.ok,
+      negate,
+      { valueName: "ensure queue result" },
+    ),
+    // Queue url
+    mixin.createValueMixin(
+      () => result.queueUrl,
+      negate,
+      { valueName: "queue url" },
+    ),
+    mixin.createStringValueMixin(
+      () => result.queueUrl,
+      negate,
+      { valueName: "queue url" },
+    ),
+    // Duration
+    mixin.createValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+  ]);
 }

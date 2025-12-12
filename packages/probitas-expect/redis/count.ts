@@ -1,148 +1,179 @@
-import {
-  buildCountAtLeastError,
-  buildCountAtMostError,
-  buildCountError,
-} from "../common.ts";
 import type { RedisCountResult } from "@probitas/client-redis";
-import {
-  expectRedisResultBase,
-  type RedisResultExpectation,
-} from "./result.ts";
+import * as mixin from "../mixin.ts";
 
 /**
  * Fluent API for Redis count result validation.
  *
- * Extends {@linkcode RedisResultExpectation} with additional assertions
- * specific to count-based results (e.g., DEL, LPUSH, SCARD operations).
+ * Provides chainable assertions specifically designed for count-based results
+ * (e.g., DEL, LPUSH, SCARD operations).
  */
-export interface RedisCountResultExpectation
-  extends RedisResultExpectation<number> {
+export interface RedisCountResultExpectation {
   /**
    * Negates the next assertion.
    *
    * @example
    * ```ts
-   * expectRedisResult(result).not.toHaveLength(0);
+   * expectRedisResult(result).not.toHaveValue(0);
    * ```
    */
   readonly not: this;
 
   /**
-   * Asserts that the count equals the expected value.
-   *
-   * @param expected - The expected count value
-   * @example
-   * ```ts
-   * expectRedisResult(result).toHaveLength(5);
-   * ```
+   * Asserts that the result is successful.
    */
-  toHaveLength(expected: number): this;
+  toBeOk(): this;
 
   /**
-   * Asserts that the count is greater than or equal to the minimum value.
-   *
-   * @param min - The minimum count value (inclusive)
-   * @example
-   * ```ts
-   * expectRedisResult(result).toHaveLengthGreaterThanOrEqual(1);
-   * ```
+   * Asserts that the value equals the expected value.
+   * @param expected - The expected value
    */
-  toHaveLengthGreaterThanOrEqual(min: number): this;
+  toHaveValue(expected: unknown): this;
 
   /**
-   * Asserts that the count is less than or equal to the maximum value.
-   *
-   * @param max - The maximum count value (inclusive)
-   * @example
-   * ```ts
-   * expectRedisResult(result).toHaveLengthLessThanOrEqual(10);
-   * ```
+   * Asserts that the value equals the expected value using deep equality.
+   * @param expected - The expected value
    */
-  toHaveLengthLessThanOrEqual(max: number): this;
+  toHaveValueEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the value strictly equals the expected value.
+   * @param expected - The expected value
+   */
+  toHaveValueStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the value satisfies the provided matcher function.
+   * @param matcher - A function that receives the value and performs assertions
+   */
+  toHaveValueSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the value is NaN.
+   */
+  toHaveValueNaN(): this;
+
+  /**
+   * Asserts that the value is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveValueGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the value is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveValueGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the value is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveValueLessThan(expected: number): this;
+
+  /**
+   * Asserts that the value is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveValueLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the value is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveValueCloseTo(expected: number, numDigits?: number): this;
+
+  /**
+   * Asserts that the duration equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDuration(expected: unknown): this;
+
+  /**
+   * Asserts that the duration equals the expected value using deep equality.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration strictly equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration satisfies the provided matcher function.
+   * @param matcher - A function that receives the duration and performs assertions
+   */
+  toHaveDurationSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the duration is NaN.
+   */
+  toHaveDurationNaN(): this;
+
+  /**
+   * Asserts that the duration is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveDurationCloseTo(expected: number, numDigits?: number): this;
 }
 
 export function expectRedisCountResult(
   result: RedisCountResult,
-  negate = false,
 ): RedisCountResultExpectation {
-  const base = expectRedisResultBase(result, negate);
-
-  const self: RedisCountResultExpectation = {
-    get not(): RedisCountResultExpectation {
-      return expectRedisCountResult(result, !negate);
-    },
-
-    toBeSuccessful() {
-      base.toBeSuccessful();
-      return this;
-    },
-
-    toHaveData(expected: number) {
-      base.toHaveData(expected);
-      return this;
-    },
-
-    toSatisfy(matcher: (value: number) => void) {
-      base.toSatisfy(matcher);
-      return this;
-    },
-
-    toHaveDurationLessThan(ms: number) {
-      base.toHaveDurationLessThan(ms);
-      return this;
-    },
-
-    toHaveDurationLessThanOrEqual(ms: number) {
-      base.toHaveDurationLessThanOrEqual(ms);
-      return this;
-    },
-
-    toHaveDurationGreaterThan(ms: number) {
-      base.toHaveDurationGreaterThan(ms);
-      return this;
-    },
-
-    toHaveDurationGreaterThanOrEqual(ms: number) {
-      base.toHaveDurationGreaterThanOrEqual(ms);
-      return this;
-    },
-
-    toHaveLength(expected: number) {
-      const match = result.value === expected;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected count to not be ${expected}, got ${result.value}`
-            : buildCountError(expected, result.value, "count"),
-        );
-      }
-      return this;
-    },
-
-    toHaveLengthGreaterThanOrEqual(min: number) {
-      const match = result.value >= min;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected count to not be >= ${min}, got ${result.value}`
-            : buildCountAtLeastError(min, result.value, "count"),
-        );
-      }
-      return this;
-    },
-
-    toHaveLengthLessThanOrEqual(max: number) {
-      const match = result.value <= max;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected count to not be <= ${max}, got ${result.value}`
-            : buildCountAtMostError(max, result.value, "count"),
-        );
-      }
-      return this;
-    },
-  };
-
-  return self;
+  return mixin.defineExpectation((negate) => [
+    mixin.createOkMixin(
+      () => result.ok,
+      negate,
+      { valueName: "count result" },
+    ),
+    // Value
+    mixin.createValueMixin(
+      () => result.value,
+      negate,
+      { valueName: "value" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.value,
+      negate,
+      { valueName: "value" },
+    ),
+    // Duration
+    mixin.createValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+  ]);
 }

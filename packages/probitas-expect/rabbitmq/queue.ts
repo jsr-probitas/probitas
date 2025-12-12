@@ -1,12 +1,11 @@
-import {
-  buildCountAtLeastError,
-  buildCountError,
-  createDurationMethods,
-} from "../common.ts";
 import type { RabbitMqQueueResult } from "@probitas/client-rabbitmq";
+import * as mixin from "../mixin.ts";
 
 /**
  * Fluent API for RabbitMQ queue result validation.
+ *
+ * Provides chainable assertions specifically designed for queue declaration results
+ * (e.g., assertQueue, checkQueue operations).
  */
 export interface RabbitMqQueueResultExpectation {
   /**
@@ -14,319 +13,285 @@ export interface RabbitMqQueueResultExpectation {
    *
    * @example
    * ```ts
-   * expectRabbitMqResult(result).not.toBeSuccessful();
+   * expectRabbitMqResult(result).not.toBeOk();
    * ```
    */
   readonly not: this;
 
   /**
-   * Asserts that the result ok is true.
-   *
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toBeSuccessful();
-   * ```
+   * Asserts that the result is successful.
    */
-  toBeSuccessful(): this;
+  toBeOk(): this;
 
   /**
-   * Asserts that the queue message count equals the expected value.
-   *
-   * @param count - The expected message count
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toHaveMessageCount(10);
-   * ```
+   * Asserts that the queue name equals the expected value.
+   * @param expected - The expected queue name
    */
-  toHaveMessageCount(count: number): this;
+  toHaveQueue(expected: unknown): this;
 
   /**
-   * Asserts that the queue message count is greater than the specified value.
-   *
-   * @param count - The value to compare against
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toHaveMessageCountGreaterThan(5);
-   * ```
+   * Asserts that the queue name equals the expected value using deep equality.
+   * @param expected - The expected queue name
    */
-  toHaveMessageCountGreaterThan(count: number): this;
+  toHaveQueueEqual(expected: unknown): this;
 
   /**
-   * Asserts that the queue message count is greater than or equal to the specified minimum.
-   *
-   * @param min - The minimum message count
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toHaveMessageCountGreaterThanOrEqual(5);
-   * ```
+   * Asserts that the queue name strictly equals the expected value.
+   * @param expected - The expected queue name
    */
-  toHaveMessageCountGreaterThanOrEqual(min: number): this;
+  toHaveQueueStrictEqual(expected: unknown): this;
 
   /**
-   * Asserts that the queue message count is less than the specified value.
-   *
-   * @param count - The value to compare against
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toHaveMessageCountLessThan(100);
-   * ```
+   * Asserts that the queue name satisfies the provided matcher function.
+   * @param matcher - A function that receives the queue name and performs assertions
    */
-  toHaveMessageCountLessThan(count: number): this;
+  toHaveQueueSatisfying(matcher: (value: string) => void): this;
 
   /**
-   * Asserts that the queue message count is less than or equal to the specified value.
-   *
-   * @param count - The value to compare against
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toHaveMessageCountLessThanOrEqual(100);
-   * ```
+   * Asserts that the queue name contains the specified substring.
+   * @param substr - The substring to search for
    */
-  toHaveMessageCountLessThanOrEqual(count: number): this;
+  toHaveQueueContaining(substr: string): this;
 
   /**
-   * Asserts that the queue consumer count equals the expected value.
-   *
-   * @param count - The expected consumer count
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toHaveConsumerCount(3);
-   * ```
+   * Asserts that the queue name matches the specified regular expression.
+   * @param expected - The regular expression to match against
    */
-  toHaveConsumerCount(count: number): this;
+  toHaveQueueMatching(expected: RegExp): this;
 
   /**
-   * Asserts that the queue consumer count is greater than the specified value.
-   *
-   * @param count - The value to compare against
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toHaveConsumerCountGreaterThan(1);
-   * ```
+   * Asserts that the message count equals the expected value.
+   * @param expected - The expected message count
    */
-  toHaveConsumerCountGreaterThan(count: number): this;
+  toHaveMessageCount(expected: unknown): this;
 
   /**
-   * Asserts that the queue consumer count is greater than or equal to the specified value.
-   *
-   * @param count - The value to compare against
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toHaveConsumerCountGreaterThanOrEqual(2);
-   * ```
+   * Asserts that the message count equals the expected value using deep equality.
+   * @param expected - The expected message count
    */
-  toHaveConsumerCountGreaterThanOrEqual(count: number): this;
+  toHaveMessageCountEqual(expected: unknown): this;
 
   /**
-   * Asserts that the queue consumer count is less than the specified value.
-   *
-   * @param count - The value to compare against
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toHaveConsumerCountLessThan(10);
-   * ```
+   * Asserts that the message count strictly equals the expected value.
+   * @param expected - The expected message count
    */
-  toHaveConsumerCountLessThan(count: number): this;
+  toHaveMessageCountStrictEqual(expected: unknown): this;
 
   /**
-   * Asserts that the queue consumer count is less than or equal to the specified value.
-   *
-   * @param count - The value to compare against
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toHaveConsumerCountLessThanOrEqual(10);
-   * ```
+   * Asserts that the message count satisfies the provided matcher function.
+   * @param matcher - A function that receives the message count and performs assertions
    */
-  toHaveConsumerCountLessThanOrEqual(count: number): this;
+  toHaveMessageCountSatisfying(matcher: (value: number) => void): this;
 
   /**
-   * Asserts that the operation duration is less than the specified threshold.
-   *
-   * @param ms - The threshold in milliseconds
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toHaveDurationLessThan(100);
-   * ```
+   * Asserts that the message count is NaN.
    */
-  toHaveDurationLessThan(ms: number): this;
+  toHaveMessageCountNaN(): this;
 
   /**
-   * Asserts that the operation duration is less than or equal to the specified threshold.
-   *
-   * @param ms - The threshold in milliseconds
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toHaveDurationLessThanOrEqual(100);
-   * ```
+   * Asserts that the message count is greater than the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveDurationLessThanOrEqual(ms: number): this;
+  toHaveMessageCountGreaterThan(expected: number): this;
 
   /**
-   * Asserts that the operation duration is greater than the specified threshold.
-   *
-   * @param ms - The threshold in milliseconds
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toHaveDurationGreaterThan(50);
-   * ```
+   * Asserts that the message count is greater than or equal to the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveDurationGreaterThan(ms: number): this;
+  toHaveMessageCountGreaterThanOrEqual(expected: number): this;
 
   /**
-   * Asserts that the operation duration is greater than or equal to the specified threshold.
-   *
-   * @param ms - The threshold in milliseconds
-   * @example
-   * ```ts
-   * expectRabbitMqResult(result).toHaveDurationGreaterThanOrEqual(50);
-   * ```
+   * Asserts that the message count is less than the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveDurationGreaterThanOrEqual(ms: number): this;
+  toHaveMessageCountLessThan(expected: number): this;
+
+  /**
+   * Asserts that the message count is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveMessageCountLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the message count is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveMessageCountCloseTo(expected: number, numDigits?: number): this;
+
+  /**
+   * Asserts that the consumer count equals the expected value.
+   * @param expected - The expected consumer count
+   */
+  toHaveConsumerCount(expected: unknown): this;
+
+  /**
+   * Asserts that the consumer count equals the expected value using deep equality.
+   * @param expected - The expected consumer count
+   */
+  toHaveConsumerCountEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the consumer count strictly equals the expected value.
+   * @param expected - The expected consumer count
+   */
+  toHaveConsumerCountStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the consumer count satisfies the provided matcher function.
+   * @param matcher - A function that receives the consumer count and performs assertions
+   */
+  toHaveConsumerCountSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the consumer count is NaN.
+   */
+  toHaveConsumerCountNaN(): this;
+
+  /**
+   * Asserts that the consumer count is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveConsumerCountGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the consumer count is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveConsumerCountGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the consumer count is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveConsumerCountLessThan(expected: number): this;
+
+  /**
+   * Asserts that the consumer count is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveConsumerCountLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the consumer count is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveConsumerCountCloseTo(expected: number, numDigits?: number): this;
+
+  /**
+   * Asserts that the duration equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDuration(expected: unknown): this;
+
+  /**
+   * Asserts that the duration equals the expected value using deep equality.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration strictly equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration satisfies the provided matcher function.
+   * @param matcher - A function that receives the duration and performs assertions
+   */
+  toHaveDurationSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the duration is NaN.
+   */
+  toHaveDurationNaN(): this;
+
+  /**
+   * Asserts that the duration is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveDurationCloseTo(expected: number, numDigits?: number): this;
 }
 
 export function expectRabbitMqQueueResult(
   result: RabbitMqQueueResult,
-  negate = false,
 ): RabbitMqQueueResultExpectation {
-  const self: RabbitMqQueueResultExpectation = {
-    get not(): RabbitMqQueueResultExpectation {
-      return expectRabbitMqQueueResult(result, !negate);
-    },
-
-    toBeSuccessful() {
-      const isSuccess = result.ok;
-      if (negate ? isSuccess : !isSuccess) {
-        throw new Error(
-          negate
-            ? "Expected not ok result, but ok is true"
-            : "Expected ok result, but ok is false",
-        );
-      }
-      return this;
-    },
-
-    toHaveMessageCount(count: number) {
-      const match = result.messageCount === count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected message count to not be ${count}, got ${result.messageCount}`
-            : buildCountError(count, result.messageCount, "message count"),
-        );
-      }
-      return this;
-    },
-
-    toHaveMessageCountGreaterThan(count: number) {
-      const match = result.messageCount > count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected message count to not be > ${count}, got ${result.messageCount}`
-            : `Expected message count > ${count}, but got ${result.messageCount}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveMessageCountGreaterThanOrEqual(min: number) {
-      const match = result.messageCount >= min;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected message count to not be >= ${min}, got ${result.messageCount}`
-            : buildCountAtLeastError(min, result.messageCount, "message count"),
-        );
-      }
-      return this;
-    },
-
-    toHaveMessageCountLessThan(count: number) {
-      const match = result.messageCount < count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected message count to not be < ${count}, got ${result.messageCount}`
-            : `Expected message count < ${count}, but got ${result.messageCount}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveMessageCountLessThanOrEqual(count: number) {
-      const match = result.messageCount <= count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected message count to not be <= ${count}, got ${result.messageCount}`
-            : `Expected message count <= ${count}, but got ${result.messageCount}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveConsumerCount(count: number) {
-      const match = result.consumerCount === count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected consumer count to not be ${count}, got ${result.consumerCount}`
-            : buildCountError(count, result.consumerCount, "consumer count"),
-        );
-      }
-      return this;
-    },
-
-    toHaveConsumerCountGreaterThan(count: number) {
-      const match = result.consumerCount > count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected consumer count to not be > ${count}, got ${result.consumerCount}`
-            : `Expected consumer count > ${count}, but got ${result.consumerCount}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveConsumerCountGreaterThanOrEqual(count: number) {
-      const match = result.consumerCount >= count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected consumer count to not be >= ${count}, got ${result.consumerCount}`
-            : `Expected consumer count >= ${count}, but got ${result.consumerCount}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveConsumerCountLessThan(count: number) {
-      const match = result.consumerCount < count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected consumer count to not be < ${count}, got ${result.consumerCount}`
-            : `Expected consumer count < ${count}, but got ${result.consumerCount}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveConsumerCountLessThanOrEqual(count: number) {
-      const match = result.consumerCount <= count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected consumer count to not be <= ${count}, got ${result.consumerCount}`
-            : `Expected consumer count <= ${count}, but got ${result.consumerCount}`,
-        );
-      }
-      return this;
-    },
-
-    ...createDurationMethods(result.duration, negate),
-  };
-
-  return self;
+  return mixin.defineExpectation((negate) => [
+    mixin.createOkMixin(
+      () => result.ok,
+      negate,
+      { valueName: "queue result" },
+    ),
+    // Queue
+    mixin.createValueMixin(
+      () => result.queue,
+      negate,
+      { valueName: "queue" },
+    ),
+    mixin.createStringValueMixin(
+      () => result.queue,
+      negate,
+      { valueName: "queue" },
+    ),
+    // Message count
+    mixin.createValueMixin(
+      () => result.messageCount,
+      negate,
+      { valueName: "message count" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.messageCount,
+      negate,
+      { valueName: "message count" },
+    ),
+    // Consumer count
+    mixin.createValueMixin(
+      () => result.consumerCount,
+      negate,
+      { valueName: "consumer count" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.consumerCount,
+      negate,
+      { valueName: "consumer count" },
+    ),
+    // Duration
+    mixin.createValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+  ]);
 }

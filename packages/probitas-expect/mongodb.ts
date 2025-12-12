@@ -13,9 +13,13 @@ import {
   type MongoFindResultExpectation,
 } from "./mongodb/find.ts";
 import {
-  expectMongoInsertResult,
-  type MongoInsertResultExpectation,
-} from "./mongodb/insert.ts";
+  expectMongoInsertOneResult,
+  type MongoInsertOneResultExpectation,
+} from "./mongodb/insert_one.ts";
+import {
+  expectMongoInsertManyResult,
+  type MongoInsertManyResultExpectation,
+} from "./mongodb/insert_many.ts";
 import {
   expectMongoUpdateResult,
   type MongoUpdateResultExpectation,
@@ -39,7 +43,8 @@ export type {
   MongoDeleteResultExpectation,
   MongoFindOneResultExpectation,
   MongoFindResultExpectation,
-  MongoInsertResultExpectation,
+  MongoInsertManyResultExpectation,
+  MongoInsertOneResultExpectation,
   MongoUpdateResultExpectation,
 };
 
@@ -48,8 +53,8 @@ export type {
  */
 export type MongoExpectation<R extends MongoResult> = R extends
   MongoFindResult<infer T> ? MongoFindResultExpectation<T>
-  : R extends MongoInsertOneResult ? MongoInsertResultExpectation
-  : R extends MongoInsertManyResult ? MongoInsertResultExpectation
+  : R extends MongoInsertOneResult ? MongoInsertOneResultExpectation
+  : R extends MongoInsertManyResult ? MongoInsertManyResultExpectation
   : R extends MongoUpdateResult ? MongoUpdateResultExpectation
   : R extends MongoDeleteResult ? MongoDeleteResultExpectation
   : R extends MongoFindOneResult<infer T> ? MongoFindOneResultExpectation<T>
@@ -66,41 +71,45 @@ export type MongoExpectation<R extends MongoResult> = R extends
  * ```ts
  * // For find result - returns MongoFindResultExpectation
  * const findResult = await users.find({ age: { $gte: 30 } });
- * expectMongoResult(findResult).toBeSuccessful().toHaveContent().toHaveLength(2);
+ * expectMongoResult(findResult).toBeOk().toHaveContent().toHaveLength(2);
  *
  * // For insert result - returns MongoInsertResultExpectation
  * const insertResult = await users.insertOne({ name: "Alice", age: 30 });
- * expectMongoResult(insertResult).toBeSuccessful().toHaveInsertedId();
+ * expectMongoResult(insertResult).toBeOk().toHaveInsertedId();
  *
  * // For update result - returns MongoUpdateResultExpectation
  * const updateResult = await users.updateOne({ name: "Alice" }, { $set: { age: 31 } });
- * expectMongoResult(updateResult).toBeSuccessful().toHaveMatchedCount(1).toHaveModifiedCount(1);
+ * expectMongoResult(updateResult).toBeOk().toHaveMatchedCount(1).toHaveModifiedCount(1);
  *
  * // For delete result - returns MongoDeleteResultExpectation
  * const deleteResult = await users.deleteOne({ name: "Alice" });
- * expectMongoResult(deleteResult).toBeSuccessful().toHaveDeletedCount(1);
+ * expectMongoResult(deleteResult).toBeOk().toHaveDeletedCount(1);
  *
  * // For findOne result - returns MongoFindOneResultExpectation
  * const findOneResult = await users.findOne({ name: "Alice" });
- * expectMongoResult(findOneResult).toBeSuccessful().toHaveContent().toMatchObject({ name: "Alice" });
+ * expectMongoResult(findOneResult).toBeOk().toHaveContent().toMatchObject({ name: "Alice" });
  *
  * // For count result - returns MongoCountResultExpectation
  * const countResult = await users.countDocuments();
- * expectMongoResult(countResult).toBeSuccessful().toHaveLength(10);
+ * expectMongoResult(countResult).toBeOk().toHaveLength(10);
  * ```
  */
 // deno-lint-ignore no-explicit-any
 export function expectMongoResult<R extends MongoResult<any>>(
   result: R,
 ): MongoExpectation<R> {
-  switch (result.type) {
+  switch (result.kind) {
     case "mongo:find":
       return expectMongoFindResult(
         result as MongoFindResult,
       ) as unknown as MongoExpectation<R>;
-    case "mongo:insert":
-      return expectMongoInsertResult(
-        result as MongoInsertOneResult | MongoInsertManyResult,
+    case "mongo:insert-one":
+      return expectMongoInsertOneResult(
+        result as MongoInsertOneResult,
+      ) as unknown as MongoExpectation<R>;
+    case "mongo:insert-many":
+      return expectMongoInsertManyResult(
+        result as MongoInsertManyResult,
       ) as unknown as MongoExpectation<R>;
     case "mongo:update":
       return expectMongoUpdateResult(
@@ -120,7 +129,7 @@ export function expectMongoResult<R extends MongoResult<any>>(
       ) as unknown as MongoExpectation<R>;
     default:
       throw new Error(
-        `Unknown MongoDB result type: ${(result as { type: string }).type}`,
+        `Unknown MongoDB result kind: ${(result as { kind: string }).kind}`,
       );
   }
 }

@@ -1,16 +1,10 @@
-import {
-  buildCountAtLeastError,
-  buildCountAtMostError,
-  buildCountError,
-  containsSubset,
-  createDurationMethods,
-} from "../common.ts";
-import type { MongoDocs, MongoFindResult } from "@probitas/client-mongodb";
+import type { MongoFindResult } from "@probitas/client-mongodb";
+import * as mixin from "../mixin.ts";
 
 /**
  * Fluent API for MongoDB find result validation.
  */
-export interface MongoFindResultExpectation<T> {
+export interface MongoFindResultExpectation<_T = unknown> {
   /**
    * Negates the next assertion.
    *
@@ -23,219 +17,221 @@ export interface MongoFindResultExpectation<T> {
   readonly not: this;
 
   /**
-   * Asserts that the find operation completed successfully.
-   *
-   * @example
-   * ```ts
-   * expectMongoResult(findResult).toBeSuccessful();
-   * ```
+   * Asserts that the find result is successful.
    */
-  toBeSuccessful(): this;
+  toBeOk(): this;
 
   /**
-   * Asserts that the result contains at least one document.
-   *
-   * @example
-   * ```ts
-   * expectMongoResult(findResult).toHaveContent();
-   * ```
+   * Asserts that the docs equal the expected value.
+   * @param expected - The expected docs value
    */
-  toHaveContent(): this;
+  toHaveDocs(expected: unknown): this;
 
   /**
-   * Asserts that the document count matches the expected value.
-   *
-   * @param expected - The expected number of documents
-   * @example
-   * ```ts
-   * expectMongoResult(findResult).toHaveLength(5);
-   * ```
+   * Asserts that the docs equal the expected value using deep equality.
+   * @param expected - The expected docs value
    */
-  toHaveLength(expected: number): this;
+  toHaveDocsEqual(expected: unknown): this;
 
   /**
-   * Asserts that the document count is at least the specified minimum.
-   *
-   * @param min - The minimum expected number of documents
-   * @example
-   * ```ts
-   * expectMongoResult(findResult).toHaveLengthGreaterThanOrEqual(3);
-   * ```
+   * Asserts that the docs strictly equal the expected value.
+   * @param expected - The expected docs value
    */
-  toHaveLengthGreaterThanOrEqual(min: number): this;
+  toHaveDocsStrictEqual(expected: unknown): this;
 
   /**
-   * Asserts that the document count is at most the specified maximum.
-   *
-   * @param max - The maximum expected number of documents
-   * @example
-   * ```ts
-   * expectMongoResult(findResult).toHaveLengthLessThanOrEqual(10);
-   * ```
+   * Asserts that the docs satisfy the provided matcher function.
+   * @param matcher - A function that receives the docs and performs assertions
    */
-  toHaveLengthLessThanOrEqual(max: number): this;
+  toHaveDocsSatisfying(matcher: (value: unknown[]) => void): this;
 
   /**
-   * Asserts that at least one document in the result contains the given subset of properties.
-   *
-   * @param subset - An object containing the properties to match
-   * @example
-   * ```ts
-   * expectMongoResult(findResult).toMatchObject({ name: "Alice", age: 30 });
-   * ```
+   * Asserts that the docs array contains the specified item.
+   * @param item - The item to search for
    */
-  toMatchObject(subset: Partial<T>): this;
+  toHaveDocsContaining(item: unknown): this;
 
   /**
-   * Asserts documents using a custom matcher function.
-   *
-   * @param matcher - A function that receives the array of documents and performs assertions
-   * @example
-   * ```ts
-   * expectMongoResult(findResult).toSatisfy((docs) => {
-   *   expect(docs.every((doc) => doc.age >= 18)).toBe(true);
-   * });
-   * ```
+   * Asserts that the docs array contains an item equal to the specified value.
+   * @param item - The item to search for using deep equality
    */
-  toSatisfy(matcher: (docs: MongoDocs<T>) => void): this;
+  toHaveDocsContainingEqual(item: unknown): this;
 
   /**
-   * Asserts that the operation duration is less than the specified threshold.
-   *
-   * @param ms - The maximum duration in milliseconds
-   * @example
-   * ```ts
-   * expectMongoResult(findResult).toHaveDurationLessThan(100);
-   * ```
+   * Asserts that the docs array matches the specified subset.
+   * @param subset - The subset to match against
    */
-  toHaveDurationLessThan(ms: number): this;
+  toHaveDocsMatching(
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
+  ): this;
 
   /**
-   * Asserts that the operation duration is less than or equal to the specified threshold.
-   *
-   * @param ms - The maximum duration in milliseconds
-   * @example
-   * ```ts
-   * expectMongoResult(findResult).toHaveDurationLessThanOrEqual(100);
-   * ```
+   * Asserts that the docs array is empty.
    */
-  toHaveDurationLessThanOrEqual(ms: number): this;
+  toHaveDocsEmpty(): this;
 
   /**
-   * Asserts that the operation duration is greater than the specified threshold.
-   *
-   * @param ms - The minimum duration in milliseconds
-   * @example
-   * ```ts
-   * expectMongoResult(findResult).toHaveDurationGreaterThan(50);
-   * ```
+   * Asserts that the docs count equals the expected value.
+   * @param expected - The expected docs count
    */
-  toHaveDurationGreaterThan(ms: number): this;
+  toHaveDocsCount(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is greater than or equal to the specified threshold.
-   *
-   * @param ms - The minimum duration in milliseconds
-   * @example
-   * ```ts
-   * expectMongoResult(findResult).toHaveDurationGreaterThanOrEqual(50);
-   * ```
+   * Asserts that the docs count equals the expected value using deep equality.
+   * @param expected - The expected docs count
    */
-  toHaveDurationGreaterThanOrEqual(ms: number): this;
+  toHaveDocsCountEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the docs count strictly equals the expected value.
+   * @param expected - The expected docs count
+   */
+  toHaveDocsCountStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the docs count satisfies the provided matcher function.
+   * @param matcher - A function that receives the docs count and performs assertions
+   */
+  toHaveDocsCountSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the docs count is NaN.
+   */
+  toHaveDocsCountNaN(): this;
+
+  /**
+   * Asserts that the docs count is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDocsCountGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the docs count is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDocsCountGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the docs count is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDocsCountLessThan(expected: number): this;
+
+  /**
+   * Asserts that the docs count is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDocsCountLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the docs count is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveDocsCountCloseTo(expected: number, numDigits?: number): this;
+
+  /**
+   * Asserts that the duration equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDuration(expected: unknown): this;
+
+  /**
+   * Asserts that the duration equals the expected value using deep equality.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration strictly equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration satisfies the provided matcher function.
+   * @param matcher - A function that receives the duration and performs assertions
+   */
+  toHaveDurationSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the duration is NaN.
+   */
+  toHaveDurationNaN(): this;
+
+  /**
+   * Asserts that the duration is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveDurationCloseTo(expected: number, numDigits?: number): this;
 }
 
 export function expectMongoFindResult<T>(
   result: MongoFindResult<T>,
-  negate = false,
-): MongoFindResultExpectation<T> {
-  const self: MongoFindResultExpectation<T> = {
-    get not(): MongoFindResultExpectation<T> {
-      return expectMongoFindResult(result, !negate);
-    },
-
-    toBeSuccessful() {
-      const isSuccess = result.ok;
-      if (negate ? isSuccess : !isSuccess) {
-        throw new Error(
-          negate
-            ? "Expected not ok result, but ok is true"
-            : "Expected ok result, but ok is false",
-        );
-      }
-      return this;
-    },
-
-    toHaveContent() {
-      const hasContent = result.docs.length > 0;
-      if (negate ? hasContent : !hasContent) {
-        throw new Error(
-          negate
-            ? `Expected no documents, got ${result.docs.length}`
-            : "Expected documents, but got none",
-        );
-      }
-      return this;
-    },
-
-    toHaveLength(expected: number) {
-      const match = result.docs.length === expected;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected document count to not be ${expected}, got ${result.docs.length}`
-            : buildCountError(expected, result.docs.length, "documents"),
-        );
-      }
-      return this;
-    },
-
-    toHaveLengthGreaterThanOrEqual(min: number) {
-      const match = result.docs.length >= min;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected document count to not be >= ${min}, got ${result.docs.length}`
-            : buildCountAtLeastError(min, result.docs.length, "documents"),
-        );
-      }
-      return this;
-    },
-
-    toHaveLengthLessThanOrEqual(max: number) {
-      const match = result.docs.length <= max;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected document count to not be <= ${max}, got ${result.docs.length}`
-            : buildCountAtMostError(max, result.docs.length, "documents"),
-        );
-      }
-      return this;
-    },
-
-    toMatchObject(subset: Partial<T>) {
-      const found = result.docs.some((doc) => containsSubset(doc, subset));
-      if (negate ? found : !found) {
-        throw new Error(
-          negate
-            ? `Expected no document to contain ${
-              JSON.stringify(subset)
-            }, but found one`
-            : `Expected at least one document to contain ${
-              JSON.stringify(subset)
-            }`,
-        );
-      }
-      return this;
-    },
-
-    toSatisfy(matcher: (docs: MongoDocs<T>) => void) {
-      matcher(result.docs);
-      return this;
-    },
-
-    ...createDurationMethods(result.duration, negate),
-  };
-
-  return self;
+): MongoFindResultExpectation {
+  return mixin.defineExpectation((negate) => [
+    mixin.createOkMixin(
+      () => result.ok,
+      negate,
+      { valueName: "find result" },
+    ),
+    // Docs
+    mixin.createValueMixin(
+      () => result.docs,
+      negate,
+      { valueName: "docs" },
+    ),
+    mixin.createArrayValueMixin(
+      () => result.docs,
+      negate,
+      { valueName: "docs" },
+    ),
+    // Docs count
+    mixin.createValueMixin(
+      () => result.docs.length,
+      negate,
+      { valueName: "docs count" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.docs.length,
+      negate,
+      { valueName: "docs count" },
+    ),
+    // Duration
+    mixin.createValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+  ]);
 }

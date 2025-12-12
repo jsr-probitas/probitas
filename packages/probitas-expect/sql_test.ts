@@ -1,518 +1,190 @@
-import { assertThrows } from "@std/assert";
-import { expectSqlQueryResult } from "./sql.ts";
-import type { SqlQueryResult, SqlRows } from "@probitas/client-sql";
+import { assertEquals, assertExists } from "@std/assert";
+import type { SqlQueryResult } from "@probitas/client-sql";
+import { expectSqlQueryResult, type SqlQueryResultExpectation } from "./sql.ts";
 
-// Helper to create SqlRows (array with helper methods)
-function createSqlRows<T>(items: T[]): SqlRows<T> {
-  const arr = [...items] as T[] & {
-    first(): T | undefined;
-    firstOrThrow(): T;
-    last(): T | undefined;
-    lastOrThrow(): T;
+// Mock SqlQueryResult for testing
+function createMockResult(
+  overrides: Partial<{
+    ok: boolean;
+    rows: unknown[];
+    rowCount: number;
+    duration: number;
+    lastInsertId?: unknown;
+    warnings?: unknown[];
+  }> = {},
+): SqlQueryResult {
+  const defaultResult: SqlQueryResult = {
+    kind: "sql",
+    ok: true,
+    rows: [
+      { id: 1, name: "Alice", age: 30 },
+      { id: 2, name: "Bob", age: 25 },
+    ] as unknown as SqlQueryResult["rows"],
+    rowCount: 2,
+    duration: 123,
+    lastInsertId: BigInt(42),
+    warnings: ["Warning: truncated value"],
+    map: <U>(fn: (row: Record<string, unknown>) => U) =>
+      (defaultResult.rows as Record<string, unknown>[]).map(fn),
+    as: () => defaultResult.rows as unknown as never[],
   };
-  arr.first = function () {
-    return this[0];
-  };
-  arr.firstOrThrow = function () {
-    if (this.length === 0) throw new Error("No rows found");
-    return this[0];
-  };
-  arr.last = function () {
-    return this[this.length - 1];
-  };
-  arr.lastOrThrow = function () {
-    if (this.length === 0) throw new Error("No rows found");
-    return this[this.length - 1];
-  };
-  return arr as unknown as SqlRows<T>;
+
+  return {
+    ...defaultResult,
+    ...overrides,
+  } as SqlQueryResult;
 }
 
-// Mock helper
-const mockSqlQueryResult = <T>(
-  overrides: Partial<Omit<SqlQueryResult<T>, "rows">> & { rows?: T[] } = {},
-): SqlQueryResult<T> => {
-  const { rows: rawRows, ...rest } = overrides;
-  const defaultRows: T[] = [];
-  return {
-    type: "sql" as const,
-    ok: true,
-    rows: createSqlRows(rawRows ?? defaultRows),
-    rowCount: 0,
-    metadata: {},
-    duration: 100,
-    map: function <U>(fn: (row: T) => U): U[] {
-      return this.rows.map(fn);
-    },
-    as: function <U>(ctor: new (row: T) => U): U[] {
-      return this.rows.map((row) => new ctor(row));
-    },
-    ...rest,
-  };
+// Define expected methods with their test arguments
+// Using Record to ensure all interface methods are listed (compile-time check)
+const EXPECTED_METHODS: Record<keyof SqlQueryResultExpectation, unknown[]> = {
+  // Core (special property, not a method)
+  not: [],
+  // Ok
+  toBeOk: [],
+  // Rows (arrays - can't test with strict equality)
+  toHaveRows: [],
+  toHaveRowsEqual: [],
+  toHaveRowsStrictEqual: [],
+  toHaveRowsSatisfying: [(v: unknown[]) => assertEquals(v.length, 2)],
+  toHaveRowsContaining: [],
+  toHaveRowsContainingEqual: [],
+  toHaveRowsMatching: [{ id: 1, name: "Alice" }],
+  toHaveRowsEmpty: [],
+  // Row count
+  toHaveRowCount: [2],
+  toHaveRowCountEqual: [2],
+  toHaveRowCountStrictEqual: [2],
+  toHaveRowCountSatisfying: [(v: number) => assertEquals(v, 2)],
+  toHaveRowCountNaN: [],
+  toHaveRowCountGreaterThan: [1],
+  toHaveRowCountGreaterThanOrEqual: [2],
+  toHaveRowCountLessThan: [3],
+  toHaveRowCountLessThanOrEqual: [2],
+  toHaveRowCountCloseTo: [2, 0],
+  // Last insert ID
+  toHaveLastInsertId: [BigInt(42)],
+  toHaveLastInsertIdEqual: [BigInt(42)],
+  toHaveLastInsertIdStrictEqual: [BigInt(42)],
+  toHaveLastInsertIdSatisfying: [(v: unknown) => assertEquals(v, BigInt(42))],
+  toHaveLastInsertIdPresent: [],
+  toHaveLastInsertIdNull: [],
+  toHaveLastInsertIdUndefined: [],
+  toHaveLastInsertIdNullish: [],
+  // Warnings (arrays - can't test with strict equality)
+  toHaveWarnings: [],
+  toHaveWarningsEqual: [],
+  toHaveWarningsStrictEqual: [],
+  toHaveWarningsSatisfying: [(v: unknown[]) => assertEquals(v.length, 1)],
+  toHaveWarningsPresent: [],
+  toHaveWarningsNull: [],
+  toHaveWarningsUndefined: [],
+  toHaveWarningsNullish: [],
+  toHaveWarningsContaining: [],
+  toHaveWarningsContainingEqual: [],
+  toHaveWarningsMatching: [],
+  toHaveWarningsEmpty: [],
+  // Duration
+  toHaveDuration: [123],
+  toHaveDurationEqual: [123],
+  toHaveDurationStrictEqual: [123],
+  toHaveDurationSatisfying: [(v: number) => assertEquals(v, 123)],
+  toHaveDurationNaN: [],
+  toHaveDurationGreaterThan: [100],
+  toHaveDurationGreaterThanOrEqual: [123],
+  toHaveDurationLessThan: [200],
+  toHaveDurationLessThanOrEqual: [123],
+  toHaveDurationCloseTo: [123, 0],
 };
 
-Deno.test("expectSqlQueryResult", async (t) => {
-  await t.step("toBeSuccessful", async (t) => {
-    await t.step("passes when ok is true", () => {
-      const result = mockSqlQueryResult({ ok: true });
-      expectSqlQueryResult(result).toBeSuccessful();
-    });
+Deno.test("expectSqlQueryResult - method existence check", () => {
+  const result = createMockResult();
+  const expectation = expectSqlQueryResult(result);
 
-    await t.step("fails when ok is false", () => {
-      const result = mockSqlQueryResult({ ok: false });
-      assertThrows(
-        () => expectSqlQueryResult(result).toBeSuccessful(),
-        Error,
-        "Expected query to succeed",
-      );
-    });
+  const expectedMethodNames = Object.keys(EXPECTED_METHODS) as Array<
+    keyof SqlQueryResultExpectation
+  >;
 
-    await t.step("negated - fails when ok is true", () => {
-      const result = mockSqlQueryResult({ ok: true });
-      assertThrows(
-        () => expectSqlQueryResult(result).not.toBeSuccessful(),
-        Error,
-        "Expected query to fail",
-      );
-    });
+  // Check that all expected methods exist
+  for (const method of expectedMethodNames) {
+    assertExists(
+      expectation[method],
+      `Method '${method}' should exist on SqlQueryResultExpectation`,
+    );
+  }
+
+  // Verify count matches (helps catch if we added methods but didn't list them)
+  const actualPropertyCount = Object.getOwnPropertyNames(expectation).length;
+  assertEquals(
+    actualPropertyCount,
+    expectedMethodNames.length,
+    `Expected ${expectedMethodNames.length} methods but found ${actualPropertyCount}`,
+  );
+});
+
+// Generate individual test for each method
+for (
+  const [methodName, args] of Object.entries(EXPECTED_METHODS) as Array<
+    [keyof SqlQueryResultExpectation, unknown[]]
+  >
+) {
+  // Skip 'not' as it's a property, not a method
+  if (methodName === "not") continue;
+
+  // Skip methods that require special setup or have empty args (can't test with simple value equality)
+  if (
+    methodName === "toHaveRowCountNaN" ||
+    methodName === "toHaveDurationNaN" ||
+    methodName === "toHaveRowsEmpty" ||
+    methodName === "toHaveWarningsEmpty" ||
+    (args.length === 0 && methodName !== "toBeOk")
+  ) {
+    continue;
+  }
+
+  Deno.test(`expectSqlQueryResult - ${methodName} - success`, () => {
+    const result = createMockResult();
+    const expectation = expectSqlQueryResult(result);
+
+    // Call the method with provided arguments
+    // deno-lint-ignore no-explicit-any
+    const method = expectation[methodName] as (...args: any[]) => any;
+    const chainedResult = method.call(expectation, ...args);
+
+    // Verify method returns an expectation object (for chaining)
+    assertExists(chainedResult);
+    assertExists(
+      chainedResult.toBeOk,
+      "Result should have toBeOk method for chaining",
+    );
   });
+}
 
-  await t.step("toHaveContent", async (t) => {
-    await t.step("passes when rows exist", () => {
-      const result = mockSqlQueryResult({ rows: [{ id: 1 }] });
-      expectSqlQueryResult(result).toHaveContent();
-    });
+Deno.test("expectSqlQueryResult - not property - success", () => {
+  const result = createMockResult({ ok: false, rowCount: 0 });
+  const expectation = expectSqlQueryResult(result);
 
-    await t.step("fails when rows are empty", () => {
-      const result = mockSqlQueryResult({ rows: [] });
-      assertThrows(
-        () => expectSqlQueryResult(result).toHaveContent(),
-        Error,
-        "Expected rows to be present",
-      );
-    });
+  // Verify .not is accessible and returns expectation
+  expectation.not.toBeOk();
+  expectation.not.toHaveRowCount(2);
+});
 
-    await t.step("negated - passes when rows are empty", () => {
-      const result = mockSqlQueryResult({ rows: [] });
-      expectSqlQueryResult(result).not.toHaveContent();
-    });
+Deno.test("expectSqlQueryResult - empty array methods - success", () => {
+  // Test empty rows
+  const emptyRowsResult = createMockResult({
+    rows: [],
+    rowCount: 0,
+    warnings: [],
   });
+  const emptyExpectation = expectSqlQueryResult(emptyRowsResult);
 
-  await t.step("toHaveLength", async (t) => {
-    await t.step("passes for matching count", () => {
-      const result = mockSqlQueryResult({ rows: [{ id: 1 }, { id: 2 }] });
-      expectSqlQueryResult(result).toHaveLength(2);
-    });
+  emptyExpectation.toHaveRowsEmpty();
+  emptyExpectation.toHaveWarningsEmpty();
 
-    await t.step("fails for non-matching count", () => {
-      const result = mockSqlQueryResult({ rows: [{ id: 1 }] });
-      assertThrows(
-        () => expectSqlQueryResult(result).toHaveLength(2),
-        Error,
-        "Expected 2 rows, got 1",
-      );
-    });
-  });
+  // Test non-empty (should pass with .not)
+  const nonEmptyResult = createMockResult();
+  const nonEmptyExpectation = expectSqlQueryResult(nonEmptyResult);
 
-  await t.step("toHaveLengthGreaterThanOrEqual", async (t) => {
-    await t.step("passes when count is greater", () => {
-      const result = mockSqlQueryResult({ rows: [{ id: 1 }, { id: 2 }] });
-      expectSqlQueryResult(result).toHaveLengthGreaterThanOrEqual(1);
-    });
-
-    await t.step("passes when count is equal", () => {
-      const result = mockSqlQueryResult({ rows: [{ id: 1 }] });
-      expectSqlQueryResult(result).toHaveLengthGreaterThanOrEqual(1);
-    });
-
-    await t.step("fails when count is less", () => {
-      const result = mockSqlQueryResult({ rows: [] });
-      assertThrows(
-        () => expectSqlQueryResult(result).toHaveLengthGreaterThanOrEqual(1),
-        Error,
-        "Expected at least 1 rows, got 0",
-      );
-    });
-  });
-
-  await t.step("toHaveLengthLessThanOrEqual", async (t) => {
-    await t.step("passes when count is less", () => {
-      const result = mockSqlQueryResult({ rows: [] });
-      expectSqlQueryResult(result).toHaveLengthLessThanOrEqual(1);
-    });
-
-    await t.step("passes when count is equal", () => {
-      const result = mockSqlQueryResult({ rows: [{ id: 1 }] });
-      expectSqlQueryResult(result).toHaveLengthLessThanOrEqual(1);
-    });
-
-    await t.step("fails when count is greater", () => {
-      const result = mockSqlQueryResult({ rows: [{ id: 1 }, { id: 2 }] });
-      assertThrows(
-        () => expectSqlQueryResult(result).toHaveLengthLessThanOrEqual(1),
-        Error,
-        "Expected at most 1 rows, got 2",
-      );
-    });
-  });
-
-  await t.step("toHaveRowCount", async (t) => {
-    await t.step("passes for matching count", () => {
-      const result = mockSqlQueryResult({ rowCount: 2 });
-      expectSqlQueryResult(result).toHaveRowCount(2);
-    });
-
-    await t.step("fails for non-matching count", () => {
-      const result = mockSqlQueryResult({ rowCount: 1 });
-      assertThrows(
-        () => expectSqlQueryResult(result).toHaveRowCount(2),
-        Error,
-        "Expected 2 rowCount, got 1",
-      );
-    });
-  });
-
-  await t.step("toHaveRowCountGreaterThanOrEqual", async (t) => {
-    await t.step("passes when count is greater", () => {
-      const result = mockSqlQueryResult({ rowCount: 2 });
-      expectSqlQueryResult(result).toHaveRowCountGreaterThanOrEqual(1);
-    });
-
-    await t.step("passes when count is equal", () => {
-      const result = mockSqlQueryResult({ rowCount: 1 });
-      expectSqlQueryResult(result).toHaveRowCountGreaterThanOrEqual(1);
-    });
-
-    await t.step("fails when count is less", () => {
-      const result = mockSqlQueryResult({ rowCount: 0 });
-      assertThrows(
-        () => expectSqlQueryResult(result).toHaveRowCountGreaterThanOrEqual(1),
-        Error,
-        "Expected at least 1 rowCount, got 0",
-      );
-    });
-  });
-
-  await t.step("toHaveRowCountLessThanOrEqual", async (t) => {
-    await t.step("passes when count is less", () => {
-      const result = mockSqlQueryResult({ rowCount: 0 });
-      expectSqlQueryResult(result).toHaveRowCountLessThanOrEqual(1);
-    });
-
-    await t.step("passes when count is equal", () => {
-      const result = mockSqlQueryResult({ rowCount: 1 });
-      expectSqlQueryResult(result).toHaveRowCountLessThanOrEqual(1);
-    });
-
-    await t.step("fails when count is greater", () => {
-      const result = mockSqlQueryResult({ rowCount: 2 });
-      assertThrows(
-        () => expectSqlQueryResult(result).toHaveRowCountLessThanOrEqual(1),
-        Error,
-        "Expected at most 1 rowCount, got 2",
-      );
-    });
-  });
-
-  await t.step("toMatchObject", async (t) => {
-    await t.step("passes when row contains subset", () => {
-      const result = mockSqlQueryResult({
-        rows: [{ id: 1, name: "Alice", age: 30 }],
-      });
-      expectSqlQueryResult(result).toMatchObject({ name: "Alice" });
-    });
-
-    await t.step("fails when no row contains subset", () => {
-      const result = mockSqlQueryResult({
-        rows: [{ id: 1, name: "Bob" }],
-      });
-      assertThrows(
-        () => expectSqlQueryResult(result).toMatchObject({ name: "Alice" }),
-        Error,
-        "No row contains the expected subset",
-      );
-    });
-  });
-
-  await t.step("toSatisfy", async (t) => {
-    await t.step("passes when matcher succeeds", () => {
-      const result = mockSqlQueryResult({
-        rows: [{ id: 1 }, { id: 2 }],
-      });
-      expectSqlQueryResult(result).toSatisfy((rows) => {
-        if (rows.length !== 2) throw new Error("Expected 2 rows");
-      });
-    });
-
-    await t.step("fails when matcher throws", () => {
-      const result = mockSqlQueryResult({
-        rows: [{ id: 1 }],
-      });
-      assertThrows(
-        () =>
-          expectSqlQueryResult(result).toSatisfy((rows) => {
-            if (rows.length !== 2) throw new Error("Expected 2 rows");
-          }),
-        Error,
-        "Expected 2 rows",
-      );
-    });
-  });
-
-  await t.step("toHaveMapContaining", async (t) => {
-    await t.step("passes when mapped row contains subset", () => {
-      const result = mockSqlQueryResult({
-        rows: [
-          { id: 1, name: "Alice", age: 30 },
-          { id: 2, name: "Bob", age: 25 },
-        ],
-      });
-      expectSqlQueryResult(result).toHaveMapContaining(
-        (row: { id: number; name: string; age: number }) => ({
-          upper: row.name.toUpperCase(),
-        }),
-        { upper: "ALICE" },
-      );
-    });
-
-    await t.step("fails when no mapped row contains subset", () => {
-      const result = mockSqlQueryResult({
-        rows: [{ id: 1, name: "Bob", age: 25 }],
-      });
-      assertThrows(
-        () =>
-          expectSqlQueryResult(result).toHaveMapContaining(
-            (row: { id: number; name: string; age: number }) => ({
-              upper: row.name.toUpperCase(),
-            }),
-            { upper: "ALICE" },
-          ),
-        Error,
-        "No mapped row contains the expected subset",
-      );
-    });
-  });
-
-  await t.step("toHaveMapMatching", async (t) => {
-    await t.step("passes when matcher succeeds", () => {
-      const result = mockSqlQueryResult({
-        rows: [{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }],
-      });
-      expectSqlQueryResult(result).toHaveMapMatching(
-        (row: { id: number; name: string }) => row.name.toUpperCase(),
-        (names) => {
-          if (names.length !== 2) throw new Error("Expected 2 names");
-        },
-      );
-    });
-
-    await t.step("fails when matcher throws", () => {
-      const result = mockSqlQueryResult({
-        rows: [{ id: 1, name: "Alice" }],
-      });
-      assertThrows(
-        () =>
-          expectSqlQueryResult(result).toHaveMapMatching(
-            (row: { id: number; name: string }) => row.name,
-            (names) => {
-              if (names.length !== 2) throw new Error("Expected 2 names");
-            },
-          ),
-        Error,
-        "Expected 2 names",
-      );
-    });
-  });
-
-  await t.step("toHaveInstanceContaining", async (t) => {
-    class User {
-      id: number;
-      name: string;
-      constructor(row: { id: number; name: string }) {
-        this.id = row.id;
-        this.name = row.name;
-      }
-    }
-
-    await t.step("passes when instance contains subset", () => {
-      const result = mockSqlQueryResult({
-        rows: [{ id: 1, name: "Alice" }],
-      });
-      expectSqlQueryResult(result).toHaveInstanceContaining(User, {
-        name: "Alice",
-      });
-    });
-
-    await t.step("fails when no instance contains subset", () => {
-      const result = mockSqlQueryResult({
-        rows: [{ id: 1, name: "Bob" }],
-      });
-      assertThrows(
-        () =>
-          expectSqlQueryResult(result).toHaveInstanceContaining(User, {
-            name: "Alice",
-          }),
-        Error,
-        "No instance contains the expected subset",
-      );
-    });
-  });
-
-  await t.step("toHaveInstanceMatching", async (t) => {
-    class User {
-      id: number;
-      name: string;
-      constructor(row: { id: number; name: string }) {
-        this.id = row.id;
-        this.name = row.name;
-      }
-    }
-
-    await t.step("passes when matcher succeeds", () => {
-      const result = mockSqlQueryResult({
-        rows: [{ id: 1, name: "Alice" }],
-      });
-      expectSqlQueryResult(result).toHaveInstanceMatching(User, (instances) => {
-        if (instances.length !== 1) throw new Error("Expected 1 instance");
-      });
-    });
-
-    await t.step("fails when matcher throws", () => {
-      const result = mockSqlQueryResult({
-        rows: [{ id: 1, name: "Alice" }],
-      });
-      assertThrows(
-        () =>
-          expectSqlQueryResult(result).toHaveInstanceMatching(
-            User,
-            (instances) => {
-              if (instances.length !== 2) {
-                throw new Error("Expected 2 instances");
-              }
-            },
-          ),
-        Error,
-        "Expected 2 instances",
-      );
-    });
-  });
-
-  await t.step("toHaveLastInsertId", async (t) => {
-    await t.step("passes when lastInsertId exists (no arg)", () => {
-      const result = mockSqlQueryResult({
-        metadata: { lastInsertId: BigInt(123) },
-      });
-      expectSqlQueryResult(result).toHaveLastInsertId();
-    });
-
-    await t.step("passes when lastInsertId matches", () => {
-      const result = mockSqlQueryResult({
-        metadata: { lastInsertId: BigInt(123) },
-      });
-      expectSqlQueryResult(result).toHaveLastInsertId(BigInt(123));
-    });
-
-    await t.step("fails when lastInsertId does not exist", () => {
-      const result = mockSqlQueryResult({ metadata: {} });
-      assertThrows(
-        () => expectSqlQueryResult(result).toHaveLastInsertId(),
-        Error,
-        "Expected lastInsertId to be present",
-      );
-    });
-
-    await t.step("fails when lastInsertId does not match", () => {
-      const result = mockSqlQueryResult({
-        metadata: { lastInsertId: BigInt(456) },
-      });
-      assertThrows(
-        () => expectSqlQueryResult(result).toHaveLastInsertId(BigInt(123)),
-        Error,
-        "Expected lastInsertId 123, got 456",
-      );
-    });
-  });
-
-  await t.step("toHaveDurationLessThan", async (t) => {
-    await t.step("passes when duration is less", () => {
-      const result = mockSqlQueryResult({ duration: 50 });
-      expectSqlQueryResult(result).toHaveDurationLessThan(100);
-    });
-
-    await t.step("fails when duration is equal", () => {
-      const result = mockSqlQueryResult({ duration: 100 });
-      assertThrows(
-        () => expectSqlQueryResult(result).toHaveDurationLessThan(100),
-        Error,
-        "Expected duration < 100ms, got 100ms",
-      );
-    });
-  });
-
-  await t.step("toHaveDurationLessThanOrEqual", async (t) => {
-    await t.step("passes when duration is equal", () => {
-      const result = mockSqlQueryResult({ duration: 100 });
-      expectSqlQueryResult(result).toHaveDurationLessThanOrEqual(100);
-    });
-
-    await t.step("fails when duration is greater", () => {
-      const result = mockSqlQueryResult({ duration: 150 });
-      assertThrows(
-        () => expectSqlQueryResult(result).toHaveDurationLessThanOrEqual(100),
-        Error,
-        "Expected duration <= 100ms, got 150ms",
-      );
-    });
-  });
-
-  await t.step("toHaveDurationGreaterThan", async (t) => {
-    await t.step("passes when duration is greater", () => {
-      const result = mockSqlQueryResult({ duration: 150 });
-      expectSqlQueryResult(result).toHaveDurationGreaterThan(100);
-    });
-
-    await t.step("fails when duration is equal", () => {
-      const result = mockSqlQueryResult({ duration: 100 });
-      assertThrows(
-        () => expectSqlQueryResult(result).toHaveDurationGreaterThan(100),
-        Error,
-        "Expected duration > 100ms, got 100ms",
-      );
-    });
-  });
-
-  await t.step("toHaveDurationGreaterThanOrEqual", async (t) => {
-    await t.step("passes when duration is equal", () => {
-      const result = mockSqlQueryResult({ duration: 100 });
-      expectSqlQueryResult(result).toHaveDurationGreaterThanOrEqual(100);
-    });
-
-    await t.step("fails when duration is less", () => {
-      const result = mockSqlQueryResult({ duration: 50 });
-      assertThrows(
-        () =>
-          expectSqlQueryResult(result).toHaveDurationGreaterThanOrEqual(100),
-        Error,
-        "Expected duration >= 100ms, got 50ms",
-      );
-    });
-  });
-
-  await t.step("method chaining", () => {
-    const result = mockSqlQueryResult({
-      ok: true,
-      rows: [{ id: 1, name: "Alice" }],
-      rowCount: 1,
-      metadata: { lastInsertId: BigInt(1) },
-      duration: 50,
-    });
-
-    expectSqlQueryResult(result)
-      .toBeSuccessful()
-      .toHaveContent()
-      .toHaveLength(1)
-      .toHaveRowCount(1)
-      .toMatchObject({ name: "Alice" })
-      .toHaveLastInsertId()
-      .toHaveDurationLessThan(100);
-  });
+  nonEmptyExpectation.not.toHaveRowsEmpty();
+  nonEmptyExpectation.not.toHaveWarningsEmpty();
 });

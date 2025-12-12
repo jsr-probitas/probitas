@@ -4,6 +4,7 @@ import type {
   MongoDocs,
   MongoFindOneResult,
   MongoFindResult,
+  MongoInsertManyResult,
   MongoInsertOneResult,
   MongoUpdateResult,
 } from "@probitas/client-mongodb";
@@ -39,7 +40,7 @@ export const mockMongoFindResult = <T>(
   const { docs: rawDocs, ...rest } = overrides;
   const defaultDocs: T[] = [{ id: "1", name: "Alice" }] as T[];
   return {
-    type: "mongo:find" as const,
+    kind: "mongo:find" as const,
     ok: true,
     docs: createMockMongoDocs(rawDocs ?? defaultDocs),
     duration: 100,
@@ -50,9 +51,20 @@ export const mockMongoFindResult = <T>(
 export const mockMongoInsertOneResult = (
   overrides: Partial<MongoInsertOneResult> = {},
 ): MongoInsertOneResult => ({
-  type: "mongo:insert" as const,
+  kind: "mongo:insert-one" as const,
   ok: true,
   insertedId: "123",
+  duration: 100,
+  ...overrides,
+});
+
+export const mockMongoInsertManyResult = (
+  overrides: Partial<MongoInsertManyResult> = {},
+): MongoInsertManyResult => ({
+  kind: "mongo:insert-many" as const,
+  ok: true,
+  insertedIds: ["123", "456", "789"],
+  insertedCount: 3,
   duration: 100,
   ...overrides,
 });
@@ -60,7 +72,7 @@ export const mockMongoInsertOneResult = (
 export const mockMongoUpdateResult = (
   overrides: Partial<MongoUpdateResult> = {},
 ): MongoUpdateResult => ({
-  type: "mongo:update" as const,
+  kind: "mongo:update" as const,
   ok: true,
   matchedCount: 1,
   modifiedCount: 1,
@@ -72,7 +84,7 @@ export const mockMongoUpdateResult = (
 export const mockMongoDeleteResult = (
   overrides: Partial<MongoDeleteResult> = {},
 ): MongoDeleteResult => ({
-  type: "mongo:delete" as const,
+  kind: "mongo:delete" as const,
   ok: true,
   deletedCount: 1,
   duration: 100,
@@ -82,7 +94,7 @@ export const mockMongoDeleteResult = (
 export const mockMongoFindOneResult = <T>(
   overrides: Partial<MongoFindOneResult<T>> = {},
 ): MongoFindOneResult<T> => ({
-  type: "mongo:find-one" as const,
+  kind: "mongo:find-one" as const,
   ok: true,
   doc: { id: "1", name: "Alice" } as T,
   duration: 100,
@@ -92,7 +104,7 @@ export const mockMongoFindOneResult = <T>(
 export const mockMongoCountResult = (
   overrides: Partial<MongoCountResult> = {},
 ): MongoCountResult => ({
-  type: "mongo:count" as const,
+  kind: "mongo:count" as const,
   ok: true,
   count: 10,
   duration: 100,

@@ -1,95 +1,108 @@
-import { createDurationMethods } from "../common.ts";
 import type { SqsDeleteQueueResult } from "@probitas/client-sqs";
+import * as mixin from "../mixin.ts";
 
+/**
+ * Fluent API for SQS delete queue result validation.
+ *
+ * Provides chainable assertions for queue deletion results.
+ * Delete queue results only have ok and duration properties.
+ */
 export interface SqsDeleteQueueResultExpectation {
   /**
    * Negates the next assertion.
    *
    * @example
    * ```ts
-   * expectSqsResult(deleteQueueResult).not.toBeSuccessful();
+   * expectSqsResult(deleteQueueResult).not.toBeOk();
    * ```
    */
   readonly not: this;
 
   /**
-   * Asserts that the delete queue operation completed successfully.
-   *
-   * @example
-   * ```ts
-   * expectSqsResult(deleteQueueResult).toBeSuccessful();
-   * ```
+   * Asserts that the result is successful.
    */
-  toBeSuccessful(): this;
+  toBeOk(): this;
 
   /**
-   * Asserts that the operation duration is less than the specified threshold.
-   *
-   * @param ms - Maximum duration in milliseconds
-   * @example
-   * ```ts
-   * expectSqsResult(deleteQueueResult).toHaveDurationLessThan(1000);
-   * ```
+   * Asserts that the duration equals the expected value.
+   * @param expected - The expected duration value
    */
-  toHaveDurationLessThan(ms: number): this;
+  toHaveDuration(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is less than or equal to the specified threshold.
-   *
-   * @param ms - Maximum duration in milliseconds (inclusive)
-   * @example
-   * ```ts
-   * expectSqsResult(deleteQueueResult).toHaveDurationLessThanOrEqual(1000);
-   * ```
+   * Asserts that the duration equals the expected value using deep equality.
+   * @param expected - The expected duration value
    */
-  toHaveDurationLessThanOrEqual(ms: number): this;
+  toHaveDurationEqual(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is greater than the specified threshold.
-   *
-   * @param ms - Minimum duration in milliseconds
-   * @example
-   * ```ts
-   * expectSqsResult(deleteQueueResult).toHaveDurationGreaterThan(50);
-   * ```
+   * Asserts that the duration strictly equals the expected value.
+   * @param expected - The expected duration value
    */
-  toHaveDurationGreaterThan(ms: number): this;
+  toHaveDurationStrictEqual(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is greater than or equal to the specified threshold.
-   *
-   * @param ms - Minimum duration in milliseconds (inclusive)
-   * @example
-   * ```ts
-   * expectSqsResult(deleteQueueResult).toHaveDurationGreaterThanOrEqual(50);
-   * ```
+   * Asserts that the duration satisfies the provided matcher function.
+   * @param matcher - A function that receives the duration and performs assertions
    */
-  toHaveDurationGreaterThanOrEqual(ms: number): this;
+  toHaveDurationSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the duration is NaN.
+   */
+  toHaveDurationNaN(): this;
+
+  /**
+   * Asserts that the duration is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveDurationCloseTo(expected: number, numDigits?: number): this;
 }
 
 export function expectSqsDeleteQueueResult(
   result: SqsDeleteQueueResult,
-  negate = false,
 ): SqsDeleteQueueResultExpectation {
-  const self: SqsDeleteQueueResultExpectation = {
-    get not(): SqsDeleteQueueResultExpectation {
-      return expectSqsDeleteQueueResult(result, !negate);
-    },
-
-    toBeSuccessful() {
-      const isSuccess = result.ok;
-      if (negate ? isSuccess : !isSuccess) {
-        throw new Error(
-          negate
-            ? "Expected not ok result, but ok is true"
-            : "Expected ok result, but ok is false",
-        );
-      }
-      return this;
-    },
-
-    ...createDurationMethods(result.duration, negate),
-  };
-
-  return self;
+  return mixin.defineExpectation((negate) => [
+    mixin.createOkMixin(
+      () => result.ok,
+      negate,
+      { valueName: "delete queue result" },
+    ),
+    // Duration
+    mixin.createValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+  ]);
 }

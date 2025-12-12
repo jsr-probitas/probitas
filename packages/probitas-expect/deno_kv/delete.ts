@@ -1,5 +1,5 @@
-import { createDurationMethods } from "../common.ts";
 import type { DenoKvDeleteResult } from "@probitas/client-deno-kv";
+import * as mixin from "../mixin.ts";
 
 /**
  * Fluent API for validating DenoKvDeleteResult.
@@ -13,64 +13,75 @@ export interface DenoKvDeleteResultExpectation {
    *
    * @example
    * ```ts
-   * expectDenoKvResult(result).not.toBeSuccessful();
+   * expectDenoKvResult(result).not.toBeOk();
    * ```
    */
   readonly not: this;
 
   /**
-   * Asserts that the delete operation succeeded.
-   *
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toBeSuccessful();
-   * ```
+   * Asserts that the result is successful.
    */
-  toBeSuccessful(): this;
+  toBeOk(): this;
 
   /**
-   * Asserts that the operation duration is less than the specified threshold.
-   *
-   * @param ms - The maximum duration in milliseconds (exclusive)
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveDurationLessThan(100);
-   * ```
+   * Asserts that the duration equals the expected value.
+   * @param expected - The expected duration value
    */
-  toHaveDurationLessThan(ms: number): this;
+  toHaveDuration(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is less than or equal to the specified threshold.
-   *
-   * @param ms - The maximum duration in milliseconds (inclusive)
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveDurationLessThanOrEqual(100);
-   * ```
+   * Asserts that the duration equals the expected value using deep equality.
+   * @param expected - The expected duration value
    */
-  toHaveDurationLessThanOrEqual(ms: number): this;
+  toHaveDurationEqual(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is greater than the specified threshold.
-   *
-   * @param ms - The minimum duration in milliseconds (exclusive)
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveDurationGreaterThan(10);
-   * ```
+   * Asserts that the duration strictly equals the expected value.
+   * @param expected - The expected duration value
    */
-  toHaveDurationGreaterThan(ms: number): this;
+  toHaveDurationStrictEqual(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is greater than or equal to the specified threshold.
-   *
-   * @param ms - The minimum duration in milliseconds (inclusive)
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveDurationGreaterThanOrEqual(10);
-   * ```
+   * Asserts that the duration satisfies the provided matcher function.
+   * @param matcher - A function that receives the duration and performs assertions
    */
-  toHaveDurationGreaterThanOrEqual(ms: number): this;
+  toHaveDurationSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the duration is NaN.
+   */
+  toHaveDurationNaN(): this;
+
+  /**
+   * Asserts that the duration is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveDurationCloseTo(expected: number, numDigits?: number): this;
 }
 
 /**
@@ -78,25 +89,23 @@ export interface DenoKvDeleteResultExpectation {
  */
 export function expectDenoKvDeleteResult(
   result: DenoKvDeleteResult,
-  negate = false,
 ): DenoKvDeleteResultExpectation {
-  const self: DenoKvDeleteResultExpectation = {
-    get not(): DenoKvDeleteResultExpectation {
-      return expectDenoKvDeleteResult(result, !negate);
-    },
-
-    toBeSuccessful() {
-      const isSuccess = result.ok;
-      if (negate ? isSuccess : !isSuccess) {
-        throw new Error(
-          negate ? "Expected not ok result" : "Expected ok result",
-        );
-      }
-      return this;
-    },
-
-    ...createDurationMethods(result.duration, negate),
-  };
-
-  return self;
+  return mixin.defineExpectation((negate) => [
+    mixin.createOkMixin(
+      () => result.ok,
+      negate,
+      { valueName: "result" },
+    ),
+    // Duration
+    mixin.createValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+  ]);
 }

@@ -38,7 +38,7 @@ export function createMockSqsMessages(messages: SqsMessage[]): SqsMessages {
 export const mockSqsSendResult = (
   overrides: Partial<SqsSendResult> = {},
 ): SqsSendResult => ({
-  type: "sqs:send" as const,
+  kind: "sqs:send" as const,
   ok: true,
   messageId: "msg-123",
   md5OfBody: "md5hash",
@@ -49,7 +49,7 @@ export const mockSqsSendResult = (
 export const mockSqsSendBatchResult = (
   overrides: Partial<SqsSendBatchResult> = {},
 ): SqsSendBatchResult => ({
-  type: "sqs:send-batch" as const,
+  kind: "sqs:send-batch" as const,
   ok: true,
   successful: [{ id: "1", messageId: "msg-1" }],
   failed: [],
@@ -73,7 +73,7 @@ export const mockSqsReceiveResult = (
     },
   ];
   return {
-    type: "sqs:receive" as const,
+    kind: "sqs:receive" as const,
     ok: true,
     messages: createMockSqsMessages(rawMessages ?? defaultMessages),
     duration: 100,
@@ -84,7 +84,7 @@ export const mockSqsReceiveResult = (
 export const mockSqsDeleteResult = (
   overrides: Partial<SqsDeleteResult> = {},
 ): SqsDeleteResult => ({
-  type: "sqs:delete" as const,
+  kind: "sqs:delete" as const,
   ok: true,
   duration: 100,
   ...overrides,
@@ -93,7 +93,7 @@ export const mockSqsDeleteResult = (
 export const mockSqsDeleteBatchResult = (
   overrides: Partial<SqsDeleteBatchResult> = {},
 ): SqsDeleteBatchResult => ({
-  type: "sqs:delete-batch" as const,
+  kind: "sqs:delete-batch" as const,
   ok: true,
   successful: ["1"],
   failed: [],
@@ -104,7 +104,7 @@ export const mockSqsDeleteBatchResult = (
 export const mockSqsEnsureQueueResult = (
   overrides: Partial<SqsEnsureQueueResult> = {},
 ): SqsEnsureQueueResult => ({
-  type: "sqs:ensure-queue" as const,
+  kind: "sqs:ensure-queue" as const,
   ok: true,
   queueUrl: "https://sqs.us-east-1.amazonaws.com/123456/test-queue",
   duration: 100,
@@ -114,7 +114,7 @@ export const mockSqsEnsureQueueResult = (
 export const mockSqsDeleteQueueResult = (
   overrides: Partial<SqsDeleteQueueResult> = {},
 ): SqsDeleteQueueResult => ({
-  type: "sqs:delete-queue" as const,
+  kind: "sqs:delete-queue" as const,
   ok: true,
   duration: 100,
   ...overrides,

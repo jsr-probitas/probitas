@@ -59,30 +59,30 @@ export type DenoKvExpectation<R extends DenoKvResult> = R extends
  * ```ts
  * // For GET result - returns DenoKvGetResultExpectation<T>
  * const getResult = await kv.get(["users", "1"]);
- * expectDenoKvResult(getResult).toBeSuccessful().toHaveContent().toMatchObject({ name: "Alice" });
+ * expectDenoKvResult(getResult).toBeOk().toHaveContent().toMatchObject({ name: "Alice" });
  *
  * // For SET result - returns DenoKvSetResultExpectation
  * const setResult = await kv.set(["users", "1"], { name: "Alice" });
- * expectDenoKvResult(setResult).toBeSuccessful().toHaveVersionstamp();
+ * expectDenoKvResult(setResult).toBeOk().toHaveVersionstamp();
  *
  * // For LIST result - returns DenoKvListResultExpectation<T>
  * const listResult = await kv.list({ prefix: ["users"] });
- * expectDenoKvResult(listResult).toBeSuccessful().toHaveLength(3);
+ * expectDenoKvResult(listResult).toBeOk().toHaveLength(3);
  *
  * // For DELETE result - returns DenoKvDeleteResultExpectation
  * const deleteResult = await kv.delete(["users", "1"]);
- * expectDenoKvResult(deleteResult).toBeSuccessful();
+ * expectDenoKvResult(deleteResult).toBeOk();
  *
  * // For ATOMIC result - returns DenoKvAtomicResultExpectation
  * const atomicResult = await kv.atomic().set(["counter"], 1).commit();
- * expectDenoKvResult(atomicResult).toBeSuccessful().toHaveVersionstamp();
+ * expectDenoKvResult(atomicResult).toBeOk().toHaveVersionstamp();
  * ```
  */
 // deno-lint-ignore no-explicit-any
 export function expectDenoKvResult<R extends DenoKvResult<any>>(
   result: R,
 ): DenoKvExpectation<R> {
-  switch (result.type) {
+  switch (result.kind) {
     case "deno-kv:get":
       return expectDenoKvGetResult(
         // deno-lint-ignore no-explicit-any
@@ -107,7 +107,7 @@ export function expectDenoKvResult<R extends DenoKvResult<any>>(
       ) as unknown as DenoKvExpectation<R>;
     default:
       throw new Error(
-        `Unknown Deno KV result type: ${(result as { type: string }).type}`,
+        `Unknown Deno KV result kind: ${(result as { kind: string }).kind}`,
       );
   }
 }

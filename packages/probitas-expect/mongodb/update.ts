@@ -1,5 +1,6 @@
-import { createDurationMethods } from "../common.ts";
 import type { MongoUpdateResult } from "@probitas/client-mongodb";
+import { getNonNull } from "../common.ts";
+import * as mixin from "../mixin.ts";
 
 /**
  * Fluent API for MongoDB update result validation.
@@ -16,335 +17,306 @@ export interface MongoUpdateResultExpectation {
   readonly not: this;
 
   /**
-   * Asserts that the update operation completed successfully.
-   *
-   * @example
-   * ```ts
-   * expectMongoResult(updateResult).toBeSuccessful();
-   * ```
+   * Asserts that the update result is successful.
    */
-  toBeSuccessful(): this;
+  toBeOk(): this;
 
   /**
-   * Asserts that the number of matched documents equals the expected value.
-   *
-   * @param count - The expected number of matched documents
-   * @example
-   * ```ts
-   * expectMongoResult(updateResult).toHaveMatchedCount(1);
-   * ```
+   * Asserts that the matched count equals the expected value.
+   * @param expected - The expected matched count
    */
-  toHaveMatchedCount(count: number): this;
+  toHaveMatchedCount(expected: unknown): this;
 
   /**
-   * Asserts that the number of matched documents is greater than the specified threshold.
-   *
-   * @param count - The threshold value
-   * @example
-   * ```ts
-   * expectMongoResult(updateResult).toHaveMatchedCountGreaterThan(0);
-   * ```
+   * Asserts that the matched count equals the expected value using deep equality.
+   * @param expected - The expected matched count
    */
-  toHaveMatchedCountGreaterThan(count: number): this;
+  toHaveMatchedCountEqual(expected: unknown): this;
 
   /**
-   * Asserts that the number of matched documents is at least the specified minimum.
-   *
-   * @param count - The minimum expected number of matched documents
-   * @example
-   * ```ts
-   * expectMongoResult(updateResult).toHaveMatchedCountGreaterThanOrEqual(1);
-   * ```
+   * Asserts that the matched count strictly equals the expected value.
+   * @param expected - The expected matched count
    */
-  toHaveMatchedCountGreaterThanOrEqual(count: number): this;
+  toHaveMatchedCountStrictEqual(expected: unknown): this;
 
   /**
-   * Asserts that the number of matched documents is less than the specified threshold.
-   *
-   * @param count - The threshold value
-   * @example
-   * ```ts
-   * expectMongoResult(updateResult).toHaveMatchedCountLessThan(100);
-   * ```
+   * Asserts that the matched count satisfies the provided matcher function.
+   * @param matcher - A function that receives the matched count and performs assertions
    */
-  toHaveMatchedCountLessThan(count: number): this;
+  toHaveMatchedCountSatisfying(matcher: (value: number) => void): this;
 
   /**
-   * Asserts that the number of matched documents is at most the specified maximum.
-   *
-   * @param count - The maximum expected number of matched documents
-   * @example
-   * ```ts
-   * expectMongoResult(updateResult).toHaveMatchedCountLessThanOrEqual(10);
-   * ```
+   * Asserts that the matched count is NaN.
    */
-  toHaveMatchedCountLessThanOrEqual(count: number): this;
+  toHaveMatchedCountNaN(): this;
 
   /**
-   * Asserts that the number of modified documents equals the expected value.
-   *
-   * @param count - The expected number of modified documents
-   * @example
-   * ```ts
-   * expectMongoResult(updateResult).toHaveModifiedCount(1);
-   * ```
+   * Asserts that the matched count is greater than the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveModifiedCount(count: number): this;
+  toHaveMatchedCountGreaterThan(expected: number): this;
 
   /**
-   * Asserts that the number of modified documents is greater than the specified threshold.
-   *
-   * @param count - The threshold value
-   * @example
-   * ```ts
-   * expectMongoResult(updateResult).toHaveModifiedCountGreaterThan(0);
-   * ```
+   * Asserts that the matched count is greater than or equal to the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveModifiedCountGreaterThan(count: number): this;
+  toHaveMatchedCountGreaterThanOrEqual(expected: number): this;
 
   /**
-   * Asserts that the number of modified documents is at least the specified minimum.
-   *
-   * @param count - The minimum expected number of modified documents
-   * @example
-   * ```ts
-   * expectMongoResult(updateResult).toHaveModifiedCountGreaterThanOrEqual(1);
-   * ```
+   * Asserts that the matched count is less than the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveModifiedCountGreaterThanOrEqual(count: number): this;
+  toHaveMatchedCountLessThan(expected: number): this;
 
   /**
-   * Asserts that the number of modified documents is less than the specified threshold.
-   *
-   * @param count - The threshold value
-   * @example
-   * ```ts
-   * expectMongoResult(updateResult).toHaveModifiedCountLessThan(100);
-   * ```
+   * Asserts that the matched count is less than or equal to the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveModifiedCountLessThan(count: number): this;
+  toHaveMatchedCountLessThanOrEqual(expected: number): this;
 
   /**
-   * Asserts that the number of modified documents is at most the specified maximum.
-   *
-   * @param count - The maximum expected number of modified documents
-   * @example
-   * ```ts
-   * expectMongoResult(updateResult).toHaveModifiedCountLessThanOrEqual(10);
-   * ```
+   * Asserts that the matched count is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
    */
-  toHaveModifiedCountLessThanOrEqual(count: number): this;
+  toHaveMatchedCountCloseTo(expected: number, numDigits?: number): this;
 
   /**
-   * Asserts that an upsertedId is present (document was upserted).
-   *
-   * @example
-   * ```ts
-   * expectMongoResult(updateResult).toHaveUpsertedId();
-   * ```
+   * Asserts that the modified count equals the expected value.
+   * @param expected - The expected modified count
    */
-  toHaveUpsertedId(): this;
+  toHaveModifiedCount(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is less than the specified threshold.
-   *
-   * @param ms - The maximum duration in milliseconds
-   * @example
-   * ```ts
-   * expectMongoResult(updateResult).toHaveDurationLessThan(100);
-   * ```
+   * Asserts that the modified count equals the expected value using deep equality.
+   * @param expected - The expected modified count
    */
-  toHaveDurationLessThan(ms: number): this;
+  toHaveModifiedCountEqual(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is less than or equal to the specified threshold.
-   *
-   * @param ms - The maximum duration in milliseconds
-   * @example
-   * ```ts
-   * expectMongoResult(updateResult).toHaveDurationLessThanOrEqual(100);
-   * ```
+   * Asserts that the modified count strictly equals the expected value.
+   * @param expected - The expected modified count
    */
-  toHaveDurationLessThanOrEqual(ms: number): this;
+  toHaveModifiedCountStrictEqual(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is greater than the specified threshold.
-   *
-   * @param ms - The minimum duration in milliseconds
-   * @example
-   * ```ts
-   * expectMongoResult(updateResult).toHaveDurationGreaterThan(50);
-   * ```
+   * Asserts that the modified count satisfies the provided matcher function.
+   * @param matcher - A function that receives the modified count and performs assertions
    */
-  toHaveDurationGreaterThan(ms: number): this;
+  toHaveModifiedCountSatisfying(matcher: (value: number) => void): this;
 
   /**
-   * Asserts that the operation duration is greater than or equal to the specified threshold.
-   *
-   * @param ms - The minimum duration in milliseconds
-   * @example
-   * ```ts
-   * expectMongoResult(updateResult).toHaveDurationGreaterThanOrEqual(50);
-   * ```
+   * Asserts that the modified count is NaN.
    */
-  toHaveDurationGreaterThanOrEqual(ms: number): this;
+  toHaveModifiedCountNaN(): this;
+
+  /**
+   * Asserts that the modified count is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveModifiedCountGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the modified count is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveModifiedCountGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the modified count is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveModifiedCountLessThan(expected: number): this;
+
+  /**
+   * Asserts that the modified count is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveModifiedCountLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the modified count is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveModifiedCountCloseTo(expected: number, numDigits?: number): this;
+
+  /**
+   * Asserts that the upserted ID equals the expected value.
+   * @param expected - The expected upserted ID
+   */
+  toHaveUpsertedId(expected: unknown): this;
+
+  /**
+   * Asserts that the upserted ID equals the expected value using deep equality.
+   * @param expected - The expected upserted ID
+   */
+  toHaveUpsertedIdEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the upserted ID strictly equals the expected value.
+   * @param expected - The expected upserted ID
+   */
+  toHaveUpsertedIdStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the upserted ID satisfies the provided matcher function.
+   * @param matcher - A function that receives the upserted ID and performs assertions
+   */
+  toHaveUpsertedIdSatisfying(
+    matcher: (value: string | undefined) => void,
+  ): this;
+
+  /**
+   * Asserts that the upserted ID is present (not null or undefined).
+   */
+  toHaveUpsertedIdPresent(): this;
+
+  /**
+   * Asserts that the upserted ID is null.
+   */
+  toHaveUpsertedIdNull(): this;
+
+  /**
+   * Asserts that the upserted ID is undefined.
+   */
+  toHaveUpsertedIdUndefined(): this;
+
+  /**
+   * Asserts that the upserted ID is nullish (null or undefined).
+   */
+  toHaveUpsertedIdNullish(): this;
+
+  /**
+   * Asserts that the upserted ID contains the specified substring.
+   * @param substr - The substring to search for
+   */
+  toHaveUpsertedIdContaining(substr: string): this;
+
+  /**
+   * Asserts that the upserted ID matches the specified regular expression.
+   * @param expected - The regular expression to match against
+   */
+  toHaveUpsertedIdMatching(expected: RegExp): this;
+
+  /**
+   * Asserts that the duration equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDuration(expected: unknown): this;
+
+  /**
+   * Asserts that the duration equals the expected value using deep equality.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration strictly equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration satisfies the provided matcher function.
+   * @param matcher - A function that receives the duration and performs assertions
+   */
+  toHaveDurationSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the duration is NaN.
+   */
+  toHaveDurationNaN(): this;
+
+  /**
+   * Asserts that the duration is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveDurationCloseTo(expected: number, numDigits?: number): this;
 }
 
 export function expectMongoUpdateResult(
   result: MongoUpdateResult,
-  negate = false,
 ): MongoUpdateResultExpectation {
-  const self: MongoUpdateResultExpectation = {
-    get not(): MongoUpdateResultExpectation {
-      return expectMongoUpdateResult(result, !negate);
-    },
-
-    toBeSuccessful() {
-      const isSuccess = result.ok;
-      if (negate ? isSuccess : !isSuccess) {
-        throw new Error(
-          negate
-            ? "Expected not ok result, but ok is true"
-            : "Expected ok result, but ok is false",
-        );
-      }
-      return this;
-    },
-
-    toHaveMatchedCount(count: number) {
-      const match = result.matchedCount === count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected matched count to not be ${count}, got ${result.matchedCount}`
-            : `Expected ${count} matched documents, got ${result.matchedCount}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveMatchedCountGreaterThan(count: number) {
-      const match = result.matchedCount > count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected matched count to not be > ${count}, got ${result.matchedCount}`
-            : `Expected matched count > ${count}, but got ${result.matchedCount}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveMatchedCountGreaterThanOrEqual(count: number) {
-      const match = result.matchedCount >= count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected matched count to not be >= ${count}, got ${result.matchedCount}`
-            : `Expected matched count >= ${count}, but got ${result.matchedCount}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveMatchedCountLessThan(count: number) {
-      const match = result.matchedCount < count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected matched count to not be < ${count}, got ${result.matchedCount}`
-            : `Expected matched count < ${count}, but got ${result.matchedCount}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveMatchedCountLessThanOrEqual(count: number) {
-      const match = result.matchedCount <= count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected matched count to not be <= ${count}, got ${result.matchedCount}`
-            : `Expected matched count <= ${count}, but got ${result.matchedCount}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveModifiedCount(count: number) {
-      const match = result.modifiedCount === count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected modified count to not be ${count}, got ${result.modifiedCount}`
-            : `Expected ${count} modified documents, got ${result.modifiedCount}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveModifiedCountGreaterThan(count: number) {
-      const match = result.modifiedCount > count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected modified count to not be > ${count}, got ${result.modifiedCount}`
-            : `Expected modified count > ${count}, but got ${result.modifiedCount}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveModifiedCountGreaterThanOrEqual(count: number) {
-      const match = result.modifiedCount >= count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected modified count to not be >= ${count}, got ${result.modifiedCount}`
-            : `Expected modified count >= ${count}, but got ${result.modifiedCount}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveModifiedCountLessThan(count: number) {
-      const match = result.modifiedCount < count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected modified count to not be < ${count}, got ${result.modifiedCount}`
-            : `Expected modified count < ${count}, but got ${result.modifiedCount}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveModifiedCountLessThanOrEqual(count: number) {
-      const match = result.modifiedCount <= count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected modified count to not be <= ${count}, got ${result.modifiedCount}`
-            : `Expected modified count <= ${count}, but got ${result.modifiedCount}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveUpsertedId() {
-      const hasId = !!result.upsertedId;
-      if (negate ? hasId : !hasId) {
-        throw new Error(
-          negate
-            ? "Expected no upsertedId, but upsertedId exists"
-            : "Expected upsertedId, but no document was upserted",
-        );
-      }
-      return this;
-    },
-
-    ...createDurationMethods(result.duration, negate),
-  };
-
-  return self;
+  return mixin.defineExpectation((negate) => [
+    mixin.createOkMixin(
+      () => result.ok,
+      negate,
+      { valueName: "update result" },
+    ),
+    // Matched count
+    mixin.createValueMixin(
+      () => result.matchedCount,
+      negate,
+      { valueName: "matched count" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.matchedCount,
+      negate,
+      { valueName: "matched count" },
+    ),
+    // Modified count
+    mixin.createValueMixin(
+      () => result.modifiedCount,
+      negate,
+      { valueName: "modified count" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.modifiedCount,
+      negate,
+      { valueName: "modified count" },
+    ),
+    // Upserted ID
+    mixin.createValueMixin(
+      () => result.upsertedId,
+      negate,
+      { valueName: "upserted id" },
+    ),
+    mixin.createNullishValueMixin(
+      () => result.upsertedId,
+      negate,
+      { valueName: "upserted id" },
+    ),
+    mixin.createStringValueMixin(
+      () => getNonNull(result.upsertedId, "upserted id"),
+      negate,
+      { valueName: "upserted id" },
+    ),
+    // Duration
+    mixin.createValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+  ]);
 }

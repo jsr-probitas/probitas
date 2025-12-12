@@ -1,117 +1,250 @@
-import { createDurationMethods } from "../common.ts";
 import type { SqsSendResult } from "@probitas/client-sqs";
+import { getNonNull } from "../common.ts";
+import * as mixin from "../mixin.ts";
 
+/**
+ * Fluent API for SQS send result validation.
+ *
+ * Provides chainable assertions specifically designed for single message send results
+ * including message ID and sequence number.
+ */
 export interface SqsSendResultExpectation {
   /**
    * Negates the next assertion.
    *
    * @example
    * ```ts
-   * expectSqsResult(sendResult).not.toBeSuccessful();
+   * expectSqsResult(sendResult).not.toBeOk();
    * ```
    */
   readonly not: this;
 
   /**
-   * Asserts that the send operation completed successfully.
-   *
-   * @example
-   * ```ts
-   * expectSqsResult(sendResult).toBeSuccessful();
-   * ```
+   * Asserts that the result is successful.
    */
-  toBeSuccessful(): this;
+  toBeOk(): this;
 
   /**
-   * Asserts that the send result contains a messageId.
-   *
-   * @example
-   * ```ts
-   * expectSqsResult(sendResult).toHaveMessageId();
-   * ```
+   * Asserts that the message ID equals the expected value.
+   * @param expected - The expected message ID
    */
-  toHaveMessageId(): this;
+  toHaveMessageId(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is less than the specified threshold.
-   *
-   * @param ms - Maximum duration in milliseconds
-   * @example
-   * ```ts
-   * expectSqsResult(sendResult).toHaveDurationLessThan(1000);
-   * ```
+   * Asserts that the message ID equals the expected value using deep equality.
+   * @param expected - The expected message ID
    */
-  toHaveDurationLessThan(ms: number): this;
+  toHaveMessageIdEqual(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is less than or equal to the specified threshold.
-   *
-   * @param ms - Maximum duration in milliseconds (inclusive)
-   * @example
-   * ```ts
-   * expectSqsResult(sendResult).toHaveDurationLessThanOrEqual(1000);
-   * ```
+   * Asserts that the message ID strictly equals the expected value.
+   * @param expected - The expected message ID
    */
-  toHaveDurationLessThanOrEqual(ms: number): this;
+  toHaveMessageIdStrictEqual(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is greater than the specified threshold.
-   *
-   * @param ms - Minimum duration in milliseconds
-   * @example
-   * ```ts
-   * expectSqsResult(sendResult).toHaveDurationGreaterThan(100);
-   * ```
+   * Asserts that the message ID satisfies the provided matcher function.
+   * @param matcher - A function that receives the message ID and performs assertions
    */
-  toHaveDurationGreaterThan(ms: number): this;
+  toHaveMessageIdSatisfying(matcher: (value: string) => void): this;
 
   /**
-   * Asserts that the operation duration is greater than or equal to the specified threshold.
-   *
-   * @param ms - Minimum duration in milliseconds (inclusive)
-   * @example
-   * ```ts
-   * expectSqsResult(sendResult).toHaveDurationGreaterThanOrEqual(100);
-   * ```
+   * Asserts that the message ID contains the specified substring.
+   * @param substr - The substring to search for
    */
-  toHaveDurationGreaterThanOrEqual(ms: number): this;
+  toHaveMessageIdContaining(substr: string): this;
+
+  /**
+   * Asserts that the message ID matches the specified regular expression.
+   * @param expected - The regular expression to match against
+   */
+  toHaveMessageIdMatching(expected: RegExp): this;
+
+  /**
+   * Asserts that the MD5 of body equals the expected value.
+   * @param expected - The expected MD5 hash
+   */
+  toHaveMd5OfBody(expected: unknown): this;
+
+  /**
+   * Asserts that the MD5 of body equals the expected value using deep equality.
+   * @param expected - The expected MD5 hash
+   */
+  toHaveMd5OfBodyEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the MD5 of body strictly equals the expected value.
+   * @param expected - The expected MD5 hash
+   */
+  toHaveMd5OfBodyStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the MD5 of body satisfies the provided matcher function.
+   * @param matcher - A function that receives the MD5 hash and performs assertions
+   */
+  toHaveMd5OfBodySatisfying(matcher: (value: string) => void): this;
+
+  /**
+   * Asserts that the MD5 of body contains the specified substring.
+   * @param substr - The substring to search for
+   */
+  toHaveMd5OfBodyContaining(substr: string): this;
+
+  /**
+   * Asserts that the MD5 of body matches the specified regular expression.
+   * @param expected - The regular expression to match against
+   */
+  toHaveMd5OfBodyMatching(expected: RegExp): this;
+
+  /**
+   * Asserts that the sequence number equals the expected value.
+   * @param expected - The expected sequence number
+   */
+  toHaveSequenceNumber(expected: unknown): this;
+
+  /**
+   * Asserts that the sequence number equals the expected value using deep equality.
+   * @param expected - The expected sequence number
+   */
+  toHaveSequenceNumberEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the sequence number strictly equals the expected value.
+   * @param expected - The expected sequence number
+   */
+  toHaveSequenceNumberStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the sequence number satisfies the provided matcher function.
+   * @param matcher - A function that receives the sequence number and performs assertions
+   */
+  toHaveSequenceNumberSatisfying(matcher: (value: string) => void): this;
+
+  /**
+   * Asserts that the sequence number contains the specified substring.
+   * @param substr - The substring to search for
+   */
+  toHaveSequenceNumberContaining(substr: string): this;
+
+  /**
+   * Asserts that the sequence number matches the specified regular expression.
+   * @param expected - The regular expression to match against
+   */
+  toHaveSequenceNumberMatching(expected: RegExp): this;
+
+  /**
+   * Asserts that the duration equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDuration(expected: unknown): this;
+
+  /**
+   * Asserts that the duration equals the expected value using deep equality.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration strictly equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration satisfies the provided matcher function.
+   * @param matcher - A function that receives the duration and performs assertions
+   */
+  toHaveDurationSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the duration is NaN.
+   */
+  toHaveDurationNaN(): this;
+
+  /**
+   * Asserts that the duration is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveDurationCloseTo(expected: number, numDigits?: number): this;
 }
 
 export function expectSqsSendResult(
   result: SqsSendResult,
-  negate = false,
 ): SqsSendResultExpectation {
-  const self: SqsSendResultExpectation = {
-    get not(): SqsSendResultExpectation {
-      return expectSqsSendResult(result, !negate);
-    },
-
-    toBeSuccessful() {
-      const isSuccess = result.ok;
-      if (negate ? isSuccess : !isSuccess) {
-        throw new Error(
-          negate
-            ? "Expected not ok result, but ok is true"
-            : "Expected ok result, but ok is false",
-        );
-      }
-      return this;
-    },
-
-    toHaveMessageId() {
-      const hasId = !!result.messageId;
-      if (negate ? hasId : !hasId) {
-        throw new Error(
-          negate
-            ? "Expected no messageId, but messageId exists"
-            : "Expected messageId, but messageId is undefined",
-        );
-      }
-      return this;
-    },
-
-    ...createDurationMethods(result.duration, negate),
-  };
-
-  return self;
+  return mixin.defineExpectation((negate) => [
+    mixin.createOkMixin(
+      () => result.ok,
+      negate,
+      { valueName: "send result" },
+    ),
+    // Message id
+    mixin.createValueMixin(
+      () => result.messageId,
+      negate,
+      { valueName: "message id" },
+    ),
+    mixin.createStringValueMixin(
+      () => result.messageId,
+      negate,
+      { valueName: "message id" },
+    ),
+    // md5 of body
+    mixin.createValueMixin(
+      () => result.md5OfBody,
+      negate,
+      { valueName: "md5 of body" },
+    ),
+    mixin.createStringValueMixin(
+      () => result.md5OfBody,
+      negate,
+      { valueName: "md5 of body" },
+    ),
+    // Sequence number
+    mixin.createValueMixin(
+      () => result.sequenceNumber,
+      negate,
+      { valueName: "sequence number" },
+    ),
+    mixin.createStringValueMixin(
+      () => getNonNull(result.sequenceNumber, "sequence number"),
+      negate,
+      { valueName: "sequence number" },
+    ),
+    // Duration
+    mixin.createValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+  ]);
 }

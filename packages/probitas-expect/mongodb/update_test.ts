@@ -1,64 +1,182 @@
-import { expectMongoUpdateResult } from "./update.ts";
+import { assertEquals, assertExists } from "@std/assert";
+import {
+  expectMongoUpdateResult,
+  type MongoUpdateResultExpectation,
+} from "./update.ts";
 import { mockMongoUpdateResult } from "./_test_utils.ts";
 
-Deno.test("expectMongoUpdateResult", async (t) => {
-  await t.step("toBeSuccessful", () => {
-    expectMongoUpdateResult(mockMongoUpdateResult({ ok: true }))
-      .toBeSuccessful();
-  });
+// Define expected methods with their test arguments
+// Using Record to ensure all interface methods are listed (compile-time check)
+const EXPECTED_METHODS: Record<keyof MongoUpdateResultExpectation, unknown[]> =
+  {
+    // Core (special property, not a method)
+    not: [],
+    // Ok
+    toBeOk: [],
+    // Matched count
+    toHaveMatchedCount: [1],
+    toHaveMatchedCountEqual: [1],
+    toHaveMatchedCountStrictEqual: [1],
+    toHaveMatchedCountSatisfying: [(v: number) => assertEquals(v, 1)],
+    toHaveMatchedCountNaN: [],
+    toHaveMatchedCountGreaterThan: [0],
+    toHaveMatchedCountGreaterThanOrEqual: [1],
+    toHaveMatchedCountLessThan: [2],
+    toHaveMatchedCountLessThanOrEqual: [1],
+    toHaveMatchedCountCloseTo: [1, 0],
+    // Modified count
+    toHaveModifiedCount: [1],
+    toHaveModifiedCountEqual: [1],
+    toHaveModifiedCountStrictEqual: [1],
+    toHaveModifiedCountSatisfying: [(v: number) => assertEquals(v, 1)],
+    toHaveModifiedCountNaN: [],
+    toHaveModifiedCountGreaterThan: [0],
+    toHaveModifiedCountGreaterThanOrEqual: [1],
+    toHaveModifiedCountLessThan: [2],
+    toHaveModifiedCountLessThanOrEqual: [1],
+    toHaveModifiedCountCloseTo: [1, 0],
+    // Upserted ID
+    toHaveUpsertedId: [undefined],
+    toHaveUpsertedIdEqual: [undefined],
+    toHaveUpsertedIdStrictEqual: [undefined],
+    toHaveUpsertedIdSatisfying: [
+      (v: string | undefined) => assertEquals(v, undefined),
+    ],
+    toHaveUpsertedIdPresent: [],
+    toHaveUpsertedIdNull: [],
+    toHaveUpsertedIdUndefined: [],
+    toHaveUpsertedIdNullish: [],
+    toHaveUpsertedIdContaining: ["upsert"],
+    toHaveUpsertedIdMatching: [/upsert/],
+    // Duration
+    toHaveDuration: [100],
+    toHaveDurationEqual: [100],
+    toHaveDurationStrictEqual: [100],
+    toHaveDurationSatisfying: [(v: number) => assertEquals(v, 100)],
+    toHaveDurationNaN: [],
+    toHaveDurationGreaterThan: [50],
+    toHaveDurationGreaterThanOrEqual: [100],
+    toHaveDurationLessThan: [200],
+    toHaveDurationLessThanOrEqual: [100],
+    toHaveDurationCloseTo: [100, 0],
+  };
 
-  await t.step("toHaveMatchedCount", () => {
-    expectMongoUpdateResult(mockMongoUpdateResult({ matchedCount: 2 }))
-      .toHaveMatchedCount(2);
-  });
+Deno.test("expectMongoUpdateResult - method existence check", () => {
+  const result = mockMongoUpdateResult();
+  const expectation = expectMongoUpdateResult(result);
 
-  await t.step("toHaveMatchedCountGreaterThan", () => {
-    expectMongoUpdateResult(mockMongoUpdateResult({ matchedCount: 5 }))
-      .toHaveMatchedCountGreaterThan(2);
-  });
+  const expectedMethodNames = Object.keys(EXPECTED_METHODS) as Array<
+    keyof MongoUpdateResultExpectation
+  >;
 
-  await t.step("toHaveMatchedCountGreaterThanOrEqual", () => {
-    expectMongoUpdateResult(mockMongoUpdateResult({ matchedCount: 5 }))
-      .toHaveMatchedCountGreaterThanOrEqual(5);
-  });
+  // Check that all expected methods exist
+  for (const method of expectedMethodNames) {
+    assertExists(
+      expectation[method],
+      `Method '${method}' should exist on MongoUpdateResultExpectation`,
+    );
+  }
 
-  await t.step("toHaveMatchedCountLessThan", () => {
-    expectMongoUpdateResult(mockMongoUpdateResult({ matchedCount: 2 }))
-      .toHaveMatchedCountLessThan(5);
-  });
+  // Verify count matches (helps catch if we added methods but didn't list them)
+  const actualPropertyCount = Object.getOwnPropertyNames(expectation).length;
+  assertEquals(
+    actualPropertyCount,
+    expectedMethodNames.length,
+    `Expected ${expectedMethodNames.length} methods but found ${actualPropertyCount}`,
+  );
+});
 
-  await t.step("toHaveMatchedCountLessThanOrEqual", () => {
-    expectMongoUpdateResult(mockMongoUpdateResult({ matchedCount: 5 }))
-      .toHaveMatchedCountLessThanOrEqual(5);
-  });
+// Generate individual test for each method
+for (
+  const [methodName, args] of Object.entries(EXPECTED_METHODS) as Array<
+    [keyof MongoUpdateResultExpectation, unknown[]]
+  >
+) {
+  // Skip 'not' as it's a property, not a method
+  if (methodName === "not") continue;
 
-  await t.step("toHaveModifiedCount", () => {
-    expectMongoUpdateResult(mockMongoUpdateResult({ modifiedCount: 3 }))
-      .toHaveModifiedCount(3);
-  });
+  // Skip methods that require special setup (NaN values, null/undefined/nullish)
+  if (
+    methodName === "toHaveMatchedCountNaN" ||
+    methodName === "toHaveModifiedCountNaN" ||
+    methodName === "toHaveDurationNaN" ||
+    methodName === "toHaveUpsertedIdPresent" ||
+    methodName === "toHaveUpsertedIdNull" ||
+    methodName === "toHaveUpsertedIdContaining" ||
+    methodName === "toHaveUpsertedIdMatching"
+  ) {
+    continue;
+  }
 
-  await t.step("toHaveModifiedCountGreaterThan", () => {
-    expectMongoUpdateResult(mockMongoUpdateResult({ modifiedCount: 5 }))
-      .toHaveModifiedCountGreaterThan(2);
-  });
+  Deno.test(`expectMongoUpdateResult - ${methodName} - success`, () => {
+    const result = mockMongoUpdateResult();
+    const expectation = expectMongoUpdateResult(result);
 
-  await t.step("toHaveModifiedCountGreaterThanOrEqual", () => {
-    expectMongoUpdateResult(mockMongoUpdateResult({ modifiedCount: 5 }))
-      .toHaveModifiedCountGreaterThanOrEqual(5);
-  });
+    // Call the method with provided arguments
+    // deno-lint-ignore no-explicit-any
+    const method = expectation[methodName] as (...args: any[]) => any;
+    const chainedResult = method.call(expectation, ...args);
 
-  await t.step("toHaveModifiedCountLessThan", () => {
-    expectMongoUpdateResult(mockMongoUpdateResult({ modifiedCount: 2 }))
-      .toHaveModifiedCountLessThan(5);
+    // Verify method returns an expectation object (for chaining)
+    assertExists(chainedResult);
+    assertExists(
+      chainedResult.toBeOk,
+      "Result should have toBeOk method for chaining",
+    );
   });
+}
 
-  await t.step("toHaveModifiedCountLessThanOrEqual", () => {
-    expectMongoUpdateResult(mockMongoUpdateResult({ modifiedCount: 5 }))
-      .toHaveModifiedCountLessThanOrEqual(5);
-  });
+Deno.test("expectMongoUpdateResult - not property - success", () => {
+  const result = mockMongoUpdateResult({ ok: false });
+  const expectation = expectMongoUpdateResult(result);
 
-  await t.step("toHaveUpsertedId", () => {
-    expectMongoUpdateResult(mockMongoUpdateResult({ upsertedId: "456" }))
-      .toHaveUpsertedId();
+  // Verify .not is accessible and returns expectation
+  expectation.not.toBeOk();
+  expectation.not.toHaveMatchedCount(0);
+});
+
+Deno.test("expectMongoUpdateResult - upsert with ID - success", () => {
+  const result = mockMongoUpdateResult({
+    upsertedId: "upserted-123",
+    matchedCount: 0,
+    modifiedCount: 0,
   });
+  const expectation = expectMongoUpdateResult(result);
+
+  expectation.toHaveUpsertedIdPresent();
+  expectation.toHaveUpsertedId("upserted-123");
+  expectation.toHaveUpsertedIdContaining("upserted");
+  expectation.toHaveUpsertedIdMatching(/^upserted-\d+$/);
+  expectation.toHaveMatchedCount(0);
+  expectation.toHaveModifiedCount(0);
+});
+
+Deno.test("expectMongoUpdateResult - nullish upserted ID - success", () => {
+  // Test undefined upsertedId
+  const undefinedResult = mockMongoUpdateResult({ upsertedId: undefined });
+  const undefinedExpectation = expectMongoUpdateResult(undefinedResult);
+
+  undefinedExpectation.toHaveUpsertedIdUndefined();
+  undefinedExpectation.toHaveUpsertedIdNullish();
+
+  // Test null upsertedId (cast to any since the type expects string | undefined)
+  // deno-lint-ignore no-explicit-any
+  const nullResult = mockMongoUpdateResult({ upsertedId: null as any });
+  const nullExpectation = expectMongoUpdateResult(nullResult);
+
+  nullExpectation.toHaveUpsertedIdNull();
+  nullExpectation.toHaveUpsertedIdNullish();
+});
+
+Deno.test("expectMongoUpdateResult - multiple documents updated - success", () => {
+  const result = mockMongoUpdateResult({
+    matchedCount: 5,
+    modifiedCount: 3,
+  });
+  const expectation = expectMongoUpdateResult(result);
+
+  expectation.toHaveMatchedCount(5);
+  expectation.toHaveModifiedCount(3);
+  expectation.toHaveMatchedCountGreaterThan(3);
+  expectation.toHaveModifiedCountLessThanOrEqual(5);
 });

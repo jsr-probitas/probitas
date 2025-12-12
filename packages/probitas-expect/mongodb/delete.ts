@@ -1,5 +1,5 @@
-import { createDurationMethods } from "../common.ts";
 import type { MongoDeleteResult } from "@probitas/client-mongodb";
+import * as mixin from "../mixin.ts";
 
 /**
  * Fluent API for MongoDB delete result validation.
@@ -16,198 +16,161 @@ export interface MongoDeleteResultExpectation {
   readonly not: this;
 
   /**
-   * Asserts that the delete operation completed successfully.
-   *
-   * @example
-   * ```ts
-   * expectMongoResult(deleteResult).toBeSuccessful();
-   * ```
+   * Asserts that the delete result is successful.
    */
-  toBeSuccessful(): this;
+  toBeOk(): this;
 
   /**
-   * Asserts that the number of deleted documents equals the expected value.
-   *
-   * @param count - The expected number of deleted documents
-   * @example
-   * ```ts
-   * expectMongoResult(deleteResult).toHaveDeletedCount(1);
-   * ```
+   * Asserts that the deleted count equals the expected value.
+   * @param expected - The expected deleted count
    */
-  toHaveDeletedCount(count: number): this;
+  toHaveDeletedCount(expected: unknown): this;
 
   /**
-   * Asserts that the number of deleted documents is greater than the specified threshold.
-   *
-   * @param count - The threshold value
-   * @example
-   * ```ts
-   * expectMongoResult(deleteResult).toHaveDeletedCountGreaterThan(0);
-   * ```
+   * Asserts that the deleted count equals the expected value using deep equality.
+   * @param expected - The expected deleted count
    */
-  toHaveDeletedCountGreaterThan(count: number): this;
+  toHaveDeletedCountEqual(expected: unknown): this;
 
   /**
-   * Asserts that the number of deleted documents is at least the specified minimum.
-   *
-   * @param count - The minimum expected number of deleted documents
-   * @example
-   * ```ts
-   * expectMongoResult(deleteResult).toHaveDeletedCountGreaterThanOrEqual(1);
-   * ```
+   * Asserts that the deleted count strictly equals the expected value.
+   * @param expected - The expected deleted count
    */
-  toHaveDeletedCountGreaterThanOrEqual(count: number): this;
+  toHaveDeletedCountStrictEqual(expected: unknown): this;
 
   /**
-   * Asserts that the number of deleted documents is less than the specified threshold.
-   *
-   * @param count - The threshold value
-   * @example
-   * ```ts
-   * expectMongoResult(deleteResult).toHaveDeletedCountLessThan(100);
-   * ```
+   * Asserts that the deleted count satisfies the provided matcher function.
+   * @param matcher - A function that receives the deleted count and performs assertions
    */
-  toHaveDeletedCountLessThan(count: number): this;
+  toHaveDeletedCountSatisfying(matcher: (value: number) => void): this;
 
   /**
-   * Asserts that the number of deleted documents is at most the specified maximum.
-   *
-   * @param count - The maximum expected number of deleted documents
-   * @example
-   * ```ts
-   * expectMongoResult(deleteResult).toHaveDeletedCountLessThanOrEqual(10);
-   * ```
+   * Asserts that the deleted count is NaN.
    */
-  toHaveDeletedCountLessThanOrEqual(count: number): this;
+  toHaveDeletedCountNaN(): this;
 
   /**
-   * Asserts that the operation duration is less than the specified threshold.
-   *
-   * @param ms - The maximum duration in milliseconds
-   * @example
-   * ```ts
-   * expectMongoResult(deleteResult).toHaveDurationLessThan(100);
-   * ```
+   * Asserts that the deleted count is greater than the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveDurationLessThan(ms: number): this;
+  toHaveDeletedCountGreaterThan(expected: number): this;
 
   /**
-   * Asserts that the operation duration is less than or equal to the specified threshold.
-   *
-   * @param ms - The maximum duration in milliseconds
-   * @example
-   * ```ts
-   * expectMongoResult(deleteResult).toHaveDurationLessThanOrEqual(100);
-   * ```
+   * Asserts that the deleted count is greater than or equal to the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveDurationLessThanOrEqual(ms: number): this;
+  toHaveDeletedCountGreaterThanOrEqual(expected: number): this;
 
   /**
-   * Asserts that the operation duration is greater than the specified threshold.
-   *
-   * @param ms - The minimum duration in milliseconds
-   * @example
-   * ```ts
-   * expectMongoResult(deleteResult).toHaveDurationGreaterThan(50);
-   * ```
+   * Asserts that the deleted count is less than the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveDurationGreaterThan(ms: number): this;
+  toHaveDeletedCountLessThan(expected: number): this;
 
   /**
-   * Asserts that the operation duration is greater than or equal to the specified threshold.
-   *
-   * @param ms - The minimum duration in milliseconds
-   * @example
-   * ```ts
-   * expectMongoResult(deleteResult).toHaveDurationGreaterThanOrEqual(50);
-   * ```
+   * Asserts that the deleted count is less than or equal to the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveDurationGreaterThanOrEqual(ms: number): this;
+  toHaveDeletedCountLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the deleted count is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveDeletedCountCloseTo(expected: number, numDigits?: number): this;
+
+  /**
+   * Asserts that the duration equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDuration(expected: unknown): this;
+
+  /**
+   * Asserts that the duration equals the expected value using deep equality.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration strictly equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration satisfies the provided matcher function.
+   * @param matcher - A function that receives the duration and performs assertions
+   */
+  toHaveDurationSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the duration is NaN.
+   */
+  toHaveDurationNaN(): this;
+
+  /**
+   * Asserts that the duration is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveDurationCloseTo(expected: number, numDigits?: number): this;
 }
 
 export function expectMongoDeleteResult(
   result: MongoDeleteResult,
-  negate = false,
 ): MongoDeleteResultExpectation {
-  const self: MongoDeleteResultExpectation = {
-    get not(): MongoDeleteResultExpectation {
-      return expectMongoDeleteResult(result, !negate);
-    },
-
-    toBeSuccessful() {
-      const isSuccess = result.ok;
-      if (negate ? isSuccess : !isSuccess) {
-        throw new Error(
-          negate
-            ? "Expected not ok result, but ok is true"
-            : "Expected ok result, but ok is false",
-        );
-      }
-      return this;
-    },
-
-    toHaveDeletedCount(count: number) {
-      const match = result.deletedCount === count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected deleted count to not be ${count}, got ${result.deletedCount}`
-            : `Expected ${count} deleted documents, got ${result.deletedCount}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveDeletedCountGreaterThan(count: number) {
-      const match = result.deletedCount > count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected deleted count to not be > ${count}, got ${result.deletedCount}`
-            : `Expected deleted count > ${count}, but got ${result.deletedCount}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveDeletedCountGreaterThanOrEqual(count: number) {
-      const match = result.deletedCount >= count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected deleted count to not be >= ${count}, got ${result.deletedCount}`
-            : `Expected deleted count >= ${count}, but got ${result.deletedCount}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveDeletedCountLessThan(count: number) {
-      const match = result.deletedCount < count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected deleted count to not be < ${count}, got ${result.deletedCount}`
-            : `Expected deleted count < ${count}, but got ${result.deletedCount}`,
-        );
-      }
-      return this;
-    },
-
-    toHaveDeletedCountLessThanOrEqual(count: number) {
-      const match = result.deletedCount <= count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected deleted count to not be <= ${count}, got ${result.deletedCount}`
-            : `Expected deleted count <= ${count}, but got ${result.deletedCount}`,
-        );
-      }
-      return this;
-    },
-
-    ...createDurationMethods(result.duration, negate),
-  };
-
-  return self;
+  return mixin.defineExpectation((negate) => [
+    mixin.createOkMixin(
+      () => result.ok,
+      negate,
+      { valueName: "delete result" },
+    ),
+    // Deleted count
+    mixin.createValueMixin(
+      () => result.deletedCount,
+      negate,
+      { valueName: "deleted count" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.deletedCount,
+      negate,
+      { valueName: "deleted count" },
+    ),
+    // Duration
+    mixin.createValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+  ]);
 }

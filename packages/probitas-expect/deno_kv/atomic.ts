@@ -1,5 +1,6 @@
-import { createDurationMethods } from "../common.ts";
 import type { DenoKvAtomicResult } from "@probitas/client-deno-kv";
+import { getNonNull } from "../common.ts";
+import * as mixin from "../mixin.ts";
 
 /**
  * Fluent API for validating DenoKvAtomicResult.
@@ -13,75 +14,132 @@ export interface DenoKvAtomicResultExpectation {
    *
    * @example
    * ```ts
-   * expectDenoKvResult(result).not.toBeSuccessful();
+   * expectDenoKvResult(result).not.toBeOk();
    * expectDenoKvResult(result).not.toHaveVersionstamp();
    * ```
    */
   readonly not: this;
 
   /**
-   * Asserts that the atomic operation succeeded.
-   *
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toBeSuccessful();
-   * ```
+   * Asserts that the result is successful.
    */
-  toBeSuccessful(): this;
+  toBeOk(): this;
 
   /**
-   * Asserts that the result has a versionstamp (only present on successful atomic commits).
-   *
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveVersionstamp();
-   * ```
+   * Asserts that the versionstamp equals the expected value.
+   * @param expected - The expected versionstamp value
    */
-  toHaveVersionstamp(): this;
+  toHaveVersionstamp(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is less than the specified threshold.
-   *
-   * @param ms - The maximum duration in milliseconds (exclusive)
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveDurationLessThan(100);
-   * ```
+   * Asserts that the versionstamp equals the expected value using deep equality.
+   * @param expected - The expected versionstamp value
    */
-  toHaveDurationLessThan(ms: number): this;
+  toHaveVersionstampEqual(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is less than or equal to the specified threshold.
-   *
-   * @param ms - The maximum duration in milliseconds (inclusive)
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveDurationLessThanOrEqual(100);
-   * ```
+   * Asserts that the versionstamp strictly equals the expected value.
+   * @param expected - The expected versionstamp value
    */
-  toHaveDurationLessThanOrEqual(ms: number): this;
+  toHaveVersionstampStrictEqual(expected: unknown): this;
 
   /**
-   * Asserts that the operation duration is greater than the specified threshold.
-   *
-   * @param ms - The minimum duration in milliseconds (exclusive)
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveDurationGreaterThan(10);
-   * ```
+   * Asserts that the versionstamp satisfies the provided matcher function.
+   * @param matcher - A function that receives the versionstamp and performs assertions
    */
-  toHaveDurationGreaterThan(ms: number): this;
+  toHaveVersionstampSatisfying(matcher: (value: string) => void): this;
 
   /**
-   * Asserts that the operation duration is greater than or equal to the specified threshold.
-   *
-   * @param ms - The minimum duration in milliseconds (inclusive)
-   * @example
-   * ```ts
-   * expectDenoKvResult(result).toHaveDurationGreaterThanOrEqual(10);
-   * ```
+   * Asserts that the versionstamp contains the specified substring.
+   * @param substr - The substring to search for
    */
-  toHaveDurationGreaterThanOrEqual(ms: number): this;
+  toHaveVersionstampContaining(substr: string): this;
+
+  /**
+   * Asserts that the versionstamp matches the specified regular expression.
+   * @param expected - The regular expression to match against
+   */
+  toHaveVersionstampMatching(expected: RegExp): this;
+
+  /**
+   * Asserts that the versionstamp is present (not null or undefined).
+   */
+  toHaveVersionstampPresent(): this;
+
+  /**
+   * Asserts that the versionstamp is null.
+   */
+  toHaveVersionstampNull(): this;
+
+  /**
+   * Asserts that the versionstamp is undefined.
+   */
+  toHaveVersionstampUndefined(): this;
+
+  /**
+   * Asserts that the versionstamp is nullish (null or undefined).
+   */
+  toHaveVersionstampNullish(): this;
+
+  /**
+   * Asserts that the duration equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDuration(expected: unknown): this;
+
+  /**
+   * Asserts that the duration equals the expected value using deep equality.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration strictly equals the expected value.
+   * @param expected - The expected duration value
+   */
+  toHaveDurationStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the duration satisfies the provided matcher function.
+   * @param matcher - A function that receives the duration and performs assertions
+   */
+  toHaveDurationSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the duration is NaN.
+   */
+  toHaveDurationNaN(): this;
+
+  /**
+   * Asserts that the duration is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveDurationCloseTo(expected: number, numDigits?: number): this;
 }
 
 /**
@@ -89,37 +147,39 @@ export interface DenoKvAtomicResultExpectation {
  */
 export function expectDenoKvAtomicResult(
   result: DenoKvAtomicResult,
-  negate = false,
 ): DenoKvAtomicResultExpectation {
-  const self: DenoKvAtomicResultExpectation = {
-    get not(): DenoKvAtomicResultExpectation {
-      return expectDenoKvAtomicResult(result, !negate);
-    },
-
-    toBeSuccessful() {
-      const isSuccess = result.ok;
-      if (negate ? isSuccess : !isSuccess) {
-        throw new Error(
-          negate ? "Expected not ok result" : "Expected ok result",
-        );
-      }
-      return this;
-    },
-
-    toHaveVersionstamp() {
-      const hasStamp = !!result.versionstamp;
-      if (negate ? hasStamp : !hasStamp) {
-        throw new Error(
-          negate
-            ? "Expected no versionstamp, but it exists"
-            : "Expected versionstamp, but it is missing or empty",
-        );
-      }
-      return this;
-    },
-
-    ...createDurationMethods(result.duration, negate),
-  };
-
-  return self;
+  return mixin.defineExpectation((negate) => [
+    mixin.createOkMixin(
+      () => result.ok,
+      negate,
+      { valueName: "result" },
+    ),
+    // Versionstamp
+    mixin.createValueMixin(
+      () => result.versionstamp,
+      negate,
+      { valueName: "versionstamp" },
+    ),
+    mixin.createNullishValueMixin(
+      () => result.versionstamp,
+      negate,
+      { valueName: "versionstamp" },
+    ),
+    mixin.createStringValueMixin(
+      () => getNonNull(result.versionstamp, "versionstamp"),
+      negate,
+      { valueName: "versionstamp" },
+    ),
+    // Duration
+    mixin.createValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+  ]);
 }

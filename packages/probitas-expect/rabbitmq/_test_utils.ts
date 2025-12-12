@@ -1,5 +1,7 @@
 import type {
+  RabbitMqAckResult,
   RabbitMqConsumeResult,
+  RabbitMqExchangeResult,
   RabbitMqPublishResult,
   RabbitMqQueueResult,
 } from "@probitas/client-rabbitmq";
@@ -7,7 +9,7 @@ import type {
 export const mockRabbitMqPublishResult = (
   overrides: Partial<RabbitMqPublishResult> = {},
 ): RabbitMqPublishResult => ({
-  type: "rabbitmq:publish" as const,
+  kind: "rabbitmq:publish" as const,
   ok: true,
   duration: 100,
   ...overrides,
@@ -16,7 +18,7 @@ export const mockRabbitMqPublishResult = (
 export const mockRabbitMqConsumeResult = (
   overrides: Partial<RabbitMqConsumeResult> = {},
 ): RabbitMqConsumeResult => ({
-  type: "rabbitmq:consume" as const,
+  kind: "rabbitmq:consume" as const,
   ok: true,
   message: {
     content: new TextEncoder().encode("test message"),
@@ -35,11 +37,29 @@ export const mockRabbitMqConsumeResult = (
 export const mockRabbitMqQueueResult = (
   overrides: Partial<RabbitMqQueueResult> = {},
 ): RabbitMqQueueResult => ({
-  type: "rabbitmq:queue" as const,
+  kind: "rabbitmq:queue" as const,
   ok: true,
   queue: "test-queue",
   messageCount: 10,
   consumerCount: 2,
+  duration: 100,
+  ...overrides,
+});
+
+export const mockRabbitMqAckResult = (
+  overrides: Partial<RabbitMqAckResult> = {},
+): RabbitMqAckResult => ({
+  kind: "rabbitmq:ack" as const,
+  ok: true,
+  duration: 100,
+  ...overrides,
+});
+
+export const mockRabbitMqExchangeResult = (
+  overrides: Partial<RabbitMqExchangeResult> = {},
+): RabbitMqExchangeResult => ({
+  kind: "rabbitmq:exchange" as const,
+  ok: true,
   duration: 100,
   ...overrides,
 });

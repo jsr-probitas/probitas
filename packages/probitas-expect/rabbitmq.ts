@@ -18,27 +18,23 @@ import {
   expectRabbitMqQueueResult,
   type RabbitMqQueueResultExpectation,
 } from "./rabbitmq/queue.ts";
-import { expectSimpleResult } from "./rabbitmq/simple.ts";
+import {
+  expectRabbitMqAckResult,
+  type RabbitMqAckResultExpectation,
+} from "./rabbitmq/ack.ts";
+import {
+  expectRabbitMqExchangeResult,
+  type RabbitMqExchangeResultExpectation,
+} from "./rabbitmq/exchange.ts";
 
 // Re-export interfaces
 export type {
+  RabbitMqAckResultExpectation,
   RabbitMqConsumeResultExpectation,
+  RabbitMqExchangeResultExpectation,
   RabbitMqPublishResultExpectation,
   RabbitMqQueueResultExpectation,
 };
-
-/**
- * Fluent API for RabbitMQ exchange result validation.
- * Same interface as publish result (ok, duration only).
- */
-export type RabbitMqExchangeResultExpectation =
-  RabbitMqPublishResultExpectation;
-
-/**
- * Fluent API for RabbitMQ ack result validation.
- * Same interface as publish result (ok, duration only).
- */
-export type RabbitMqAckResultExpectation = RabbitMqPublishResultExpectation;
 
 /**
  * Expectation type returned by expectRabbitMqResult based on the result type.
@@ -61,29 +57,29 @@ export type RabbitMqExpectation<R extends RabbitMqResult> = R extends
  * ```ts
  * // For publish result - returns RabbitMqPublishResultExpectation
  * const publishResult = await channel.sendToQueue(queue, content);
- * expectRabbitMqResult(publishResult).toBeSuccessful();
+ * expectRabbitMqResult(publishResult).toBeOk();
  *
  * // For consume result - returns RabbitMqConsumeResultExpectation
  * const consumeResult = await channel.get(queue);
- * expectRabbitMqResult(consumeResult).toBeSuccessful().toHaveContent().routingKey("key");
+ * expectRabbitMqResult(consumeResult).toBeOk().toHaveContent().routingKey("key");
  *
  * // For queue result - returns RabbitMqQueueResultExpectation
  * const queueResult = await channel.assertQueue("my-queue");
- * expectRabbitMqResult(queueResult).toBeSuccessful().messageCount(0);
+ * expectRabbitMqResult(queueResult).toBeOk().messageCount(0);
  *
  * // For exchange result - returns RabbitMqExchangeResultExpectation
  * const exchangeResult = await channel.assertExchange("my-exchange", "direct");
- * expectRabbitMqResult(exchangeResult).toBeSuccessful();
+ * expectRabbitMqResult(exchangeResult).toBeOk();
  *
  * // For ack result - returns RabbitMqAckResultExpectation
  * const ackResult = await channel.ack(message);
- * expectRabbitMqResult(ackResult).toBeSuccessful();
+ * expectRabbitMqResult(ackResult).toBeOk();
  * ```
  */
 export function expectRabbitMqResult<R extends RabbitMqResult>(
   result: R,
 ): RabbitMqExpectation<R> {
-  switch (result.type) {
+  switch (result.kind) {
     case "rabbitmq:consume":
       return expectRabbitMqConsumeResult(
         result as unknown as RabbitMqConsumeResult,
@@ -97,16 +93,16 @@ export function expectRabbitMqResult<R extends RabbitMqResult>(
         result as unknown as RabbitMqPublishResult,
       ) as unknown as RabbitMqExpectation<R>;
     case "rabbitmq:exchange":
-      return expectSimpleResult(
+      return expectRabbitMqExchangeResult(
         result as unknown as RabbitMqExchangeResult,
       ) as unknown as RabbitMqExpectation<R>;
     case "rabbitmq:ack":
-      return expectSimpleResult(
+      return expectRabbitMqAckResult(
         result as unknown as RabbitMqAckResult,
       ) as unknown as RabbitMqExpectation<R>;
     default:
       throw new Error(
-        `Unknown RabbitMQ result type: ${(result as { type: string }).type}`,
+        `Unknown RabbitMQ result kind: ${(result as { kind: string }).kind}`,
       );
   }
 }
