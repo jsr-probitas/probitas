@@ -1,3 +1,62 @@
+### 2025.12.12
+
+#### @probitas/builder 0.2.8 (patch)
+
+- docs(*): add migration guide from 0.4.0 to 0.5.0 and update README
+
+#### @probitas/cli 0.4.1 (patch)
+
+- docs(*): add migration guide from 0.4.0 to 0.5.0 and update README
+
+#### @probitas/discover 0.2.8 (patch)
+
+- docs(*): add migration guide from 0.4.0 to 0.5.0 and update README
+
+#### @probitas/expect 0.2.0 (minor)
+
+- BREAKING(@probitas/expect): migrate to mixin-based expectation architecture
+- feat(@probitas/expect): refactor AnythingExpectation to use state-based
+  negation
+- feat(@probitas/expect): Add comprehensive mixin system for type-safe
+  expectations
+- feat(@probitas/expect): Add boolean XOR utility to convert boolean values
+- feat(@probitas/expect): Add tryOk utility to convert exceptions to boolean
+  results
+- feat(@probitas/expect): Add toPascalCase utility function
+- feat(@probitas/expect): Add `catchError` utility for error handling in tests
+- fix(@probitas/expect): Return NonNullable type from getNonNull function
+- docs(*): add migration guide from 0.4.0 to 0.5.0 and update README
+- refactor(@probitas/expect): rename common/ to utils/ and consolidate imports
+- refactor(@probitas/expect): rename getNonNull to ensureNonNullish
+- refactor(@probitas/expect): rename format.ts to format_value.ts
+- refactor(@probitas/expect): remove obsolete common/ utilities after mixin
+  migration
+- refactor(@probitas/expect): split sqs.ts into modular structure
+- refactor(@probitas/expect): split redis.ts into modular structure
+- refactor(@probitas/expect): split rabbitmq.ts into modular structure
+- refactor(@probitas/expect): split mongodb.ts into modular structure
+- refactor(@probitas/expect): split deno_kv.ts into modular structure
+
+#### @probitas/logger 0.2.8 (patch)
+
+- docs(*): add migration guide from 0.4.0 to 0.5.0 and update README
+
+#### @probitas/probitas 0.4.1 (patch)
+
+- docs(*): add migration guide from 0.4.0 to 0.5.0 and update README
+
+#### @probitas/reporter 0.3.3 (patch)
+
+- docs(*): add migration guide from 0.4.0 to 0.5.0 and update README
+
+#### @probitas/runner 0.2.8 (patch)
+
+- docs(*): add migration guide from 0.4.0 to 0.5.0 and update README
+
+#### @probitas/scenario 0.2.8 (patch)
+
+- docs(*): add migration guide from 0.4.0 to 0.5.0 and update README
+
 ### 2025.12.09
 
 #### @probitas/expect 0.1.2 (patch)
