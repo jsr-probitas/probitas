@@ -217,17 +217,12 @@ export default scenario("API Test Example")
     const count = 42;
 
     // Chainable expectations for any value
-    expect(count)
-      .toBe(42)
-      .toBeGreaterThan(40)
-      .toBeLessThan(50);
+    expect(count).toBe(42).toBeGreaterThan(40).toBeLessThan(50);
   })
   .step("Validate message", (ctx) => {
     const message = "hello";
 
-    expect(message)
-      .not.toBe("world")
-      .toContain("ello");
+    expect(message).not.toBe("world").toContain("ello");
   })
   .build();
 ```
@@ -285,6 +280,7 @@ consistent tooling.
 | [@probitas/reporter](https://jsr.io/@probitas/reporter) | [![JSR](https://jsr.io/badges/@probitas/reporter)](https://jsr.io/@probitas/reporter) | Output formatters (List, Dot, JSON, TAP) |
 | [@probitas/scenario](https://jsr.io/@probitas/scenario) | [![JSR](https://jsr.io/badges/@probitas/scenario)](https://jsr.io/@probitas/scenario) | Scenario loading and filtering           |
 | [@probitas/discover](https://jsr.io/@probitas/discover) | [![JSR](https://jsr.io/badges/@probitas/discover)](https://jsr.io/@probitas/discover) | File discovery with glob patterns        |
+| [@probitas/expect](https://jsr.io/@probitas/expect)     | [![JSR](https://jsr.io/badges/@probitas/expect)](https://jsr.io/@probitas/expect)     | Expectation library                      |
 
 ## License
 
