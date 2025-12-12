@@ -222,14 +222,7 @@ export { expect } from "./expect.ts";
 export { type AnythingExpectation, expectAnything } from "./anything.ts";
 
 // Common utilities
-export {
-  buildErrorMessage,
-  containsSubarray,
-  containsSubset,
-  formatDifferences,
-  formatValue,
-  stripAnsi,
-} from "./common.ts";
+export { formatValue } from "./common.ts";
 
 // HTTP
 export { expectHttpResponse } from "./http.ts";
