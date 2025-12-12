@@ -208,10 +208,10 @@ export default scenario("API Test Example")
 
     // HTTP Response expectations
     expect(response)
-      .toBeSuccessful() // Status 2xx
+      .toBeOk() // Status 2xx
       .toHaveStatus(200) // Specific status
-      .toHaveContentType(/application\/json/)
-      .toMatchObject({ users: [] });
+      .toHaveHeadersProperty("content-type", /application\/json/)
+      .toHaveDataMatching({ users: [] });
   })
   .step("Validate count", (ctx) => {
     const count = 42;
@@ -249,8 +249,10 @@ All expectation methods follow a consistent naming pattern (`toBeXxx`,
 
 ## Documentation
 
-- [Migration from 0.3.6](docs/migration-from-0.3.6.md) - **Breaking changes in
-  0.4.0**
+- [Migration from 0.4.0](docs/migration-from-0.4.0.md) - **Breaking changes in
+  0.5.0**
+- [Migration from 0.3.6](docs/migration-from-0.3.6.md) - Breaking changes in
+  0.4.0
 - [Guide](docs/guide.md) - Comprehensive usage guide
 - [CLI Reference](docs/cli.md) - Command-line options
 - [Architecture](docs/architecture.md) - Design overview
