@@ -32,14 +32,14 @@ import type { SqsResult } from "@probitas/client-sqs";
 type ExtractSqlRowType<T> = T extends SqlQueryResult<infer R> ? R : never;
 
 /**
- * Type guard for objects with a `type` property
+ * Type guard for objects with a `kind` property
  */
-function hasType(value: unknown): value is { type: string } {
+function hasKind(value: unknown): value is { kind: string } {
   return (
     typeof value === "object" &&
     value !== null &&
-    "type" in value &&
-    typeof (value as { type: unknown }).type === "string"
+    "kind" in value &&
+    typeof (value as { kind: unknown }).kind === "string"
   );
 }
 
@@ -51,19 +51,19 @@ function hasType(value: unknown): value is { type: string } {
  * ```ts
  * // HTTP response
  * const httpRes = await http.get("/users");
- * expect(httpRes).toBeSuccessful().toHaveContentContaining({ users: [] });
+ * expect(httpRes).toBeOk().toHaveContentContaining({ users: [] });
  *
  * // GraphQL response
  * const gqlRes = await graphql.query("{ users { id name } }");
- * expect(gqlRes).toBeSuccessful().toHaveContent();
+ * expect(gqlRes).toBeOk().toHaveContent();
  *
  * // SQL query result
  * const sqlRes = await db.query("SELECT * FROM users");
- * expect(sqlRes).toBeSuccessful().toHaveCount(10);
+ * expect(sqlRes).toBeOk().toHaveCount(10);
  *
  * // MongoDB result
  * const mongoRes = await mongo.find({ status: "active" });
- * expect(mongoRes).toBeSuccessful().toHaveLength(10);
+ * expect(mongoRes).toBeOk().toHaveLength(10);
  *
  * // Falls back to expectAnything (chainable @std/expect) for other values
  * expect(42).toBe(42).toBeGreaterThan(40);
@@ -80,7 +80,7 @@ export function expect<T extends GraphqlResponse>(
 ): ReturnType<typeof expectGraphqlResponse>;
 export function expect<T extends SqlQueryResult>(
   value: T,
-): SqlQueryResultExpectation<ExtractSqlRowType<T>>;
+): SqlQueryResultExpectation;
 export function expect<T extends DenoKvResult>(
   value: T,
 ): ReturnType<typeof expectDenoKvResult<T>>;
@@ -98,37 +98,37 @@ export function expect<T extends SqsResult>(
 ): ReturnType<typeof expectSqsResult<T>>;
 export function expect(value: unknown): AnythingExpectation;
 export function expect(value: unknown): unknown {
-  if (hasType(value)) {
-    const { type } = value;
+  if (hasKind(value)) {
+    const { kind } = value;
 
-    // Exact type matches
-    if (type === "http") {
+    // Exact kind matches
+    if (kind === "http") {
       return expectHttpResponse(value as unknown as HttpResponse);
     }
-    if (type === "connectrpc") {
+    if (kind === "connectrpc") {
       return expectConnectRpcResponse(value as unknown as ConnectRpcResponse);
     }
-    if (type === "graphql") {
+    if (kind === "graphql") {
       return expectGraphqlResponse(value as unknown as GraphqlResponse);
     }
-    if (type === "sql") {
+    if (kind === "sql") {
       return expectSqlQueryResult(value as unknown as SqlQueryResult);
     }
 
-    // Prefix-based type matches
-    if (type.startsWith("deno-kv:")) {
+    // Prefix-based kind matches
+    if (kind.startsWith("deno-kv:")) {
       return expectDenoKvResult(value as unknown as DenoKvResult);
     }
-    if (type.startsWith("redis:")) {
+    if (kind.startsWith("redis:")) {
       return expectRedisResult(value as unknown as RedisResult);
     }
-    if (type.startsWith("mongo:")) {
+    if (kind.startsWith("mongo:")) {
       return expectMongoResult(value as unknown as MongoResult);
     }
-    if (type.startsWith("rabbitmq:")) {
+    if (kind.startsWith("rabbitmq:")) {
       return expectRabbitMqResult(value as unknown as RabbitMqResult);
     }
-    if (type.startsWith("sqs:")) {
+    if (kind.startsWith("sqs:")) {
       return expectSqsResult(value as unknown as SqsResult);
     }
   }

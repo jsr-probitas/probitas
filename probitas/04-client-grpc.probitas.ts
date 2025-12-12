@@ -20,8 +20,8 @@ export default scenario("gRPC Client Example", {
     });
 
     expect(res)
-      .toBeSuccessful()
-      .toMatchObject({ message: "Hello from probitas" });
+      .toBeOk()
+      .toHaveDataMatching({ message: "Hello from probitas" });
   })
   .step("EchoWithDelay - delayed response", async (ctx) => {
     const { grpc } = ctx.resources;
@@ -31,8 +31,8 @@ export default scenario("gRPC Client Example", {
     });
 
     expect(res)
-      .toBeSuccessful()
-      .toMatchObject({ message: "delayed" })
+      .toBeOk()
+      .toHaveDataMatching({ message: "delayed" })
       .toHaveDurationLessThan(5000);
   })
   .step("EchoError - NOT_FOUND error", async (ctx) => {
@@ -45,8 +45,8 @@ export default scenario("gRPC Client Example", {
     );
 
     expect(res)
-      .not.toBeSuccessful()
-      .toHaveCode(5);
+      .not.toBeOk()
+      .toHaveStatusCode(5);
   })
   .step("EchoError - INVALID_ARGUMENT error", async (ctx) => {
     const { grpc } = ctx.resources;
@@ -58,8 +58,8 @@ export default scenario("gRPC Client Example", {
     );
 
     expect(res)
-      .not.toBeSuccessful()
-      .toHaveCode(3);
+      .not.toBeOk()
+      .toHaveStatusCode(3);
   })
   .step("EchoRequestMetadata - echo headers", async (ctx) => {
     const { grpc } = ctx.resources;
@@ -70,7 +70,7 @@ export default scenario("gRPC Client Example", {
       { metadata: { "x-custom-header": "custom-value" } },
     );
 
-    expect(res).toBeSuccessful();
+    expect(res).toBeOk();
   })
   .step("EchoLargePayload - generate bytes", async (ctx) => {
     const { grpc } = ctx.resources;
@@ -80,8 +80,8 @@ export default scenario("gRPC Client Example", {
     });
 
     expect(res)
-      .toBeSuccessful()
-      .toMatchObject({ actualSize: 1024 });
+      .toBeOk()
+      .toHaveDataMatching({ actualSize: 1024 });
   })
   .step("EchoDeadline - check deadline info", async (ctx) => {
     const { grpc } = ctx.resources;
@@ -93,8 +93,8 @@ export default scenario("gRPC Client Example", {
     );
 
     expect(res)
-      .toBeSuccessful()
-      .toMatchObject({ message: "deadline test", hasDeadline: true });
+      .toBeOk()
+      .toHaveDataMatching({ message: "deadline test", hasDeadline: true });
   })
   .step("Health check", async (ctx) => {
     const { grpc } = ctx.resources;
@@ -103,7 +103,7 @@ export default scenario("gRPC Client Example", {
     });
 
     expect(res)
-      .toBeSuccessful()
-      .toMatchObject({ status: 1 });
+      .toBeOk()
+      .toHaveDataMatching({ status: 1 });
   })
   .build();

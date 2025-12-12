@@ -31,8 +31,10 @@ export default scenario("MongoDB Client Example", {
     const result = await users.insertOne({ name: "Alice", age: 30 });
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveInsertedId();
+      .toBeOk()
+      .toHaveInsertedIdSatisfying((id) => {
+        if (!id) throw new Error("Expected insertedId");
+      });
   })
   .step("Insert many documents", async (ctx) => {
     const { mongo } = ctx.resources;
@@ -44,7 +46,7 @@ export default scenario("MongoDB Client Example", {
     ]);
 
     expect(result)
-      .toBeSuccessful()
+      .toBeOk()
       .toHaveInsertedCount(3);
   })
   .step("Find one document", async (ctx) => {
@@ -53,15 +55,15 @@ export default scenario("MongoDB Client Example", {
     const result = await users.findOne({ name: "Alice" });
 
     expect(result)
-      .toBeSuccessful()
-      .toMatchObject({ name: "Alice" });
+      .toBeOk()
+      .toHaveDocMatching({ name: "Alice" });
   })
   .step("Find with filter", async (ctx) => {
     const { mongo } = ctx.resources;
     const users = mongo.collection<{ name: string; age: number }>("test_users");
     const result = await users.find({ age: { $gte: 30 } });
 
-    expect(result).toBeSuccessful().toHaveLength(2);
+    expect(result).toBeOk().toHaveDocsCount(2);
   })
   .step("Find with sort and limit", async (ctx) => {
     const { mongo } = ctx.resources;
@@ -72,10 +74,17 @@ export default scenario("MongoDB Client Example", {
     });
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveLength(2)
-      .toSatisfy((docs) => {
-        if (docs.first()?.age !== 35) {
+      .toBeOk()
+      .toHaveDocsCount(2)
+      .toHaveDocsSatisfying((docs) => {
+        if (
+          !Array.isArray(docs) ||
+          docs.length === 0 ||
+          typeof docs[0] !== "object" ||
+          docs[0] === null ||
+          !("age" in docs[0]) ||
+          (docs[0] as { age: number }).age !== 35
+        ) {
           throw new Error("Expected oldest user first");
         }
       });
@@ -89,7 +98,7 @@ export default scenario("MongoDB Client Example", {
     );
 
     expect(result)
-      .toBeSuccessful()
+      .toBeOk()
       .toHaveModifiedCount(1);
   })
   .step("Update many documents", async (ctx) => {
@@ -101,7 +110,7 @@ export default scenario("MongoDB Client Example", {
     );
 
     // NOTE: modifiedAtLeast is not available in current API
-    expect(result).toBeSuccessful();
+    expect(result).toBeOk();
     if (result.modifiedCount < 1) {
       throw new Error("Expected at least 1 modified document");
     }
@@ -112,8 +121,8 @@ export default scenario("MongoDB Client Example", {
     const result = await users.countDocuments({ age: { $gte: 25 } });
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveLengthGreaterThanOrEqual(3);
+      .toBeOk()
+      .toHaveCountGreaterThanOrEqual(3);
   })
   .step("Transaction - commit", async (ctx) => {
     const { mongo } = ctx.resources;
@@ -125,7 +134,7 @@ export default scenario("MongoDB Client Example", {
     // NOTE: findOne returns T | undefined directly
     const users = mongo.collection<{ name: string }>("test_users");
     const result = await users.findOne({ name: "TxUser" });
-    expect(result).toBeSuccessful();
+    expect(result).toBeOk();
   })
   .step("Delete one document", async (ctx) => {
     const { mongo } = ctx.resources;
@@ -133,7 +142,7 @@ export default scenario("MongoDB Client Example", {
     const result = await users.deleteOne({ name: "TxUser" });
 
     expect(result)
-      .toBeSuccessful()
+      .toBeOk()
       .toHaveDeletedCount(1);
   })
   .step("Delete many documents", async (ctx) => {
@@ -142,7 +151,7 @@ export default scenario("MongoDB Client Example", {
     const result = await users.deleteMany({});
 
     expect(result)
-      .toBeSuccessful()
+      .toBeOk()
       .toHaveDeletedCountGreaterThanOrEqual(1);
   })
   .build();

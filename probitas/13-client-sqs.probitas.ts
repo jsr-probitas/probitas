@@ -30,8 +30,8 @@ export default scenario("SQS Client Example", {
     }));
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveMessageId();
+      .toBeOk()
+      .toHaveMessageIdMatching(/.+/);
   })
   .step("Send message with attributes", async (ctx) => {
     const { sqs } = ctx.resources;
@@ -46,8 +46,8 @@ export default scenario("SQS Client Example", {
     );
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveMessageId();
+      .toBeOk()
+      .toHaveMessageIdMatching(/.+/);
   })
   .step("Send batch messages", async (ctx) => {
     const { sqs } = ctx.resources;
@@ -57,7 +57,11 @@ export default scenario("SQS Client Example", {
       { id: "3", body: JSON.stringify({ index: 3 }) },
     ];
     const result = await sqs.sendBatch(messages);
-    expect(result).toBeSuccessful().toHaveSuccessfulCount(3);
+    expect(result).toBeOk().toHaveSuccessfulSatisfying((msgs: unknown[]) => {
+      if (msgs.length !== 3) {
+        throw new Error(`Expected 3 successful messages, got ${msgs.length}`);
+      }
+    });
   })
   .step("Receive messages", async (ctx) => {
     const { sqs } = ctx.resources;
@@ -67,8 +71,8 @@ export default scenario("SQS Client Example", {
     });
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveLengthGreaterThanOrEqual(1);
+      .toBeOk()
+      .toHaveMessagesCountGreaterThanOrEqual(1);
   })
   .step("Receive and delete message", async (ctx) => {
     const { sqs } = ctx.resources;
@@ -102,8 +106,8 @@ export default scenario("SQS Client Example", {
     );
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveMessageId();
+      .toBeOk()
+      .toHaveMessageIdMatching(/.+/);
   })
   .step("Purge queue", async (ctx) => {
     const { sqs } = ctx.resources;
@@ -117,7 +121,7 @@ export default scenario("SQS Client Example", {
     });
 
     expect(result)
-      .toBeSuccessful()
-      .not.toHaveContent();
+      .toBeOk()
+      .toHaveMessagesEmpty();
   })
   .build();

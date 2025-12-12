@@ -38,8 +38,8 @@ export default scenario("PostgreSQL Client Example", {
     );
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveLength(1);
+      .toBeOk()
+      .toHaveRowCount(1);
   })
   .step("Insert multiple rows", async (ctx) => {
     const { pg } = ctx.resources;
@@ -49,8 +49,8 @@ export default scenario("PostgreSQL Client Example", {
     );
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveLength(2);
+      .toBeOk()
+      .toHaveRowCount(2);
   })
   .step("Select with WHERE clause", async (ctx) => {
     const { pg } = ctx.resources;
@@ -60,9 +60,9 @@ export default scenario("PostgreSQL Client Example", {
     );
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveLength(1)
-      .toMatchObject({ name: "Alice" });
+      .toBeOk()
+      .toHaveRowCount(1)
+      .toHaveRowsMatching({ name: "Alice" });
   })
   .step("Select all rows", async (ctx) => {
     const { pg } = ctx.resources;
@@ -71,8 +71,8 @@ export default scenario("PostgreSQL Client Example", {
     );
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveLengthGreaterThanOrEqual(3);
+      .toBeOk()
+      .toHaveRowCountGreaterThanOrEqual(3);
   })
   .step("Update row", async (ctx) => {
     const { pg } = ctx.resources;
@@ -82,8 +82,8 @@ export default scenario("PostgreSQL Client Example", {
     );
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveLength(1);
+      .toBeOk()
+      .toHaveRowCount(1);
   })
   .step("Transaction - commit", async (ctx) => {
     const { pg } = ctx.resources;
@@ -100,9 +100,9 @@ export default scenario("PostgreSQL Client Example", {
     );
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveLength(1)
-      .toMatchObject({ name: "TxUser" });
+      .toBeOk()
+      .toHaveRowCount(1)
+      .toHaveRowsMatching({ name: "TxUser" });
   })
   .step("Transaction - rollback on error", async (ctx) => {
     const { pg } = ctx.resources;
@@ -124,8 +124,8 @@ export default scenario("PostgreSQL Client Example", {
     );
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveLength(0);
+      .toBeOk()
+      .toHaveRowCount(0);
   })
   .step("Delete row", async (ctx) => {
     const { pg } = ctx.resources;
@@ -135,7 +135,7 @@ export default scenario("PostgreSQL Client Example", {
     );
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveLength(1);
+      .toBeOk()
+      .toHaveRowCount(1);
   })
   .build();

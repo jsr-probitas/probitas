@@ -24,14 +24,14 @@ export default scenario("Deno KV Client Example", {
   .step("Set string value", async (ctx) => {
     const { kv } = ctx.resources;
     const result = await kv.set(["test", "string"], "hello world");
-    expect(result).toBeSuccessful();
+    expect(result).toBeOk();
   })
   .step("Get string value", async (ctx) => {
     const { kv } = ctx.resources;
     const result = await kv.get<string>(["test", "string"]);
 
     expect(result)
-      .toBeSuccessful()
+      .toBeOk()
       .toHaveValue("hello world");
   })
   .step("Set object value", async (ctx) => {
@@ -46,9 +46,9 @@ export default scenario("Deno KV Client Example", {
     ]);
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveContent()
-      .toMatchObject({ name: "Alice" });
+      .toBeOk()
+      .not.toHaveValueNull()
+      .toHaveValueMatching({ name: "Alice" });
   })
   .step("Set multiple values", async (ctx) => {
     const { kv } = ctx.resources;
@@ -63,8 +63,8 @@ export default scenario("Deno KV Client Example", {
     });
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveLengthGreaterThanOrEqual(3);
+      .toBeOk()
+      .toHaveEntryCountGreaterThanOrEqual(3);
   })
   .step("List with limit", async (ctx) => {
     const { kv } = ctx.resources;
@@ -74,16 +74,16 @@ export default scenario("Deno KV Client Example", {
     );
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveLength(2);
+      .toBeOk()
+      .toHaveEntryCount(2);
   })
   .step("Get non-existent key", async (ctx) => {
     const { kv } = ctx.resources;
     const result = await kv.get(["nonexistent", "key"]);
 
     expect(result)
-      .toBeSuccessful()
-      .not.toHaveContent();
+      .toBeOk()
+      .toHaveValueNull();
   })
   .step("Atomic operation - check and set", async (ctx) => {
     const { kv } = ctx.resources;
@@ -93,7 +93,7 @@ export default scenario("Deno KV Client Example", {
     atomic.check({ key: ["counter"], versionstamp: current.versionstamp });
     atomic.set(["counter"], 1);
     const result = await atomic.commit();
-    expect(result).toBeSuccessful();
+    expect(result).toBeOk();
   })
   .step("Atomic operation - increment", async (ctx) => {
     const { kv } = ctx.resources;
@@ -105,17 +105,17 @@ export default scenario("Deno KV Client Example", {
     await atomic.commit();
 
     const updated = await kv.get<number>(["counter"]);
-    expect(updated).toBeSuccessful().toHaveValue(2);
+    expect(updated).toBeOk().toHaveValue(2);
   })
   .step("Delete key", async (ctx) => {
     const { kv } = ctx.resources;
     const result = await kv.delete(["test", "string"]);
-    expect(result).toBeSuccessful();
+    expect(result).toBeOk();
   })
   .step("Verify deletion", async (ctx) => {
     const { kv } = ctx.resources;
     const result = await kv.get(["test", "string"]);
 
-    expect(result).toBeSuccessful().not.toHaveContent();
+    expect(result).toBeOk().toHaveValueNull();
   })
   .build();

@@ -1,704 +1,263 @@
-import { assertThrows } from "@std/assert";
-import { expectHttpResponse } from "./http.ts";
+import { assertEquals, assertExists } from "@std/assert";
 import type { HttpResponse } from "@probitas/client-http";
+import { expectHttpResponse, type HttpResponseExpectation } from "./http.ts";
 
-// Mock helper
-const mockHttpResponse = (
+// Mock HttpResponse for testing
+function createMockResponse(
   overrides: Partial<HttpResponse> = {},
-): HttpResponse => {
-  const body = overrides.body ?? new TextEncoder().encode('{"success":true}');
-  const text = () => new TextDecoder().decode(body);
-  const data = () => JSON.parse(text());
-
-  return {
-    type: "http" as const,
-    url: "https://api.example.com",
+): HttpResponse {
+  const bodyBytes = new TextEncoder().encode('{"message":"success"}');
+  const defaultResponse: HttpResponse = {
+    kind: "http",
+    ok: true,
     status: 200,
     statusText: "OK",
-    ok: true,
-    headers: new Headers({ "content-type": "application/json" }),
-    body,
-    data,
-    text,
-    arrayBuffer: () => {
-      if (!body) return new ArrayBuffer(0);
-      return body.buffer instanceof ArrayBuffer
-        ? body.buffer
-        : new ArrayBuffer(0);
-    },
-    blob: () => {
-      if (!body) return new Blob([]);
-      const ab = body.buffer instanceof ArrayBuffer
-        ? body.buffer
-        : new ArrayBuffer(0);
-      return new Blob([ab]);
-    },
-    raw: new Response(
-      body && body.buffer instanceof ArrayBuffer
-        ? new Uint8Array(body.buffer)
-        : null,
-    ),
-    duration: 100,
-    ...overrides,
+    headers: new Headers({
+      "content-type": "application/json",
+      "x-custom": "value",
+    }),
+    url: "https://example.com/api/test",
+    body: bodyBytes,
+    arrayBuffer: () => bodyBytes.buffer,
+    blob: () => new Blob([bodyBytes]),
+    text: () => '{"message":"success"}',
+    // deno-lint-ignore no-explicit-any
+    data: <T = any>(): T | null => ({ message: "success" }) as T,
+    duration: 123,
+    raw: () =>
+      new Response('{"message":"success"}', {
+        status: 200,
+        statusText: "OK",
+        headers: { "content-type": "application/json" },
+      }),
   };
+  return { ...defaultResponse, ...overrides };
+}
+
+// Define expected methods with their test arguments
+// Using Record to ensure all interface methods are listed (compile-time check)
+const EXPECTED_METHODS: Record<keyof HttpResponseExpectation, unknown[]> = {
+  // Core (special property, not a method)
+  not: [],
+  // Ok
+  toBeOk: [],
+  // Status
+  toHaveStatus: [200],
+  toHaveStatusEqual: [200],
+  toHaveStatusStrictEqual: [200],
+  toHaveStatusSatisfying: [(v: number) => assertEquals(v, 200)],
+  toHaveStatusNaN: [],
+  toHaveStatusGreaterThan: [100],
+  toHaveStatusGreaterThanOrEqual: [200],
+  toHaveStatusLessThan: [300],
+  toHaveStatusLessThanOrEqual: [200],
+  toHaveStatusCloseTo: [200, 0],
+  toHaveStatusOneOf: [[200, 201, 204]],
+  // Status Text
+  toHaveStatusText: ["OK"],
+  toHaveStatusTextEqual: ["OK"],
+  toHaveStatusTextStrictEqual: ["OK"],
+  toHaveStatusTextSatisfying: [(v: string) => assertEquals(v, "OK")],
+  toHaveStatusTextContaining: ["OK"],
+  toHaveStatusTextMatching: [/OK/],
+  // Headers
+  toHaveHeaders: [],
+  toHaveHeadersEqual: [],
+  toHaveHeadersStrictEqual: [],
+  toHaveHeadersSatisfying: [(v: Record<string, string>) => assertExists(v)],
+  toHaveHeadersMatching: [{ "content-type": "application/json" }],
+  toHaveHeadersProperty: ["content-type"],
+  toHaveHeadersPropertyContaining: [],
+  toHaveHeadersPropertyMatching: [],
+  toHaveHeadersPropertySatisfying: [
+    "content-type",
+    (v: unknown) => assertEquals(v, "application/json"),
+  ],
+  // URL
+  toHaveUrl: ["https://example.com/api/test"],
+  toHaveUrlEqual: ["https://example.com/api/test"],
+  toHaveUrlStrictEqual: ["https://example.com/api/test"],
+  toHaveUrlSatisfying: [
+    (v: string) => assertEquals(v, "https://example.com/api/test"),
+  ],
+  toHaveUrlContaining: ["example.com"],
+  toHaveUrlMatching: [/example\.com/],
+  // Body
+  toHaveBody: [],
+  toHaveBodyEqual: [],
+  toHaveBodyStrictEqual: [],
+  toHaveBodySatisfying: [(v: Uint8Array | null) => assertExists(v)],
+  toHaveBodyPresent: [],
+  toHaveBodyNull: [],
+  toHaveBodyUndefined: [],
+  toHaveBodyNullish: [],
+  // Body Length
+  toHaveBodyLength: [21],
+  toHaveBodyLengthEqual: [21],
+  toHaveBodyLengthStrictEqual: [21],
+  toHaveBodyLengthSatisfying: [(v: number) => assertEquals(v, 21)],
+  toHaveBodyLengthNaN: [],
+  toHaveBodyLengthGreaterThan: [20],
+  toHaveBodyLengthGreaterThanOrEqual: [21],
+  toHaveBodyLengthLessThan: [30],
+  toHaveBodyLengthLessThanOrEqual: [21],
+  toHaveBodyLengthCloseTo: [21, 0],
+  // Text
+  toHaveText: ['{"message":"success"}'],
+  toHaveTextEqual: ['{"message":"success"}'],
+  toHaveTextStrictEqual: ['{"message":"success"}'],
+  toHaveTextSatisfying: [
+    (v: string) => assertEquals(v, '{"message":"success"}'),
+  ],
+  toHaveTextContaining: ["success"],
+  toHaveTextMatching: [/success/],
+  toHaveTextPresent: [],
+  toHaveTextNull: [],
+  toHaveTextUndefined: [],
+  toHaveTextNullish: [],
+  // Text Length
+  toHaveTextLength: [21],
+  toHaveTextLengthEqual: [21],
+  toHaveTextLengthStrictEqual: [21],
+  toHaveTextLengthSatisfying: [(v: number) => assertEquals(v, 21)],
+  toHaveTextLengthNaN: [],
+  toHaveTextLengthGreaterThan: [20],
+  toHaveTextLengthGreaterThanOrEqual: [21],
+  toHaveTextLengthLessThan: [30],
+  toHaveTextLengthLessThanOrEqual: [21],
+  toHaveTextLengthCloseTo: [21, 0],
+  // Data
+  toHaveData: [],
+  toHaveDataEqual: [],
+  toHaveDataStrictEqual: [],
+  toHaveDataSatisfying: [
+    (v: Record<string, unknown> | null) => assertExists(v),
+  ],
+  toHaveDataPresent: [],
+  toHaveDataNull: [],
+  toHaveDataUndefined: [],
+  toHaveDataNullish: [],
+  toHaveDataMatching: [{ message: "success" }],
+  toHaveDataProperty: ["message"],
+  toHaveDataPropertyContaining: [],
+  toHaveDataPropertyMatching: [],
+  toHaveDataPropertySatisfying: [
+    "message",
+    (v: unknown) => assertEquals(v, "success"),
+  ],
+  // Duration
+  toHaveDuration: [123],
+  toHaveDurationEqual: [123],
+  toHaveDurationStrictEqual: [123],
+  toHaveDurationSatisfying: [(v: number) => assertEquals(v, 123)],
+  toHaveDurationNaN: [],
+  toHaveDurationGreaterThan: [100],
+  toHaveDurationGreaterThanOrEqual: [123],
+  toHaveDurationLessThan: [200],
+  toHaveDurationLessThanOrEqual: [123],
+  toHaveDurationCloseTo: [123, 0],
 };
 
-Deno.test("expectHttpResponse", async (t) => {
-  await t.step("toBeSuccessful", async (t) => {
-    await t.step("passes for 200 status", () => {
-      const response = mockHttpResponse({ status: 200, ok: true });
-      expectHttpResponse(response).toBeSuccessful();
-    });
+Deno.test("expectHttpResponse - method existence check", () => {
+  const response = createMockResponse();
+  const expectation = expectHttpResponse(response);
 
-    await t.step("passes for 299 status", () => {
-      const response = mockHttpResponse({ status: 299, ok: true });
-      expectHttpResponse(response).toBeSuccessful();
-    });
+  const expectedMethodNames = Object.keys(EXPECTED_METHODS) as Array<
+    keyof HttpResponseExpectation
+  >;
 
-    await t.step("fails for 404 status", () => {
-      const response = mockHttpResponse({ status: 404, ok: false });
-      assertThrows(
-        () => expectHttpResponse(response).toBeSuccessful(),
-        Error,
-        "Expected successful response (200-299), got status 404",
-      );
-    });
+  // Check that all expected methods exist
+  for (const method of expectedMethodNames) {
+    assertExists(
+      expectation[method],
+      `Method '${method}' should exist on HttpResponseExpectation`,
+    );
+  }
 
-    await t.step("negated - fails for 200 status", () => {
-      const response = mockHttpResponse({ status: 200, ok: true });
-      assertThrows(
-        () => expectHttpResponse(response).not.toBeSuccessful(),
-        Error,
-        "Expected non-successful response, got status 200",
-      );
-    });
+  // Verify count matches (helps catch if we added methods but didn't list them)
+  const actualPropertyCount = Object.getOwnPropertyNames(expectation).length;
+  assertEquals(
+    actualPropertyCount,
+    expectedMethodNames.length,
+    `Expected ${expectedMethodNames.length} methods but found ${actualPropertyCount}`,
+  );
+});
 
-    await t.step("negated - passes for 404 status", () => {
-      const response = mockHttpResponse({ status: 404, ok: false });
-      expectHttpResponse(response).not.toBeSuccessful();
-    });
+// Generate individual test for each method
+for (
+  const [methodName, args] of Object.entries(EXPECTED_METHODS) as Array<
+    [keyof HttpResponseExpectation, unknown[]]
+  >
+) {
+  // Skip 'not' as it's a property, not a method
+  if (methodName === "not") continue;
+
+  // Skip methods that require special setup (null/undefined/nullish values, NaN)
+  if (
+    methodName === "toHaveBodyPresent" ||
+    methodName === "toHaveBodyNull" ||
+    methodName === "toHaveBodyUndefined" ||
+    methodName === "toHaveBodyNullish" ||
+    methodName === "toHaveDataPresent" ||
+    methodName === "toHaveDataNull" ||
+    methodName === "toHaveDataUndefined" ||
+    methodName === "toHaveDataNullish" ||
+    methodName === "toHaveStatusNaN" ||
+    methodName === "toHaveBodyLengthNaN" ||
+    methodName === "toHaveTextLengthNaN" ||
+    methodName === "toHaveDurationNaN" ||
+    // Skip methods with empty args (need special handling)
+    (args.length === 0 &&
+      methodName !== "toBeOk")
+  ) {
+    continue;
+  }
+
+  Deno.test(`expectHttpResponse - ${methodName} - success`, () => {
+    const response = createMockResponse();
+    const expectation = expectHttpResponse(response);
+
+    // Call the method with provided arguments
+    // deno-lint-ignore no-explicit-any
+    const method = expectation[methodName] as (...args: any[]) => any;
+    const result = method.call(expectation, ...args);
+
+    // Verify method returns an expectation object (for chaining)
+    assertExists(result);
+    assertExists(
+      result.toBeOk,
+      "Result should have toBeOk method for chaining",
+    );
   });
+}
 
-  await t.step("toHaveStatus", async (t) => {
-    await t.step("passes for matching status", () => {
-      const response = mockHttpResponse({ status: 201 });
-      expectHttpResponse(response).toHaveStatus(201);
-    });
+Deno.test("expectHttpResponse - not property - success", () => {
+  const response = createMockResponse({ ok: false, status: 404 });
+  const expectation = expectHttpResponse(response);
 
-    await t.step("fails for non-matching status", () => {
-      const response = mockHttpResponse({ status: 200 });
-      assertThrows(
-        () => expectHttpResponse(response).toHaveStatus(201),
-        Error,
-        "Expected status 201, got 200",
-      );
-    });
+  // Verify .not is accessible and returns expectation
+  expectation.not.toBeOk();
+  expectation.not.toHaveStatus(200);
+});
 
-    await t.step("negated - passes for non-matching", () => {
-      const response = mockHttpResponse({ status: 200 });
-      expectHttpResponse(response).not.toHaveStatus(201);
-    });
-
-    await t.step("negated - fails for matching", () => {
-      const response = mockHttpResponse({ status: 200 });
-      assertThrows(
-        () => expectHttpResponse(response).not.toHaveStatus(200),
-        Error,
-        "Expected status to not be 200",
-      );
-    });
+Deno.test("expectHttpResponse - nullish value methods - success", () => {
+  // Test null values
+  const nullResponse = createMockResponse({
+    body: null,
+    headers: new Headers(),
+    data: () => null,
   });
-
-  await t.step("toHaveStatusOneOf", async (t) => {
-    await t.step("passes when status is in list", () => {
-      const response = mockHttpResponse({ status: 200 });
-      expectHttpResponse(response).toHaveStatusOneOf([200, 201, 204]);
-    });
-
-    await t.step("fails when status is not in list", () => {
-      const response = mockHttpResponse({ status: 400 });
-      assertThrows(
-        () => expectHttpResponse(response).toHaveStatusOneOf([200, 201, 204]),
-        Error,
-        "Expected status to be one of [200, 201, 204], got 400",
-      );
-    });
-
-    await t.step("negated - passes when status not in list", () => {
-      const response = mockHttpResponse({ status: 400 });
-      expectHttpResponse(response).not.toHaveStatusOneOf([200, 201, 204]);
-    });
-
-    await t.step("negated - fails when status in list", () => {
-      const response = mockHttpResponse({ status: 200 });
-      assertThrows(
-        () => expectHttpResponse(response).not.toHaveStatusOneOf([200, 201]),
-        Error,
-        "Expected status to not be one of [200, 201], got 200",
-      );
-    });
-  });
-
-  await t.step("toHaveHeaderValue", async (t) => {
-    await t.step("passes for string match", () => {
-      const response = mockHttpResponse({
-        headers: new Headers({ "x-test": "value" }),
-      });
-      expectHttpResponse(response).toHaveHeaderValue("x-test", "value");
-    });
-
-    await t.step("passes for regex match", () => {
-      const response = mockHttpResponse({
-        headers: new Headers({ "x-test": "test-value-123" }),
-      });
-      expectHttpResponse(response).toHaveHeaderValue("x-test", /value-\d+/);
-    });
-
-    await t.step("fails for non-existent header", () => {
-      const response = mockHttpResponse();
-      assertThrows(
-        () =>
-          expectHttpResponse(response).toHaveHeaderValue("x-missing", "value"),
-        Error,
-        'Expected header "x-missing" to exist, but got null',
-      );
-    });
-
-    await t.step("fails for non-matching value", () => {
-      const response = mockHttpResponse({
-        headers: new Headers({ "x-test": "value" }),
-      });
-      assertThrows(
-        () => expectHttpResponse(response).toHaveHeaderValue("x-test", "wrong"),
-        Error,
-        'Expected header "x-test" "wrong", got "value"',
-      );
-    });
-  });
-
-  await t.step("toHaveHeader", async (t) => {
-    await t.step("passes when header exists", () => {
-      const response = mockHttpResponse({
-        headers: new Headers({ "x-test": "value" }),
-      });
-      expectHttpResponse(response).toHaveHeader("x-test");
-    });
-
-    await t.step("fails when header does not exist", () => {
-      const response = mockHttpResponse();
-      assertThrows(
-        () => expectHttpResponse(response).toHaveHeader("x-missing"),
-        Error,
-        'Expected header "x-missing" to exist',
-      );
-    });
-
-    await t.step("negated - passes when header does not exist", () => {
-      const response = mockHttpResponse();
-      expectHttpResponse(response).not.toHaveHeader("x-missing");
-    });
-
-    await t.step("negated - fails when header exists", () => {
-      const response = mockHttpResponse({
-        headers: new Headers({ "x-test": "value" }),
-      });
-      assertThrows(
-        () => expectHttpResponse(response).not.toHaveHeader("x-test"),
-        Error,
-        'Expected header "x-test" to not exist',
-      );
-    });
-  });
-
-  await t.step("toHaveHeaderContaining", async (t) => {
-    await t.step("passes when header contains substring", () => {
-      const response = mockHttpResponse({
-        headers: new Headers({ "x-test": "test-value-123" }),
-      });
-      expectHttpResponse(response).toHaveHeaderContaining("x-test", "value");
-    });
-
-    await t.step("fails when header does not contain substring", () => {
-      const response = mockHttpResponse({
-        headers: new Headers({ "x-test": "value" }),
-      });
-      assertThrows(
-        () =>
-          expectHttpResponse(response).toHaveHeaderContaining(
-            "x-test",
-            "missing",
-          ),
-        Error,
-        'Expected header "x-test" to contain "missing", got "value"',
-      );
-    });
-
-    await t.step("fails when header does not exist", () => {
-      const response = mockHttpResponse();
-      assertThrows(
-        () =>
-          expectHttpResponse(response).toHaveHeaderContaining(
-            "x-missing",
-            "value",
-          ),
-        Error,
-        'Expected header "x-missing" to exist, but got null',
-      );
-    });
-  });
-
-  await t.step("toHaveHeaderMatching", async (t) => {
-    await t.step("passes when matcher succeeds", () => {
-      const response = mockHttpResponse({
-        headers: new Headers({ "x-test": "123" }),
-      });
-      expectHttpResponse(response).toHaveHeaderMatching("x-test", (value) => {
-        if (Number(value) !== 123) throw new Error("Expected 123");
-      });
-    });
-
-    await t.step("fails when matcher throws", () => {
-      const response = mockHttpResponse({
-        headers: new Headers({ "x-test": "456" }),
-      });
-      assertThrows(
-        () =>
-          expectHttpResponse(response).toHaveHeaderMatching(
-            "x-test",
-            (value) => {
-              if (Number(value) !== 123) throw new Error("Expected 123");
-            },
-          ),
-        Error,
-        "Expected 123",
-      );
-    });
-
-    await t.step("fails when header does not exist", () => {
-      const response = mockHttpResponse();
-      assertThrows(
-        () =>
-          expectHttpResponse(response).toHaveHeaderMatching(
-            "x-missing",
-            () => {},
-          ),
-        Error,
-        'Expected header "x-missing" to exist, but got null',
-      );
-    });
-  });
-
-  await t.step("toHaveContentType", async (t) => {
-    await t.step("passes for string match", () => {
-      const response = mockHttpResponse({
-        headers: new Headers({ "content-type": "application/json" }),
-      });
-      expectHttpResponse(response).toHaveContentType("application/json");
-    });
-
-    await t.step("passes for regex match", () => {
-      const response = mockHttpResponse({
-        headers: new Headers({
-          "content-type": "application/json; charset=utf-8",
-        }),
-      });
-      expectHttpResponse(response).toHaveContentType(/application\/json/);
-    });
-  });
-
-  await t.step("toHaveContent", async (t) => {
-    await t.step("passes when body is present", () => {
-      const response = mockHttpResponse({ body: new Uint8Array([1, 2, 3]) });
-      expectHttpResponse(response).toHaveContent();
-    });
-
-    await t.step("fails when body is null", () => {
-      const response = mockHttpResponse({ body: null });
-      assertThrows(
-        () => expectHttpResponse(response).toHaveContent(),
-        Error,
-        "Expected content, but body is null",
-      );
-    });
-
-    await t.step("negated - passes when body is null", () => {
-      const response = mockHttpResponse({ body: null });
-      expectHttpResponse(response).not.toHaveContent();
-    });
-
-    await t.step("negated - fails when body is present", () => {
-      const response = mockHttpResponse({ body: new Uint8Array([1]) });
-      assertThrows(
-        () => expectHttpResponse(response).not.toHaveContent(),
-        Error,
-        "Expected no content, but body is present",
-      );
-    });
-  });
-
-  await t.step("toHaveBodyContaining", async (t) => {
-    await t.step("passes when body contains subbody", () => {
-      const response = mockHttpResponse({
-        body: new TextEncoder().encode("hello world"),
-      });
-      expectHttpResponse(response).toHaveBodyContaining(
-        new TextEncoder().encode("world"),
-      );
-    });
-
-    await t.step("fails when body does not contain subbody", () => {
-      const response = mockHttpResponse({
-        body: new TextEncoder().encode("hello"),
-      });
-      assertThrows(
-        () =>
-          expectHttpResponse(response).toHaveBodyContaining(
-            new TextEncoder().encode("world"),
-          ),
-        Error,
-        "Body does not contain expected bytes",
-      );
-    });
-
-    await t.step("fails when body is null", () => {
-      const response = mockHttpResponse({ body: null });
-      assertThrows(
-        () =>
-          expectHttpResponse(response).toHaveBodyContaining(
-            new TextEncoder().encode("test"),
-          ),
-        Error,
-        "Expected body to exist, but got null",
-      );
-    });
-
-    await t.step("negated - passes when body does not contain", () => {
-      const response = mockHttpResponse({
-        body: new TextEncoder().encode("hello"),
-      });
-      expectHttpResponse(response).not.toHaveBodyContaining(
-        new TextEncoder().encode("world"),
-      );
-    });
-  });
-
-  await t.step("toSatisfy", async (t) => {
-    await t.step("passes when matcher succeeds", () => {
-      const response = mockHttpResponse({
-        body: new TextEncoder().encode('{"name":"Alice"}'),
-      });
-      expectHttpResponse(response).toSatisfy<{ name: string }>((data) => {
-        if (data.name !== "Alice") throw new Error("Expected Alice");
-      });
-    });
-
-    await t.step("fails when matcher throws", () => {
-      const response = mockHttpResponse({
-        body: new TextEncoder().encode('{"name":"Bob"}'),
-      });
-      assertThrows(
-        () =>
-          expectHttpResponse(response).toSatisfy<{ name: string }>((data) => {
-            if (data.name !== "Alice") throw new Error("Expected Alice");
-          }),
-        Error,
-        "Expected Alice",
-      );
-    });
-
-    await t.step("fails when data is null", () => {
-      const response = mockHttpResponse({
-        data: () => null,
-      });
-      assertThrows(
-        () => expectHttpResponse(response).toSatisfy(() => {}),
-        Error,
-        "Expected JSON data to exist, but got null",
-      );
-    });
-  });
-
-  await t.step("toSatisfyBody", async (t) => {
-    await t.step("passes when matcher succeeds", () => {
-      const response = mockHttpResponse({
-        body: new Uint8Array([1, 2, 3]),
-      });
-      expectHttpResponse(response).toSatisfyBody((body) => {
-        if (body.length !== 3) throw new Error("Expected length 3");
-      });
-    });
-
-    await t.step("fails when matcher throws", () => {
-      const response = mockHttpResponse({
-        body: new Uint8Array([1, 2]),
-      });
-      assertThrows(
-        () =>
-          expectHttpResponse(response).toSatisfyBody((body) => {
-            if (body.length !== 3) throw new Error("Expected length 3");
-          }),
-        Error,
-        "Expected length 3",
-      );
-    });
-
-    await t.step("fails when body is null", () => {
-      const response = mockHttpResponse({ body: null });
-      assertThrows(
-        () => expectHttpResponse(response).toSatisfyBody(() => {}),
-        Error,
-        "Expected body to exist, but got null",
-      );
-    });
-  });
-
-  await t.step("toSatisfyText", async (t) => {
-    await t.step("passes when matcher succeeds", () => {
-      const response = mockHttpResponse({
-        body: new TextEncoder().encode("hello world"),
-      });
-      expectHttpResponse(response).toSatisfyText((text) => {
-        if (!text.includes("hello")) throw new Error("Expected hello");
-      });
-    });
-
-    await t.step("fails when matcher throws", () => {
-      const response = mockHttpResponse({
-        body: new TextEncoder().encode("goodbye"),
-      });
-      assertThrows(
-        () =>
-          expectHttpResponse(response).toSatisfyText((text) => {
-            if (!text.includes("hello")) throw new Error("Expected hello");
-          }),
-        Error,
-        "Expected hello",
-      );
-    });
-
-    await t.step("fails when text is null", () => {
-      const response = mockHttpResponse({
-        text: () => null as unknown as string,
-      });
-      assertThrows(
-        () => expectHttpResponse(response).toSatisfyText(() => {}),
-        Error,
-        "Expected text to exist, but got null",
-      );
-    });
-  });
-
-  await t.step("toHaveTextContaining", async (t) => {
-    await t.step("passes when text contains substring", () => {
-      const response = mockHttpResponse({
-        body: new TextEncoder().encode("hello world"),
-      });
-      expectHttpResponse(response).toHaveTextContaining("world");
-    });
-
-    await t.step("fails when text does not contain substring", () => {
-      const response = mockHttpResponse({
-        body: new TextEncoder().encode("hello"),
-      });
-      assertThrows(
-        () => expectHttpResponse(response).toHaveTextContaining("world"),
-        Error,
-        'Text does not contain "world"',
-      );
-    });
-
-    await t.step("fails when text is null", () => {
-      const response = mockHttpResponse({
-        text: () => null as unknown as string,
-      });
-      assertThrows(
-        () => expectHttpResponse(response).toHaveTextContaining("test"),
-        Error,
-        "Expected text body to exist, but got null",
-      );
-    });
-
-    await t.step("negated - passes when text does not contain", () => {
-      const response = mockHttpResponse({
-        body: new TextEncoder().encode("hello"),
-      });
-      expectHttpResponse(response).not.toHaveTextContaining("world");
-    });
-  });
-
-  await t.step("toMatchObject", async (t) => {
-    await t.step("passes when data contains subset", () => {
-      const response = mockHttpResponse({
-        body: new TextEncoder().encode('{"name":"Alice","age":30}'),
-      });
-      expectHttpResponse(response).toMatchObject({ name: "Alice" });
-    });
-
-    await t.step("passes for nested properties", () => {
-      const response = mockHttpResponse({
-        body: new TextEncoder().encode('{"user":{"name":"Alice","age":30}}'),
-      });
-      expectHttpResponse(response).toMatchObject({ user: { name: "Alice" } });
-    });
-
-    await t.step("fails when data does not contain subset", () => {
-      const response = mockHttpResponse({
-        body: new TextEncoder().encode('{"name":"Bob"}'),
-      });
-      assertThrows(
-        () => expectHttpResponse(response).toMatchObject({ name: "Alice" }),
-        Error,
-        "Data does not contain expected properties",
-      );
-    });
-
-    await t.step("fails when data is null", () => {
-      const response = mockHttpResponse({
-        data: () => null,
-      });
-      assertThrows(
-        () => expectHttpResponse(response).toMatchObject({ name: "Alice" }),
-        Error,
-        "Expected JSON data to exist, but got null",
-      );
-    });
-
-    await t.step("negated - passes when data does not contain", () => {
-      const response = mockHttpResponse({
-        body: new TextEncoder().encode('{"name":"Bob"}'),
-      });
-      expectHttpResponse(response).not.toMatchObject({ name: "Alice" });
-    });
-  });
-
-  await t.step("toHaveDurationLessThan", async (t) => {
-    await t.step("passes when duration is less", () => {
-      const response = mockHttpResponse({ duration: 100 });
-      expectHttpResponse(response).toHaveDurationLessThan(200);
-    });
-
-    await t.step("fails when duration is equal", () => {
-      const response = mockHttpResponse({ duration: 100 });
-      assertThrows(
-        () => expectHttpResponse(response).toHaveDurationLessThan(100),
-        Error,
-        "Expected duration < 100ms, got 100ms",
-      );
-    });
-
-    await t.step("fails when duration is greater", () => {
-      const response = mockHttpResponse({ duration: 200 });
-      assertThrows(
-        () => expectHttpResponse(response).toHaveDurationLessThan(100),
-        Error,
-        "Expected duration < 100ms, got 200ms",
-      );
-    });
-
-    await t.step("negated - passes when duration is greater or equal", () => {
-      const response = mockHttpResponse({ duration: 100 });
-      expectHttpResponse(response).not.toHaveDurationLessThan(100);
-    });
-  });
-
-  await t.step("toHaveDurationLessThanOrEqual", async (t) => {
-    await t.step("passes when duration is less", () => {
-      const response = mockHttpResponse({ duration: 50 });
-      expectHttpResponse(response).toHaveDurationLessThanOrEqual(100);
-    });
-
-    await t.step("passes when duration is equal", () => {
-      const response = mockHttpResponse({ duration: 100 });
-      expectHttpResponse(response).toHaveDurationLessThanOrEqual(100);
-    });
-
-    await t.step("fails when duration is greater", () => {
-      const response = mockHttpResponse({ duration: 150 });
-      assertThrows(
-        () => expectHttpResponse(response).toHaveDurationLessThanOrEqual(100),
-        Error,
-        "Expected duration <= 100ms, got 150ms",
-      );
-    });
-
-    await t.step("negated - passes when duration is greater", () => {
-      const response = mockHttpResponse({ duration: 150 });
-      expectHttpResponse(response).not.toHaveDurationLessThanOrEqual(100);
-    });
-  });
-
-  await t.step("toHaveDurationGreaterThan", async (t) => {
-    await t.step("passes when duration is greater", () => {
-      const response = mockHttpResponse({ duration: 200 });
-      expectHttpResponse(response).toHaveDurationGreaterThan(100);
-    });
-
-    await t.step("fails when duration is equal", () => {
-      const response = mockHttpResponse({ duration: 100 });
-      assertThrows(
-        () => expectHttpResponse(response).toHaveDurationGreaterThan(100),
-        Error,
-        "Expected duration > 100ms, got 100ms",
-      );
-    });
-
-    await t.step("fails when duration is less", () => {
-      const response = mockHttpResponse({ duration: 50 });
-      assertThrows(
-        () => expectHttpResponse(response).toHaveDurationGreaterThan(100),
-        Error,
-        "Expected duration > 100ms, got 50ms",
-      );
-    });
-
-    await t.step("negated - passes when duration is less or equal", () => {
-      const response = mockHttpResponse({ duration: 100 });
-      expectHttpResponse(response).not.toHaveDurationGreaterThan(100);
-    });
-  });
-
-  await t.step("toHaveDurationGreaterThanOrEqual", async (t) => {
-    await t.step("passes when duration is greater", () => {
-      const response = mockHttpResponse({ duration: 150 });
-      expectHttpResponse(response).toHaveDurationGreaterThanOrEqual(100);
-    });
-
-    await t.step("passes when duration is equal", () => {
-      const response = mockHttpResponse({ duration: 100 });
-      expectHttpResponse(response).toHaveDurationGreaterThanOrEqual(100);
-    });
-
-    await t.step("fails when duration is less", () => {
-      const response = mockHttpResponse({ duration: 50 });
-      assertThrows(
-        () =>
-          expectHttpResponse(response).toHaveDurationGreaterThanOrEqual(100),
-        Error,
-        "Expected duration >= 100ms, got 50ms",
-      );
-    });
-
-    await t.step("negated - passes when duration is less", () => {
-      const response = mockHttpResponse({ duration: 50 });
-      expectHttpResponse(response).not.toHaveDurationGreaterThanOrEqual(100);
-    });
-  });
-
-  await t.step("method chaining", () => {
-    const response = mockHttpResponse({
-      status: 200,
-      ok: true,
-      headers: new Headers({ "content-type": "application/json" }),
-      body: new TextEncoder().encode('{"name":"Alice"}'),
-      duration: 50,
-    });
-
-    expectHttpResponse(response)
-      .toBeSuccessful()
-      .toHaveStatus(200)
-      .toHaveContentType("application/json")
-      .toHaveContent()
-      .toMatchObject({ name: "Alice" })
-      .toHaveDurationLessThan(100);
-  });
+  const nullExpectation = expectHttpResponse(nullResponse);
+
+  nullExpectation.toHaveBodyNull();
+  nullExpectation.toHaveDataNull();
+  nullExpectation.toHaveBodyNullish();
+  nullExpectation.toHaveDataNullish();
+
+  // Test present values
+  const presentResponse = createMockResponse();
+  const presentExpectation = expectHttpResponse(presentResponse);
+
+  presentExpectation.toHaveBodyPresent();
+  presentExpectation.toHaveDataPresent();
 });

@@ -22,8 +22,8 @@ export default scenario("GraphQL Client Example", {
     `);
 
     expect(res)
-      .toBeSuccessful()
-      .toMatchObject({ echo: "Hello GraphQL" });
+      .toBeOk()
+      .toHaveDataProperty("echo", "Hello GraphQL");
   })
   .step("echo - with variables", async (ctx) => {
     const { gql } = ctx.resources;
@@ -37,8 +37,8 @@ export default scenario("GraphQL Client Example", {
     );
 
     expect(res)
-      .toBeSuccessful()
-      .toMatchObject({ echo: "variable message" });
+      .toBeOk()
+      .toHaveDataProperty("echo", "variable message");
   })
   .step("echoWithDelay - delayed query", async (ctx) => {
     const { gql } = ctx.resources;
@@ -49,8 +49,8 @@ export default scenario("GraphQL Client Example", {
     `);
 
     expect(res)
-      .toBeSuccessful()
-      .toMatchObject({ echoWithDelay: "delayed" })
+      .toBeOk()
+      .toHaveDataProperty("echoWithDelay", "delayed")
       .toHaveDurationLessThan(5000);
   })
   .step("echoError - GraphQL error", async (ctx) => {
@@ -65,7 +65,7 @@ export default scenario("GraphQL Client Example", {
       { throwOnError: false },
     );
 
-    expect(res).not.toBeSuccessful();
+    expect(res).not.toBeOk();
   })
   .step("echoNull - null handling", async (ctx) => {
     const { gql } = ctx.resources;
@@ -76,8 +76,8 @@ export default scenario("GraphQL Client Example", {
     `);
 
     expect(res)
-      .toBeSuccessful()
-      .toMatchObject({ echoNull: null });
+      .toBeOk()
+      .toHaveDataProperty("echoNull", null);
   })
   .step("echoOptional - optional value", async (ctx) => {
     const { gql } = ctx.resources;
@@ -88,8 +88,8 @@ export default scenario("GraphQL Client Example", {
     `);
 
     expect(res)
-      .toBeSuccessful()
-      .toMatchObject({ echoOptional: "optional" });
+      .toBeOk()
+      .toHaveDataProperty("echoOptional", "optional");
   })
   .step("echoList - list query", async (ctx) => {
     const { gql } = ctx.resources;
@@ -102,7 +102,7 @@ export default scenario("GraphQL Client Example", {
       }
     `);
 
-    expect(res).toBeSuccessful();
+    expect(res).toBeOk();
   })
   .step("echoNested - nested response", async (ctx) => {
     const { gql } = ctx.resources;
@@ -117,7 +117,7 @@ export default scenario("GraphQL Client Example", {
       }
     `);
 
-    expect(res).toBeSuccessful();
+    expect(res).toBeOk();
   })
   .step("echoHeaders - header verification", async (ctx) => {
     const { gql } = ctx.resources;
@@ -134,7 +134,7 @@ export default scenario("GraphQL Client Example", {
       { headers: { Authorization: "Bearer test-token" } },
     );
 
-    expect(res).toBeSuccessful();
+    expect(res).toBeOk();
   })
   .step("createMessage - mutation", async (ctx) => {
     const { gql } = ctx.resources;
@@ -148,7 +148,7 @@ export default scenario("GraphQL Client Example", {
       }
     `);
 
-    expect(res).toBeSuccessful();
+    expect(res).toBeOk();
   })
   .step("batchCreateMessages - batch mutation", async (ctx) => {
     const { gql } = ctx.resources;
@@ -161,6 +161,6 @@ export default scenario("GraphQL Client Example", {
       }
     `);
 
-    expect(res).toBeSuccessful();
+    expect(res).toBeOk();
   })
   .build();

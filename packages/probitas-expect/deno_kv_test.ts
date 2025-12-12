@@ -1,272 +1,165 @@
-import { assertThrows } from "@std/assert";
+import { assertExists, assertThrows } from "@std/assert";
 import { expectDenoKvResult } from "./deno_kv.ts";
-import type {
-  DenoKvAtomicResult,
-  DenoKvDeleteResult,
-  DenoKvEntries,
-  DenoKvEntry,
-  DenoKvGetResult,
-  DenoKvListResult,
-  DenoKvSetResult,
-} from "@probitas/client-deno-kv";
+import {
+  mockDenoKvAtomicResult,
+  mockDenoKvDeleteResult,
+  mockDenoKvGetResult,
+  mockDenoKvListResult,
+  mockDenoKvSetResult,
+} from "./deno_kv/_test_utils.ts";
 
-// Helper to create DenoKvEntries (array with helper methods)
-function createMockDenoKvEntries<T>(
-  entries: DenoKvEntry<T>[],
-): DenoKvEntries<T> {
-  const arr = [...entries] as DenoKvEntry<T>[] & {
-    first(): DenoKvEntry<T> | undefined;
-    firstOrThrow(): DenoKvEntry<T>;
-    last(): DenoKvEntry<T> | undefined;
-    lastOrThrow(): DenoKvEntry<T>;
-  };
-  arr.first = function () {
-    return this[0];
-  };
-  arr.firstOrThrow = function () {
-    if (this.length === 0) throw new Error("No entries available");
-    return this[0];
-  };
-  arr.last = function () {
-    return this[this.length - 1];
-  };
-  arr.lastOrThrow = function () {
-    if (this.length === 0) throw new Error("No entries available");
-    return this[this.length - 1];
-  };
-  return arr as unknown as DenoKvEntries<T>;
-}
+Deno.test("expectDenoKvResult - dispatches to get result expectation", () => {
+  const result = mockDenoKvGetResult();
+  const expectation = expectDenoKvResult(result);
 
-// Mock helpers
-const mockDenoKvGetResult = <T>(
-  overrides: Partial<DenoKvGetResult<T>> = {},
-): DenoKvGetResult<T> => ({
-  type: "deno-kv:get" as const,
-  ok: true,
-  key: ["users", "1"],
-  value: { name: "Alice" } as T,
-  versionstamp: "v1",
-  duration: 100,
-  ...overrides,
+  // Verify it returns the correct expectation type by checking for get-specific methods
+  assertExists(expectation.toBeOk);
+  assertExists(expectation.toHaveKey);
+  assertExists(expectation.toHaveValue);
+  assertExists(expectation.toHaveVersionstamp);
+  assertExists(expectation.toHaveDuration);
+
+  // Verify methods work correctly (avoiding array/object equality issues)
+  expectation.toBeOk().toHaveKeyContaining("users").toHaveValueProperty("name");
 });
 
-const mockDenoKvListResult = <T>(
-  overrides: Partial<Omit<DenoKvListResult<T>, "entries">> & {
-    entries?: DenoKvEntry<T>[];
-  } = {},
-): DenoKvListResult<T> => {
-  const { entries: rawEntries, ...rest } = overrides;
-  const defaultEntries: DenoKvEntry<T>[] = [
-    { key: ["users", "1"], value: { name: "Alice" } as T, versionstamp: "v1" },
+Deno.test("expectDenoKvResult - dispatches to list result expectation", () => {
+  const result = mockDenoKvListResult();
+  const expectation = expectDenoKvResult(result);
+
+  // Verify it returns the correct expectation type by checking for list-specific methods
+  assertExists(expectation.toBeOk);
+  assertExists(expectation.toHaveEntries);
+  assertExists(expectation.toHaveEntryCount);
+  assertExists(expectation.toHaveDuration);
+
+  // Verify methods work correctly
+  expectation.toBeOk().toHaveEntryCount(1);
+});
+
+Deno.test("expectDenoKvResult - dispatches to set result expectation", () => {
+  const result = mockDenoKvSetResult();
+  const expectation = expectDenoKvResult(result);
+
+  // Verify it returns the correct expectation type by checking for set-specific methods
+  assertExists(expectation.toBeOk);
+  assertExists(expectation.toHaveVersionstamp);
+  assertExists(expectation.toHaveDuration);
+
+  // Verify methods work correctly
+  expectation.toBeOk().toHaveVersionstamp("v1");
+});
+
+Deno.test("expectDenoKvResult - dispatches to delete result expectation", () => {
+  const result = mockDenoKvDeleteResult();
+  const expectation = expectDenoKvResult(result);
+
+  // Verify it returns the correct expectation type by checking for delete-specific methods
+  assertExists(expectation.toBeOk);
+  assertExists(expectation.toHaveDuration);
+
+  // Verify methods work correctly
+  expectation.toBeOk().toHaveDuration(100);
+});
+
+Deno.test("expectDenoKvResult - dispatches to atomic result expectation", () => {
+  const result = mockDenoKvAtomicResult();
+  const expectation = expectDenoKvResult(result);
+
+  // Verify it returns the correct expectation type by checking for atomic-specific methods
+  assertExists(expectation.toBeOk);
+  assertExists(expectation.toHaveVersionstamp);
+  assertExists(expectation.toHaveDuration);
+
+  // Verify methods work correctly
+  expectation.toBeOk().toHaveVersionstamp("v1");
+});
+
+Deno.test("expectDenoKvResult - throws on unknown result type", () => {
+  const unknownResult = { kind: "deno-kv:unknown", ok: true };
+
+  assertThrows(
+    // deno-lint-ignore no-explicit-any
+    () => expectDenoKvResult(unknownResult as any),
+    Error,
+    "Unknown Deno KV result kind: deno-kv:unknown",
+  );
+});
+
+Deno.test("expectDenoKvResult - get result chaining with not", () => {
+  const result = mockDenoKvGetResult({ ok: false, value: null });
+  const expectation = expectDenoKvResult(result);
+
+  expectation.not.toBeOk();
+  expectation.toHaveValueNull();
+});
+
+Deno.test("expectDenoKvResult - list result with empty entries", () => {
+  const result = mockDenoKvListResult({ entries: [] });
+  const expectation = expectDenoKvResult(result);
+
+  expectation.toBeOk().toHaveEntriesEmpty().toHaveEntryCount(0);
+});
+
+Deno.test("expectDenoKvResult - type inference works correctly", () => {
+  // Test that TypeScript correctly infers the return type based on input
+
+  // Get result
+  const getResult = mockDenoKvGetResult();
+  const getExpectation = expectDenoKvResult(getResult);
+  // This should compile without errors - toHaveKeyContaining is only on get expectation
+  getExpectation.toHaveKeyContaining("users");
+
+  // List result
+  const listResult = mockDenoKvListResult();
+  const listExpectation = expectDenoKvResult(listResult);
+  // This should compile without errors - toHaveEntryCount is only on list expectation
+  listExpectation.toHaveEntryCount(1);
+
+  // Set result
+  const setResult = mockDenoKvSetResult();
+  const setExpectation = expectDenoKvResult(setResult);
+  // This should compile without errors - toHaveVersionstamp is on set expectation
+  setExpectation.toHaveVersionstamp("v1");
+
+  // Delete result
+  const deleteResult = mockDenoKvDeleteResult();
+  const deleteExpectation = expectDenoKvResult(deleteResult);
+  // This should compile without errors - only has toBeOk and duration methods
+  deleteExpectation.toBeOk().toHaveDuration(100);
+
+  // Atomic result
+  const atomicResult = mockDenoKvAtomicResult();
+  const atomicExpectation = expectDenoKvResult(atomicResult);
+  // This should compile without errors - toHaveVersionstamp is on atomic expectation
+  atomicExpectation.toHaveVersionstamp("v1");
+});
+
+Deno.test("expectDenoKvResult - all result types support common methods", () => {
+  // Verify that all result types support the common toBeOk and duration methods
+
+  const results = [
+    mockDenoKvGetResult(),
+    mockDenoKvListResult(),
+    mockDenoKvSetResult(),
+    mockDenoKvDeleteResult(),
+    mockDenoKvAtomicResult(),
   ];
-  return {
-    type: "deno-kv:list" as const,
-    ok: true,
-    entries: createMockDenoKvEntries(rawEntries ?? defaultEntries),
-    duration: 100,
-    ...rest,
-  };
-};
 
-const mockDenoKvSetResult = (
-  overrides: Partial<DenoKvSetResult> = {},
-): DenoKvSetResult => ({
-  type: "deno-kv:set" as const,
-  ok: true,
-  versionstamp: "v1",
-  duration: 100,
-  ...overrides,
-});
+  for (const result of results) {
+    const expectation = expectDenoKvResult(result);
 
-const mockDenoKvDeleteResult = (
-  overrides: Partial<DenoKvDeleteResult> = {},
-): DenoKvDeleteResult => ({
-  type: "deno-kv:delete" as const,
-  ok: true,
-  duration: 100,
-  ...overrides,
-});
+    // All should have toBeOk
+    assertExists(expectation.toBeOk, `${result.kind} should have toBeOk`);
 
-const mockDenoKvAtomicResult = (
-  overrides: Partial<DenoKvAtomicResult> = {},
-): DenoKvAtomicResult => ({
-  type: "deno-kv:atomic" as const,
-  ok: true,
-  versionstamp: "v1",
-  duration: 100,
-  ...overrides,
-});
-
-Deno.test("expectDenoKvResult - DenoKvGetResult", async (t) => {
-  await t.step("toBeSuccessful", () => {
-    expectDenoKvResult(mockDenoKvGetResult({ ok: true })).toBeSuccessful();
-    assertThrows(
-      () =>
-        expectDenoKvResult(mockDenoKvGetResult({ ok: false })).toBeSuccessful(),
-      Error,
+    // All should have duration methods
+    assertExists(
+      expectation.toHaveDuration,
+      `${result.kind} should have toHaveDuration`,
     );
-  });
 
-  await t.step("toHaveContent", () => {
-    expectDenoKvResult(mockDenoKvGetResult()).toHaveContent();
-    assertThrows(
-      () =>
-        expectDenoKvResult(mockDenoKvGetResult({ value: null }))
-          .toHaveContent(),
-      Error,
-    );
-    expectDenoKvResult(mockDenoKvGetResult({ value: null })).not
-      .toHaveContent();
-  });
-
-  await t.step("toHaveValue", () => {
-    expectDenoKvResult(mockDenoKvGetResult({ value: { name: "Alice" } }))
-      .toHaveValue({ name: "Alice" });
-    assertThrows(
-      () =>
-        expectDenoKvResult(mockDenoKvGetResult()).toHaveValue({ name: "Bob" }),
-      Error,
-    );
-  });
-
-  await t.step("toMatchObject", () => {
-    expectDenoKvResult(
-      mockDenoKvGetResult({ value: { name: "Alice", age: 30 } }),
-    ).toMatchObject({ name: "Alice" });
-    assertThrows(
-      () =>
-        expectDenoKvResult(mockDenoKvGetResult()).toMatchObject({
-          name: "Bob",
-        }),
-      Error,
-    );
-  });
-
-  await t.step("toSatisfy", () => {
-    expectDenoKvResult(mockDenoKvGetResult<{ name: string }>()).toSatisfy(
-      (value: unknown) => {
-        const v = value as { name: string };
-        if (v.name !== "Alice") throw new Error("Expected Alice");
-      },
-    );
-    assertThrows(
-      () =>
-        expectDenoKvResult(mockDenoKvGetResult<{ name: string }>()).toSatisfy(
-          (value: unknown) => {
-            const v = value as { name: string };
-            if (v.name !== "Bob") throw new Error("Expected Bob");
-          },
-        ),
-      Error,
-      "Expected Bob",
-    );
-  });
-
-  await t.step("toHaveVersionstamp", () => {
-    expectDenoKvResult(mockDenoKvGetResult({ versionstamp: "v1" }))
-      .toHaveVersionstamp();
-    assertThrows(
-      () =>
-        expectDenoKvResult(mockDenoKvGetResult({ versionstamp: null }))
-          .toHaveVersionstamp(),
-      Error,
-    );
-  });
-
-  await t.step("duration methods", () => {
-    expectDenoKvResult(mockDenoKvGetResult({ duration: 50 }))
-      .toHaveDurationLessThan(100)
-      .toHaveDurationLessThanOrEqual(50)
-      .toHaveDurationGreaterThan(25)
-      .toHaveDurationGreaterThanOrEqual(50);
-  });
-});
-
-Deno.test("expectDenoKvResult - DenoKvListResult", async (t) => {
-  await t.step("toBeSuccessful", () => {
-    expectDenoKvResult(mockDenoKvListResult({ ok: true })).toBeSuccessful();
-  });
-
-  await t.step("toHaveContent", () => {
-    expectDenoKvResult(mockDenoKvListResult()).toHaveContent();
-    expectDenoKvResult(mockDenoKvListResult({ entries: [] })).not
-      .toHaveContent();
-  });
-
-  await t.step("toHaveLength", () => {
-    expectDenoKvResult(mockDenoKvListResult({
-      entries: [
-        { key: ["a"], value: {}, versionstamp: "v1" },
-        { key: ["b"], value: {}, versionstamp: "v2" },
-      ],
-    })).toHaveLength(2);
-  });
-
-  await t.step("toHaveLengthGreaterThanOrEqual", () => {
-    expectDenoKvResult(mockDenoKvListResult()).toHaveLengthGreaterThanOrEqual(
-      1,
-    );
-  });
-
-  await t.step("toHaveLengthLessThanOrEqual", () => {
-    expectDenoKvResult(mockDenoKvListResult()).toHaveLengthLessThanOrEqual(5);
-  });
-
-  await t.step("toHaveEntryContaining", () => {
-    expectDenoKvResult(mockDenoKvListResult()).toHaveEntryContaining({
-      key: ["users", "1"],
-    });
-    expectDenoKvResult(mockDenoKvListResult()).toHaveEntryContaining({
-      value: { name: "Alice" },
-    });
-  });
-
-  await t.step("toSatisfy", () => {
-    expectDenoKvResult(mockDenoKvListResult()).toSatisfy((entries) => {
-      if (entries.length !== 1) throw new Error("Expected 1 entry");
-    });
-  });
-});
-
-Deno.test("expectDenoKvResult - DenoKvSetResult", async (t) => {
-  await t.step("toBeSuccessful", () => {
-    expectDenoKvResult(mockDenoKvSetResult({ ok: true })).toBeSuccessful();
-  });
-
-  await t.step("toHaveVersionstamp", () => {
-    expectDenoKvResult(mockDenoKvSetResult({ versionstamp: "v1" }))
-      .toHaveVersionstamp();
-  });
-
-  await t.step("duration methods", () => {
-    expectDenoKvResult(mockDenoKvSetResult({ duration: 50 }))
-      .toHaveDurationLessThan(100);
-  });
-});
-
-Deno.test("expectDenoKvResult - DenoKvDeleteResult", async (t) => {
-  await t.step("toBeSuccessful", () => {
-    expectDenoKvResult(mockDenoKvDeleteResult({ ok: true })).toBeSuccessful();
-  });
-
-  await t.step("duration methods", () => {
-    expectDenoKvResult(mockDenoKvDeleteResult({ duration: 50 }))
-      .toHaveDurationLessThan(100);
-  });
-});
-
-Deno.test("expectDenoKvResult - DenoKvAtomicResult", async (t) => {
-  await t.step("toBeSuccessful", () => {
-    expectDenoKvResult(mockDenoKvAtomicResult({ ok: true })).toBeSuccessful();
-  });
-
-  await t.step("toHaveVersionstamp", () => {
-    expectDenoKvResult(mockDenoKvAtomicResult({ versionstamp: "v1" }))
-      .toHaveVersionstamp();
-  });
-
-  await t.step("duration methods", () => {
-    expectDenoKvResult(mockDenoKvAtomicResult({ duration: 50 }))
-      .toHaveDurationLessThan(100);
-  });
+    // All should support chaining
+    const chained = expectation.toBeOk();
+    assertExists(chained.toHaveDuration);
+  }
 });

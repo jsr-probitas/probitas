@@ -32,7 +32,7 @@ describe("expect", () => {
   describe("type dispatch", () => {
     it("dispatches HttpResponse to expectHttpResponse", () => {
       const httpResponse: HttpResponse = {
-        type: "http" as const,
+        kind: "http" as const,
         ok: true,
         status: 200,
         statusText: "OK",
@@ -40,7 +40,7 @@ describe("expect", () => {
         url: "http://example.com",
         body: null,
         duration: 100,
-        raw: new Response(),
+        raw: () => new Response(),
         arrayBuffer: () => null,
         blob: () => null,
         text: () => null,
@@ -48,67 +48,66 @@ describe("expect", () => {
       };
 
       const result = expect(httpResponse);
-      // HttpResponseExpectation has toBeSuccessful() method that returns this
-      assertEquals(typeof result.toBeSuccessful, "function");
+      // HttpResponseExpectation has toBeOk() method that returns this
+      assertEquals(typeof result.toBeOk, "function");
       assertEquals(typeof result.toHaveStatus, "function");
-      assertEquals(typeof result.toMatchObject, "function");
+      assertEquals(typeof result.toHaveDataMatching, "function");
     });
 
     it("dispatches ConnectRpcResponse to expectConnectRpcResponse", () => {
       const connectRpcResponse: ConnectRpcResponse = {
-        type: "connectrpc" as const,
+        kind: "connectrpc" as const,
         ok: true,
-        code: 0,
-        message: "",
-        headers: {},
-        trailers: {},
+        statusCode: 0,
+        statusMessage: "",
+        headers: new Headers(),
+        trailers: new Headers(),
         duration: 100,
         data: <T = unknown>() => ({} as T | null),
         raw: () => ({} as Response),
       };
 
       const result = expect(connectRpcResponse);
-      assertEquals(typeof result.toBeSuccessful, "function");
-      assertEquals(typeof result.toHaveCode, "function");
+      assertEquals(typeof result.toBeOk, "function");
+      assertEquals(typeof result.toHaveStatusCode, "function");
     });
 
     it("dispatches GraphqlResponse to expectGraphqlResponse", () => {
       const graphqlResponse: GraphqlResponse = {
-        type: "graphql" as const,
+        kind: "graphql" as const,
         ok: true,
         errors: null,
         duration: 100,
         status: 200,
         headers: new Headers(),
-        raw: new Response(),
+        raw: () => new Response(),
         data: <T = unknown>() => ({} as T | null),
       };
 
       const result = expect(graphqlResponse);
-      assertEquals(typeof result.toBeSuccessful, "function");
-      assertEquals(typeof result.toHaveContent, "function");
+      assertEquals(typeof result.toBeOk, "function");
+      assertEquals(typeof result.toHaveData, "function");
     });
 
     it("dispatches SqlQueryResult to expectSqlQueryResult", () => {
       const sqlResult: SqlQueryResult = {
-        type: "sql" as const,
+        kind: "sql" as const,
         ok: true,
         rows: [] as unknown as SqlQueryResult["rows"],
         rowCount: 0,
         duration: 100,
-        metadata: {},
         map: () => [],
         as: () => [],
       };
 
       const result = expect(sqlResult);
-      assertEquals(typeof result.toBeSuccessful, "function");
+      assertEquals(typeof result.toBeOk, "function");
       assertEquals(typeof result.toHaveRowCount, "function");
     });
 
     it("dispatches DenoKvResult (deno-kv:get) to expectDenoKvResult", () => {
       const denoKvResult: DenoKvGetResult<unknown> = {
-        type: "deno-kv:get" as const,
+        kind: "deno-kv:get" as const,
         ok: true,
         key: ["test"],
         value: null,
@@ -117,96 +116,96 @@ describe("expect", () => {
       };
 
       const result = expect(denoKvResult);
-      assertEquals(typeof result.toBeSuccessful, "function");
-      assertEquals(typeof result.toHaveContent, "function");
+      assertEquals(typeof result.toBeOk, "function");
+      assertEquals(typeof result.toHaveValue, "function");
     });
 
     it("dispatches DenoKvResult (deno-kv:set) to expectDenoKvResult", () => {
       const denoKvResult: DenoKvSetResult = {
-        type: "deno-kv:set" as const,
+        kind: "deno-kv:set" as const,
         ok: true,
         versionstamp: "00000000",
         duration: 100,
       };
 
       const result = expect(denoKvResult);
-      assertEquals(typeof result.toBeSuccessful, "function");
+      assertEquals(typeof result.toBeOk, "function");
     });
 
     it("dispatches RedisResult (redis:get) to expectRedisResult", () => {
       const redisResult: RedisGetResult = {
-        type: "redis:get" as const,
+        kind: "redis:get" as const,
         ok: true,
         value: "test",
         duration: 100,
       };
 
       const result = expect(redisResult);
-      assertEquals(typeof result.toBeSuccessful, "function");
+      assertEquals(typeof result.toBeOk, "function");
     });
 
     it("dispatches RedisResult (redis:set) to expectRedisResult", () => {
       const redisResult: RedisSetResult = {
-        type: "redis:set" as const,
+        kind: "redis:set" as const,
         ok: true,
         value: "OK" as const,
         duration: 100,
       };
 
       const result = expect(redisResult);
-      assertEquals(typeof result.toBeSuccessful, "function");
+      assertEquals(typeof result.toBeOk, "function");
     });
 
     it("dispatches MongoResult (mongo:find) to expectMongoResult", () => {
       const mongoResult: MongoFindResult = {
-        type: "mongo:find" as const,
+        kind: "mongo:find" as const,
         ok: true,
         docs: [] as unknown as MongoFindResult["docs"],
         duration: 100,
       };
 
       const result = expect(mongoResult);
-      assertEquals(typeof result.toBeSuccessful, "function");
+      assertEquals(typeof result.toBeOk, "function");
     });
 
-    it("dispatches MongoResult (mongo:insert) to expectMongoResult", () => {
+    it("dispatches MongoResult (mongo:insert-one) to expectMongoResult", () => {
       const mongoResult: MongoInsertOneResult = {
-        type: "mongo:insert" as const,
+        kind: "mongo:insert-one" as const,
         ok: true,
         insertedId: "123",
         duration: 100,
       };
 
       const result = expect(mongoResult);
-      assertEquals(typeof result.toBeSuccessful, "function");
+      assertEquals(typeof result.toBeOk, "function");
     });
 
     it("dispatches RabbitMqResult (rabbitmq:publish) to expectRabbitMqResult", () => {
       const rabbitmqResult: RabbitMqPublishResult = {
-        type: "rabbitmq:publish" as const,
+        kind: "rabbitmq:publish" as const,
         ok: true,
         duration: 100,
       };
 
       const result = expect(rabbitmqResult);
-      assertEquals(typeof result.toBeSuccessful, "function");
+      assertEquals(typeof result.toBeOk, "function");
     });
 
     it("dispatches RabbitMqResult (rabbitmq:consume) to expectRabbitMqResult", () => {
       const rabbitmqResult: RabbitMqConsumeResult = {
-        type: "rabbitmq:consume" as const,
+        kind: "rabbitmq:consume" as const,
         ok: true,
         message: null,
         duration: 100,
       };
 
       const result = expect(rabbitmqResult);
-      assertEquals(typeof result.toBeSuccessful, "function");
+      assertEquals(typeof result.toBeOk, "function");
     });
 
     it("dispatches SqsResult (sqs:send) to expectSqsResult", () => {
       const sqsResult: SqsSendResult = {
-        type: "sqs:send" as const,
+        kind: "sqs:send" as const,
         ok: true,
         messageId: "123",
         md5OfBody: "md5hash",
@@ -214,19 +213,19 @@ describe("expect", () => {
       };
 
       const result = expect(sqsResult);
-      assertEquals(typeof result.toBeSuccessful, "function");
+      assertEquals(typeof result.toBeOk, "function");
     });
 
     it("dispatches SqsResult (sqs:receive) to expectSqsResult", () => {
       const sqsResult: SqsReceiveResult = {
-        type: "sqs:receive" as const,
+        kind: "sqs:receive" as const,
         ok: true,
         messages: [] as unknown as SqsReceiveResult["messages"],
         duration: 100,
       };
 
       const result = expect(sqsResult);
-      assertEquals(typeof result.toBeSuccessful, "function");
+      assertEquals(typeof result.toBeOk, "function");
     });
   });
 
@@ -282,7 +281,7 @@ describe("expect", () => {
   describe("type inference", () => {
     it("infers correct return type for HttpResponse", () => {
       const httpResponse: HttpResponse = {
-        type: "http" as const,
+        kind: "http" as const,
         ok: true,
         status: 200,
         statusText: "OK",
@@ -290,7 +289,7 @@ describe("expect", () => {
         url: "http://example.com",
         body: null,
         duration: 100,
-        raw: new Response(),
+        raw: () => new Response(),
         arrayBuffer: () => null,
         blob: () => null,
         text: () => null,
@@ -300,7 +299,7 @@ describe("expect", () => {
       // This should compile and have HttpResponseExpectation methods
       const expectation = expect(httpResponse);
       // Chain should return same type (fluent API)
-      const chained = expectation.toBeSuccessful();
+      const chained = expectation.toBeOk();
       assertEquals(typeof chained.toHaveStatus, "function");
     });
 

@@ -31,7 +31,7 @@
  *     const response = await http.get("/api/users");
  *
  *     expect(response)
- *       .toBeSuccessful()                    // Status 2xx
+ *       .toBeOk()                    // Status 2xx
  *       .toHaveStatus(200)                   // Specific status code
  *       .toHaveContentType(/application\/json/)
  *       .toMatchObject({ users: [] });
@@ -53,7 +53,7 @@
  *     const response = await gql.query("{ user(id: 1) { name } }");
  *
  *     expect(response)
- *       .toBeSuccessful()
+ *       .toBeOk()
  *       .toHaveContent()
  *       .toMatchObject({ user: { name: "Alice" } })
  *       .toHaveErrorCount(0);
@@ -75,7 +75,7 @@
  *     const result = await db.query("SELECT * FROM users");
  *
  *     expect(result)
- *       .toBeSuccessful()
+ *       .toBeOk()
  *       .toHaveLength(10)
  *       .toMatchObject({ name: "Alice" });
  *   })
@@ -123,7 +123,7 @@
  *
  * All expectation methods follow these patterns:
  *
- * - `toBeXxx()` - Assertions about the state (e.g., `toBeSuccessful()`, `toBeNull()`)
+ * - `toBeXxx()` - Assertions about the state (e.g., `toBeOk()`, `toBeNull()`)
  * - `toHaveXxx()` - Assertions about properties (e.g., `toHaveStatus()`, `toHaveLength()`)
  * - `toMatchXxx()` - Pattern matching (e.g., `toMatchObject()`)
  * - Comparison methods use full names (e.g., `toBeGreaterThan()`, `toBeLessThanOrEqual()`)
@@ -208,7 +208,7 @@
  *
  * Key changes in 0.4.0:
  * - Method names updated to follow `toBeXxx` / `toHaveXxx` patterns
- * - `ok()` → `toBeSuccessful()`
+ * - `ok()` → `toBeOk()`
  * - `data()` → `toHaveContent()`
  * - `dataContains()` → `toHaveContentContaining()`
  *
@@ -220,16 +220,6 @@ export { expect } from "./expect.ts";
 
 // Chainable wrapper for @std/expect
 export { type AnythingExpectation, expectAnything } from "./anything.ts";
-
-// Common utilities
-export {
-  buildErrorMessage,
-  containsSubarray,
-  containsSubset,
-  formatDifferences,
-  formatValue,
-  stripAnsi,
-} from "./common.ts";
 
 // HTTP
 export { expectHttpResponse } from "./http.ts";
@@ -260,7 +250,7 @@ export { expectDenoKvResult } from "./deno_kv.ts";
 export type * from "@probitas/client-deno-kv";
 
 // SQS
-export { expectSqsMessage, expectSqsResult } from "./sqs.ts";
+export { expectSqsResult } from "./sqs.ts";
 export type * from "@probitas/client-sqs";
 
 // RabbitMQ

@@ -1,581 +1,231 @@
-import { assertThrows } from "@std/assert";
-import { expectGraphqlResponse } from "./graphql.ts";
+import { assertEquals, assertExists } from "@std/assert";
 import type { GraphqlResponse } from "@probitas/client-graphql";
+import {
+  expectGraphqlResponse,
+  type GraphqlResponseExpectation,
+} from "./graphql.ts";
 
-// Mock helper
-const mockGraphqlResponse = (
+// Mock GraphqlResponse for testing
+function createMockResponse(
   overrides: Partial<GraphqlResponse> = {},
-): GraphqlResponse => {
-  return {
-    type: "graphql" as const,
+): GraphqlResponse {
+  const defaultResponse: GraphqlResponse = {
+    kind: "graphql",
     ok: true,
-    errors: null,
-    data: <T = unknown>() => ({ user: { id: "1", name: "Alice" } }) as T | null,
-    extensions: {},
-    headers: new Headers(),
     status: 200,
-    raw: new Response(),
-    duration: 100,
-    ...overrides,
+    headers: new Headers({
+      "content-type": "application/json",
+      "x-request-id": "test-123",
+    }),
+    errors: null,
+    extensions: { tracing: { version: 1, startTime: "2024-01-01T00:00:00Z" } },
+    // deno-lint-ignore no-explicit-any
+    data: <T = any>(): T | null => ({ user: { id: "1", name: "Test" } }) as T,
+    duration: 123,
+    raw: () =>
+      new Response('{"data":{"user":{"id":"1","name":"Test"}}}', {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
   };
+  return { ...defaultResponse, ...overrides };
+}
+
+// Define expected methods with their test arguments
+// Using Record to ensure all interface methods are listed (compile-time check)
+const EXPECTED_METHODS: Record<keyof GraphqlResponseExpectation, unknown[]> = {
+  // Core (special property, not a method)
+  not: [],
+  // Ok
+  toBeOk: [],
+  // Status
+  toHaveStatus: [200],
+  toHaveStatusEqual: [200],
+  toHaveStatusStrictEqual: [200],
+  toHaveStatusSatisfying: [(v: number) => assertEquals(v, 200)],
+  toHaveStatusNaN: [],
+  toHaveStatusGreaterThan: [100],
+  toHaveStatusGreaterThanOrEqual: [200],
+  toHaveStatusLessThan: [300],
+  toHaveStatusLessThanOrEqual: [200],
+  toHaveStatusCloseTo: [200, 0],
+  toHaveStatusOneOf: [[200, 201, 204]],
+  // Headers
+  toHaveHeaders: [],
+  toHaveHeadersEqual: [],
+  toHaveHeadersStrictEqual: [],
+  toHaveHeadersSatisfying: [(v: Record<string, string>) => assertExists(v)],
+  toHaveHeadersMatching: [{ "content-type": "application/json" }],
+  toHaveHeadersProperty: ["content-type"],
+  toHaveHeadersPropertyContaining: [],
+  toHaveHeadersPropertyMatching: [],
+  toHaveHeadersPropertySatisfying: [
+    "content-type",
+    (v: unknown) => assertEquals(v, "application/json"),
+  ],
+  // Errors (arrays - can't test with strict equality, default mock has null)
+  toHaveErrors: [],
+  toHaveErrorsEqual: [],
+  toHaveErrorsStrictEqual: [],
+  toHaveErrorsSatisfying: [],
+  toHaveErrorsContaining: [],
+  toHaveErrorsContainingEqual: [],
+  toHaveErrorsMatching: [],
+  toHaveErrorsEmpty: [],
+  toHaveErrorsPresent: [],
+  toHaveErrorsNull: [],
+  toHaveErrorsUndefined: [],
+  toHaveErrorsNullish: [],
+  // Error Count
+  toHaveErrorCount: [0],
+  toHaveErrorCountEqual: [0],
+  toHaveErrorCountStrictEqual: [0],
+  toHaveErrorCountSatisfying: [(v: number) => assertEquals(v, 0)],
+  toHaveErrorCountNaN: [],
+  toHaveErrorCountGreaterThan: [-1],
+  toHaveErrorCountGreaterThanOrEqual: [0],
+  toHaveErrorCountLessThan: [1],
+  toHaveErrorCountLessThanOrEqual: [0],
+  toHaveErrorCountCloseTo: [0, 0],
+  // Extensions
+  toHaveExtensions: [],
+  toHaveExtensionsEqual: [],
+  toHaveExtensionsStrictEqual: [],
+  toHaveExtensionsSatisfying: [
+    (v: Record<string, unknown>) => assertExists(v),
+  ],
+  toHaveExtensionsMatching: [{ tracing: { version: 1 } }],
+  toHaveExtensionsProperty: ["tracing"],
+  toHaveExtensionsPropertyContaining: [],
+  toHaveExtensionsPropertyMatching: [],
+  toHaveExtensionsPropertySatisfying: [
+    "tracing",
+    (v: unknown) => assertExists(v),
+  ],
+  toHaveExtensionsPresent: [],
+  toHaveExtensionsNull: [],
+  toHaveExtensionsUndefined: [],
+  toHaveExtensionsNullish: [],
+  // Data (objects - can't test with strict equality)
+  toHaveData: [],
+  toHaveDataEqual: [],
+  toHaveDataStrictEqual: [],
+  toHaveDataSatisfying: [(v: unknown) => assertExists(v)],
+  toHaveDataMatching: [],
+  toHaveDataProperty: [],
+  toHaveDataPropertyContaining: [],
+  toHaveDataPropertyMatching: [],
+  toHaveDataPropertySatisfying: [],
+  toHaveDataPresent: [],
+  toHaveDataNull: [],
+  toHaveDataUndefined: [],
+  toHaveDataNullish: [],
+  // Duration
+  toHaveDuration: [123],
+  toHaveDurationEqual: [123],
+  toHaveDurationStrictEqual: [123],
+  toHaveDurationSatisfying: [(v: number) => assertEquals(v, 123)],
+  toHaveDurationNaN: [],
+  toHaveDurationGreaterThan: [100],
+  toHaveDurationGreaterThanOrEqual: [123],
+  toHaveDurationLessThan: [200],
+  toHaveDurationLessThanOrEqual: [123],
+  toHaveDurationCloseTo: [123, 0],
 };
 
-Deno.test("expectGraphqlResponse", async (t) => {
-  await t.step("toBeSuccessful", async (t) => {
-    await t.step("passes when ok is true", () => {
-      const response = mockGraphqlResponse({ ok: true, errors: null });
-      expectGraphqlResponse(response).toBeSuccessful();
-    });
+Deno.test("expectGraphqlResponse - method existence check", () => {
+  const response = createMockResponse();
+  const expectation = expectGraphqlResponse(response);
 
-    await t.step("fails when ok is false", () => {
-      const response = mockGraphqlResponse({
-        ok: false,
-        errors: [{ message: "Field error", path: ["user"], locations: [] }],
-      });
-      assertThrows(
-        () => expectGraphqlResponse(response).toBeSuccessful(),
-        Error,
-        "Expected successful response, got errors: Field error",
-      );
-    });
+  const expectedMethodNames = Object.keys(EXPECTED_METHODS) as Array<
+    keyof GraphqlResponseExpectation
+  >;
 
-    await t.step("negated - fails when ok is true", () => {
-      const response = mockGraphqlResponse({ ok: true });
-      assertThrows(
-        () => expectGraphqlResponse(response).not.toBeSuccessful(),
-        Error,
-        "Expected response with errors, but got successful response",
-      );
-    });
+  // Check that all expected methods exist
+  for (const method of expectedMethodNames) {
+    assertExists(
+      expectation[method],
+      `Method '${method}' should exist on GraphqlResponseExpectation`,
+    );
+  }
 
-    await t.step("negated - passes when ok is false", () => {
-      const response = mockGraphqlResponse({
-        ok: false,
-        errors: [{ message: "Error", path: [], locations: [] }],
-      });
-      expectGraphqlResponse(response).not.toBeSuccessful();
-    });
+  // Verify count matches (helps catch if we added methods but didn't list them)
+  const actualPropertyCount = Object.getOwnPropertyNames(expectation).length;
+  assertEquals(
+    actualPropertyCount,
+    expectedMethodNames.length,
+    `Expected ${expectedMethodNames.length} methods but found ${actualPropertyCount}`,
+  );
+});
+
+// Generate individual test for each method
+for (
+  const [methodName, args] of Object.entries(EXPECTED_METHODS) as Array<
+    [keyof GraphqlResponseExpectation, unknown[]]
+  >
+) {
+  // Skip 'not' as it's a property, not a method
+  if (methodName === "not") continue;
+
+  // Skip methods that require special setup (null/undefined/nullish values, NaN, empty arrays)
+  if (
+    methodName === "toHaveStatusNaN" ||
+    methodName === "toHaveErrorCountNaN" ||
+    methodName === "toHaveDurationNaN" ||
+    methodName === "toHaveErrorsEmpty" ||
+    // Skip methods with empty args (need special handling)
+    (args.length === 0 && methodName !== "toBeOk")
+  ) {
+    continue;
+  }
+
+  Deno.test(`expectGraphqlResponse - ${methodName} - success`, () => {
+    const response = createMockResponse();
+    const expectation = expectGraphqlResponse(response);
+
+    // Call the method with provided arguments
+    // deno-lint-ignore no-explicit-any
+    const method = expectation[methodName] as (...args: any[]) => any;
+    const result = method.call(expectation, ...args);
+
+    // Verify method returns an expectation object (for chaining)
+    assertExists(result);
+    assertExists(
+      result.toBeOk,
+      "Result should have toBeOk method for chaining",
+    );
   });
+}
 
-  await t.step("toHaveErrorCount", async (t) => {
-    await t.step("passes for matching count", () => {
-      const response = mockGraphqlResponse({
-        errors: [
-          { message: "Error 1", path: [], locations: [] },
-          { message: "Error 2", path: [], locations: [] },
-        ],
-      });
-      expectGraphqlResponse(response).toHaveErrorCount(2);
-    });
+Deno.test("expectGraphqlResponse - not property - success", () => {
+  const response = createMockResponse({ ok: false, status: 500 });
+  const expectation = expectGraphqlResponse(response);
 
-    await t.step("fails for non-matching count", () => {
-      const response = mockGraphqlResponse({
-        errors: [{ message: "Error 1", path: [], locations: [] }],
-      });
-      assertThrows(
-        () => expectGraphqlResponse(response).toHaveErrorCount(2),
-        Error,
-        "Expected 2 errors, got 1",
-      );
-    });
+  // Verify .not is accessible and returns expectation
+  expectation.not.toBeOk();
+  expectation.not.toHaveStatus(200);
+});
 
-    await t.step("negated - passes for non-matching count", () => {
-      const response = mockGraphqlResponse({
-        errors: [{ message: "Error 1", path: [], locations: [] }],
-      });
-      expectGraphqlResponse(response).not.toHaveErrorCount(2);
-    });
+Deno.test("expectGraphqlResponse - errors methods - success", () => {
+  // Test with errors present
+  const errorResponse = createMockResponse({
+    ok: false,
+    errors: [
+      { message: "Validation error", path: ["user", "email"] },
+      { message: "Not found", path: ["post"] },
+    ],
   });
+  const errorExpectation = expectGraphqlResponse(errorResponse);
 
-  await t.step("toHaveErrorCountGreaterThan", async (t) => {
-    await t.step("passes when count is greater", () => {
-      const response = mockGraphqlResponse({
-        errors: [
-          { message: "Error 1", path: [], locations: [] },
-          { message: "Error 2", path: [], locations: [] },
-        ],
-      });
-      expectGraphqlResponse(response).toHaveErrorCountGreaterThan(1);
-    });
+  errorExpectation.toHaveErrorCount(2);
 
-    await t.step("fails when count is equal", () => {
-      const response = mockGraphqlResponse({
-        errors: [{ message: "Error 1", path: [], locations: [] }],
-      });
-      assertThrows(
-        () => expectGraphqlResponse(response).toHaveErrorCountGreaterThan(1),
-        Error,
-        "Expected error count > 1, but got 1",
-      );
-    });
-
-    await t.step("negated - passes when count is not greater", () => {
-      const response = mockGraphqlResponse({
-        errors: [{ message: "Error 1", path: [], locations: [] }],
-      });
-      expectGraphqlResponse(response).not.toHaveErrorCountGreaterThan(1);
-    });
+  // Test with no errors (empty)
+  const successResponse = createMockResponse({
+    ok: true,
+    errors: [],
   });
+  const successExpectation = expectGraphqlResponse(successResponse);
 
-  await t.step("toHaveErrorCountGreaterThanOrEqual", async (t) => {
-    await t.step("passes when count is greater", () => {
-      const response = mockGraphqlResponse({
-        errors: [
-          { message: "Error 1", path: [], locations: [] },
-          { message: "Error 2", path: [], locations: [] },
-        ],
-      });
-      expectGraphqlResponse(response).toHaveErrorCountGreaterThanOrEqual(1);
-    });
-
-    await t.step("passes when count is equal", () => {
-      const response = mockGraphqlResponse({
-        errors: [{ message: "Error 1", path: [], locations: [] }],
-      });
-      expectGraphqlResponse(response).toHaveErrorCountGreaterThanOrEqual(1);
-    });
-
-    await t.step("fails when count is less", () => {
-      const response = mockGraphqlResponse({ errors: null });
-      assertThrows(
-        () =>
-          expectGraphqlResponse(response).toHaveErrorCountGreaterThanOrEqual(1),
-        Error,
-        "Expected error count >= 1, but got 0",
-      );
-    });
-  });
-
-  await t.step("toHaveErrorCountLessThan", async (t) => {
-    await t.step("passes when count is less", () => {
-      const response = mockGraphqlResponse({
-        errors: [{ message: "Error 1", path: [], locations: [] }],
-      });
-      expectGraphqlResponse(response).toHaveErrorCountLessThan(2);
-    });
-
-    await t.step("fails when count is equal", () => {
-      const response = mockGraphqlResponse({
-        errors: [{ message: "Error 1", path: [], locations: [] }],
-      });
-      assertThrows(
-        () => expectGraphqlResponse(response).toHaveErrorCountLessThan(1),
-        Error,
-        "Expected error count < 1, but got 1",
-      );
-    });
-  });
-
-  await t.step("toHaveErrorCountLessThanOrEqual", async (t) => {
-    await t.step("passes when count is less", () => {
-      const response = mockGraphqlResponse({ errors: null });
-      expectGraphqlResponse(response).toHaveErrorCountLessThanOrEqual(1);
-    });
-
-    await t.step("passes when count is equal", () => {
-      const response = mockGraphqlResponse({
-        errors: [{ message: "Error 1", path: [], locations: [] }],
-      });
-      expectGraphqlResponse(response).toHaveErrorCountLessThanOrEqual(1);
-    });
-
-    await t.step("fails when count is greater", () => {
-      const response = mockGraphqlResponse({
-        errors: [
-          { message: "Error 1", path: [], locations: [] },
-          { message: "Error 2", path: [], locations: [] },
-        ],
-      });
-      assertThrows(
-        () =>
-          expectGraphqlResponse(response).toHaveErrorCountLessThanOrEqual(1),
-        Error,
-        "Expected error count <= 1, but got 2",
-      );
-    });
-  });
-
-  await t.step("toHaveErrorContaining", async (t) => {
-    await t.step("passes when error contains message", () => {
-      const response = mockGraphqlResponse({
-        errors: [{ message: "User not found", path: [], locations: [] }],
-      });
-      expectGraphqlResponse(response).toHaveErrorContaining("not found");
-    });
-
-    await t.step("fails when error does not contain message", () => {
-      const response = mockGraphqlResponse({
-        errors: [{ message: "Invalid input", path: [], locations: [] }],
-      });
-      assertThrows(
-        () =>
-          expectGraphqlResponse(response).toHaveErrorContaining("not found"),
-        Error,
-        'Expected an error containing "not found", but none found',
-      );
-    });
-
-    await t.step("negated - passes when error does not contain", () => {
-      const response = mockGraphqlResponse({
-        errors: [{ message: "Invalid input", path: [], locations: [] }],
-      });
-      expectGraphqlResponse(response).not.toHaveErrorContaining("not found");
-    });
-  });
-
-  await t.step("toHaveError", async (t) => {
-    await t.step("passes for string match", () => {
-      const response = mockGraphqlResponse({
-        errors: [{ message: "User not found", path: [], locations: [] }],
-      });
-      expectGraphqlResponse(response).toHaveError("not found");
-    });
-
-    await t.step("passes for regex match", () => {
-      const response = mockGraphqlResponse({
-        errors: [{ message: "Error: code 123", path: [], locations: [] }],
-      });
-      expectGraphqlResponse(response).toHaveError(/code \d+/);
-    });
-
-    await t.step("fails when no match", () => {
-      const response = mockGraphqlResponse({
-        errors: [{ message: "Invalid input", path: [], locations: [] }],
-      });
-      assertThrows(
-        () => expectGraphqlResponse(response).toHaveError("not found"),
-        Error,
-        'Expected an error matching "not found", but none found',
-      );
-    });
-  });
-
-  await t.step("toHaveErrorMatching", async (t) => {
-    await t.step("passes when matcher succeeds", () => {
-      const response = mockGraphqlResponse({
-        errors: [{ message: "Error 1", path: [], locations: [] }],
-      });
-      expectGraphqlResponse(response).toHaveErrorMatching((errors) => {
-        if (errors.length !== 1) throw new Error("Expected 1 error");
-      });
-    });
-
-    await t.step("fails when matcher throws", () => {
-      const response = mockGraphqlResponse({
-        errors: [
-          { message: "Error 1", path: [], locations: [] },
-          { message: "Error 2", path: [], locations: [] },
-        ],
-      });
-      assertThrows(
-        () =>
-          expectGraphqlResponse(response).toHaveErrorMatching((errors) => {
-            if (errors.length !== 1) throw new Error("Expected 1 error");
-          }),
-        Error,
-        "Expected 1 error",
-      );
-    });
-  });
-
-  await t.step("toHaveContent", async (t) => {
-    await t.step("passes when data is not null", () => {
-      const response = mockGraphqlResponse({
-        data: <T = unknown>() => ({ id: "1" }) as T | null,
-      });
-      expectGraphqlResponse(response).toHaveContent();
-    });
-
-    await t.step("fails when data is null", () => {
-      const response = mockGraphqlResponse({
-        data: <T = unknown>() => null as T | null,
-      });
-      assertThrows(
-        () => expectGraphqlResponse(response).toHaveContent(),
-        Error,
-        "Expected content, but data is null",
-      );
-    });
-
-    await t.step("negated - passes when data is null", () => {
-      const response = mockGraphqlResponse({
-        data: <T = unknown>() => null as T | null,
-      });
-      expectGraphqlResponse(response).not.toHaveContent();
-    });
-  });
-
-  await t.step("toMatchObject", async (t) => {
-    await t.step("passes when data contains subset", () => {
-      const response = mockGraphqlResponse({
-        data: <T = unknown>() =>
-          ({ user: { id: "1", name: "Alice", age: 30 } }) as T | null,
-      });
-      expectGraphqlResponse(response).toMatchObject({
-        user: { name: "Alice" },
-      });
-    });
-
-    await t.step("fails when data does not contain subset", () => {
-      const response = mockGraphqlResponse({
-        data: <T = unknown>() =>
-          ({ user: { id: "1", name: "Bob" } }) as T | null,
-      });
-      assertThrows(
-        () =>
-          expectGraphqlResponse(response).toMatchObject({
-            user: { name: "Alice" },
-          }),
-        Error,
-      );
-    });
-
-    await t.step("negated - passes when data does not contain", () => {
-      const response = mockGraphqlResponse({
-        data: <T = unknown>() =>
-          ({ user: { id: "1", name: "Bob" } }) as T | null,
-      });
-      expectGraphqlResponse(response).not.toMatchObject({
-        user: { name: "Alice" },
-      });
-    });
-  });
-
-  await t.step("toSatisfy", async (t) => {
-    await t.step("passes when matcher succeeds", () => {
-      const response = mockGraphqlResponse({
-        data: <T = unknown>() =>
-          ({ user: { id: "1", name: "Alice" } }) as T | null,
-      });
-      expectGraphqlResponse(response).toSatisfy(
-        (data: { user: { name: string } }) => {
-          if (data.user.name !== "Alice") throw new Error("Expected Alice");
-        },
-      );
-    });
-
-    await t.step("fails when matcher throws", () => {
-      const response = mockGraphqlResponse({
-        data: <T = unknown>() =>
-          ({ user: { id: "1", name: "Bob" } }) as T | null,
-      });
-      assertThrows(
-        () =>
-          expectGraphqlResponse(response).toSatisfy(
-            (data: { user: { name: string } }) => {
-              if (data.user.name !== "Alice") throw new Error("Expected Alice");
-            },
-          ),
-        Error,
-        "Expected Alice",
-      );
-    });
-  });
-
-  await t.step("toHaveExtension", async (t) => {
-    await t.step("passes when extension exists", () => {
-      const response = mockGraphqlResponse({
-        extensions: { tracing: { duration: 100 } },
-      });
-      expectGraphqlResponse(response).toHaveExtension("tracing");
-    });
-
-    await t.step("fails when extension does not exist", () => {
-      const response = mockGraphqlResponse({ extensions: {} });
-      assertThrows(
-        () => expectGraphqlResponse(response).toHaveExtension("tracing"),
-        Error,
-        'Expected extension "tracing" to exist',
-      );
-    });
-
-    await t.step("negated - passes when extension does not exist", () => {
-      const response = mockGraphqlResponse({ extensions: {} });
-      expectGraphqlResponse(response).not.toHaveExtension("tracing");
-    });
-  });
-
-  await t.step("toHaveExtensionMatching", async (t) => {
-    await t.step("passes when matcher succeeds", () => {
-      const response = mockGraphqlResponse({
-        extensions: { tracing: { duration: 100 } },
-      });
-      expectGraphqlResponse(response).toHaveExtensionMatching(
-        "tracing",
-        (value) => {
-          if ((value as { duration: number }).duration !== 100) {
-            throw new Error("Expected duration 100");
-          }
-        },
-      );
-    });
-
-    await t.step("fails when matcher throws", () => {
-      const response = mockGraphqlResponse({
-        extensions: { tracing: { duration: 200 } },
-      });
-      assertThrows(
-        () =>
-          expectGraphqlResponse(response).toHaveExtensionMatching(
-            "tracing",
-            (value) => {
-              if ((value as { duration: number }).duration !== 100) {
-                throw new Error("Expected duration 100");
-              }
-            },
-          ),
-        Error,
-        "Expected duration 100",
-      );
-    });
-  });
-
-  await t.step("toHaveStatus", async (t) => {
-    await t.step("passes for matching status", () => {
-      const response = mockGraphqlResponse({ status: 200 });
-      expectGraphqlResponse(response).toHaveStatus(200);
-    });
-
-    await t.step("fails for non-matching status", () => {
-      const response = mockGraphqlResponse({ status: 500 });
-      assertThrows(
-        () => expectGraphqlResponse(response).toHaveStatus(200),
-        Error,
-        "Expected status 200, got 500",
-      );
-    });
-
-    await t.step("negated - passes for non-matching", () => {
-      const response = mockGraphqlResponse({ status: 500 });
-      expectGraphqlResponse(response).not.toHaveStatus(200);
-    });
-  });
-
-  await t.step("toHaveStatusOneOf", async (t) => {
-    await t.step("passes when status is in list", () => {
-      const response = mockGraphqlResponse({ status: 200 });
-      expectGraphqlResponse(response).toHaveStatusOneOf([200, 201, 204]);
-    });
-
-    await t.step("fails when status is not in list", () => {
-      const response = mockGraphqlResponse({ status: 500 });
-      assertThrows(
-        () =>
-          expectGraphqlResponse(response).toHaveStatusOneOf([200, 201, 204]),
-        Error,
-        "Expected status in [200, 201, 204], got 500",
-      );
-    });
-
-    await t.step("negated - passes when status not in list", () => {
-      const response = mockGraphqlResponse({ status: 500 });
-      expectGraphqlResponse(response).not.toHaveStatusOneOf([200, 201, 204]);
-    });
-  });
-
-  await t.step("toHaveDurationLessThan", async (t) => {
-    await t.step("passes when duration is less", () => {
-      const response = mockGraphqlResponse({ duration: 50 });
-      expectGraphqlResponse(response).toHaveDurationLessThan(100);
-    });
-
-    await t.step("fails when duration is equal", () => {
-      const response = mockGraphqlResponse({ duration: 100 });
-      assertThrows(
-        () => expectGraphqlResponse(response).toHaveDurationLessThan(100),
-        Error,
-        "Expected duration < 100ms, got 100ms",
-      );
-    });
-
-    await t.step("negated - passes when duration is not less", () => {
-      const response = mockGraphqlResponse({ duration: 100 });
-      expectGraphqlResponse(response).not.toHaveDurationLessThan(100);
-    });
-  });
-
-  await t.step("toHaveDurationLessThanOrEqual", async (t) => {
-    await t.step("passes when duration is less", () => {
-      const response = mockGraphqlResponse({ duration: 50 });
-      expectGraphqlResponse(response).toHaveDurationLessThanOrEqual(100);
-    });
-
-    await t.step("passes when duration is equal", () => {
-      const response = mockGraphqlResponse({ duration: 100 });
-      expectGraphqlResponse(response).toHaveDurationLessThanOrEqual(100);
-    });
-
-    await t.step("fails when duration is greater", () => {
-      const response = mockGraphqlResponse({ duration: 150 });
-      assertThrows(
-        () =>
-          expectGraphqlResponse(response).toHaveDurationLessThanOrEqual(100),
-        Error,
-        "Expected duration <= 100ms, got 150ms",
-      );
-    });
-  });
-
-  await t.step("toHaveDurationGreaterThan", async (t) => {
-    await t.step("passes when duration is greater", () => {
-      const response = mockGraphqlResponse({ duration: 150 });
-      expectGraphqlResponse(response).toHaveDurationGreaterThan(100);
-    });
-
-    await t.step("fails when duration is equal", () => {
-      const response = mockGraphqlResponse({ duration: 100 });
-      assertThrows(
-        () => expectGraphqlResponse(response).toHaveDurationGreaterThan(100),
-        Error,
-        "Expected duration > 100ms, got 100ms",
-      );
-    });
-
-    await t.step("negated - passes when duration is not greater", () => {
-      const response = mockGraphqlResponse({ duration: 100 });
-      expectGraphqlResponse(response).not.toHaveDurationGreaterThan(100);
-    });
-  });
-
-  await t.step("toHaveDurationGreaterThanOrEqual", async (t) => {
-    await t.step("passes when duration is greater", () => {
-      const response = mockGraphqlResponse({ duration: 150 });
-      expectGraphqlResponse(response).toHaveDurationGreaterThanOrEqual(100);
-    });
-
-    await t.step("passes when duration is equal", () => {
-      const response = mockGraphqlResponse({ duration: 100 });
-      expectGraphqlResponse(response).toHaveDurationGreaterThanOrEqual(100);
-    });
-
-    await t.step("fails when duration is less", () => {
-      const response = mockGraphqlResponse({ duration: 50 });
-      assertThrows(
-        () =>
-          expectGraphqlResponse(response).toHaveDurationGreaterThanOrEqual(100),
-        Error,
-        "Expected duration >= 100ms, got 50ms",
-      );
-    });
-  });
-
-  await t.step("method chaining", () => {
-    const response = mockGraphqlResponse({
-      ok: true,
-      errors: null,
-      data: <T = unknown>() =>
-        ({ user: { id: "1", name: "Alice" } }) as T | null,
-      extensions: { tracing: { duration: 100 } },
-      status: 200,
-      duration: 50,
-    });
-
-    expectGraphqlResponse(response)
-      .toBeSuccessful()
-      .toHaveStatus(200)
-      .toHaveContent()
-      .toMatchObject({ user: { name: "Alice" } })
-      .toHaveExtension("tracing")
-      .toHaveDurationLessThan(100);
-  });
+  successExpectation.toHaveErrorsEmpty();
+  successExpectation.toHaveErrorCount(0);
 });

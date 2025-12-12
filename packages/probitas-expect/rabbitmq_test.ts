@@ -1,348 +1,153 @@
-import { assertThrows } from "@std/assert";
-import { expectRabbitMqResult } from "./rabbitmq.ts";
+import { assertExists, assertThrows } from "@std/assert";
 import type {
+  RabbitMqAckResult,
   RabbitMqConsumeResult,
+  RabbitMqExchangeResult,
   RabbitMqPublishResult,
   RabbitMqQueueResult,
 } from "@probitas/client-rabbitmq";
+import { expectRabbitMqResult } from "./rabbitmq.ts";
+import {
+  mockRabbitMqAckResult,
+  mockRabbitMqConsumeResult,
+  mockRabbitMqExchangeResult,
+  mockRabbitMqPublishResult,
+  mockRabbitMqQueueResult,
+} from "./rabbitmq/_test_utils.ts";
 
-// Mock helpers
-const mockRabbitMqPublishResult = (
-  overrides: Partial<RabbitMqPublishResult> = {},
-): RabbitMqPublishResult => ({
-  type: "rabbitmq:publish" as const,
-  ok: true,
-  duration: 100,
-  ...overrides,
+Deno.test("expectRabbitMqResult - dispatches to publish expectation", () => {
+  const result: RabbitMqPublishResult = mockRabbitMqPublishResult();
+  const expectation = expectRabbitMqResult(result);
+
+  // Verify it returns publish expectation with correct methods
+  assertExists(expectation.toBeOk);
+  assertExists(expectation.toHaveDuration);
+
+  // Verify chaining works
+  expectation.toBeOk().toHaveDuration(100);
 });
 
-const mockRabbitMqConsumeResult = (
-  overrides: Partial<RabbitMqConsumeResult> = {},
-): RabbitMqConsumeResult => ({
-  type: "rabbitmq:consume" as const,
-  ok: true,
-  message: {
-    content: new TextEncoder().encode("test message"),
-    properties: { contentType: "text/plain" },
-    fields: {
-      routingKey: "test.key",
-      exchange: "test.exchange",
-      deliveryTag: 1n,
-      redelivered: false,
-    },
-  },
-  duration: 100,
-  ...overrides,
+Deno.test("expectRabbitMqResult - dispatches to consume expectation", () => {
+  const result: RabbitMqConsumeResult = mockRabbitMqConsumeResult();
+  const expectation = expectRabbitMqResult(result);
+
+  // Verify it returns consume expectation with correct methods
+  assertExists(expectation.toBeOk);
+  assertExists(expectation.toHaveMessage);
+  assertExists(expectation.toHaveContent);
+  assertExists(expectation.toHaveDuration);
+
+  // Verify chaining works
+  expectation.toBeOk().toHaveMessagePresent();
 });
 
-const mockRabbitMqQueueResult = (
-  overrides: Partial<RabbitMqQueueResult> = {},
-): RabbitMqQueueResult => ({
-  type: "rabbitmq:queue" as const,
-  ok: true,
-  queue: "test-queue",
-  messageCount: 10,
-  consumerCount: 2,
-  duration: 100,
-  ...overrides,
+Deno.test("expectRabbitMqResult - dispatches to queue expectation", () => {
+  const result: RabbitMqQueueResult = mockRabbitMqQueueResult();
+  const expectation = expectRabbitMqResult(result);
+
+  // Verify it returns queue expectation with correct methods
+  assertExists(expectation.toBeOk);
+  assertExists(expectation.toHaveQueue);
+  assertExists(expectation.toHaveMessageCount);
+  assertExists(expectation.toHaveConsumerCount);
+  assertExists(expectation.toHaveDuration);
+
+  // Verify chaining works
+  expectation.toBeOk().toHaveQueue("test-queue").toHaveMessageCount(10);
 });
 
-Deno.test("expectRabbitMqResult", async (t) => {
-  await t.step("RabbitMqPublishResult", async (t) => {
-    await t.step("toBeSuccessful", async (t) => {
-      await t.step("passes when ok is true", () => {
-        const result = mockRabbitMqPublishResult({ ok: true });
-        expectRabbitMqResult(result).toBeSuccessful();
-      });
+Deno.test("expectRabbitMqResult - dispatches to ack expectation", () => {
+  const result: RabbitMqAckResult = mockRabbitMqAckResult();
+  const expectation = expectRabbitMqResult(result);
 
-      await t.step("fails when ok is false", () => {
-        const result = mockRabbitMqPublishResult({ ok: false });
-        assertThrows(
-          () => expectRabbitMqResult(result).toBeSuccessful(),
-          Error,
-          "Expected ok result, but ok is false",
-        );
-      });
-    });
+  // Verify it returns ack expectation with correct methods
+  assertExists(expectation.toBeOk);
+  assertExists(expectation.toHaveDuration);
 
-    await t.step("duration methods", () => {
-      const result = mockRabbitMqPublishResult({ duration: 50 });
-      expectRabbitMqResult(result)
-        .toHaveDurationLessThan(100)
-        .toHaveDurationLessThanOrEqual(50)
-        .toHaveDurationGreaterThan(25)
-        .toHaveDurationGreaterThanOrEqual(50);
-    });
-  });
+  // Verify chaining works
+  expectation.toBeOk().toHaveDuration(100);
+});
 
-  await t.step("RabbitMqConsumeResult", async (t) => {
-    await t.step("toBeSuccessful", () => {
-      const result = mockRabbitMqConsumeResult({ ok: true });
-      expectRabbitMqResult(result).toBeSuccessful();
-    });
+Deno.test("expectRabbitMqResult - dispatches to exchange expectation", () => {
+  const result: RabbitMqExchangeResult = mockRabbitMqExchangeResult();
+  const expectation = expectRabbitMqResult(result);
 
-    await t.step("toHaveContent", async (t) => {
-      await t.step("passes when message exists", () => {
-        const result = mockRabbitMqConsumeResult();
-        expectRabbitMqResult(result).toHaveContent();
-      });
+  // Verify it returns exchange expectation with correct methods
+  assertExists(expectation.toBeOk);
+  assertExists(expectation.toHaveDuration);
 
-      await t.step("fails when message is null", () => {
-        const result = mockRabbitMqConsumeResult({ message: null });
-        assertThrows(
-          () => expectRabbitMqResult(result).toHaveContent(),
-          Error,
-          "Expected message, but message is null",
-        );
-      });
+  // Verify chaining works
+  expectation.toBeOk().toHaveDuration(100);
+});
 
-      await t.step("negated - passes when message is null", () => {
-        const result = mockRabbitMqConsumeResult({ message: null });
-        expectRabbitMqResult(result).not.toHaveContent();
-      });
-    });
+Deno.test("expectRabbitMqResult - throws for unknown result type", () => {
+  const unknownResult = {
+    kind: "rabbitmq:unknown" as const,
+    ok: true,
+    duration: 100,
+  };
 
-    await t.step("toHaveBodyContaining", async (t) => {
-      await t.step("passes when body contains subbody", () => {
-        const result = mockRabbitMqConsumeResult({
-          message: {
-            content: new TextEncoder().encode("hello world"),
-            properties: {},
-            fields: {
-              routingKey: "",
-              exchange: "",
-              deliveryTag: 1n,
-              redelivered: false,
-            },
-          },
-        });
-        expectRabbitMqResult(result).toHaveBodyContaining(
-          new TextEncoder().encode("world"),
-        );
-      });
+  assertThrows(
+    // deno-lint-ignore no-explicit-any
+    () => expectRabbitMqResult(unknownResult as any),
+    Error,
+    "Unknown RabbitMQ result kind: rabbitmq:unknown",
+  );
+});
 
-      await t.step("fails when body does not contain subbody", () => {
-        const result = mockRabbitMqConsumeResult({
-          message: {
-            content: new TextEncoder().encode("hello"),
-            properties: {},
-            fields: {
-              routingKey: "",
-              exchange: "",
-              deliveryTag: 1n,
-              redelivered: false,
-            },
-          },
-        });
-        assertThrows(
-          () =>
-            expectRabbitMqResult(result).toHaveBodyContaining(
-              new TextEncoder().encode("world"),
-            ),
-          Error,
-          "Expected data to contain world, but got hello",
-        );
-      });
-    });
+Deno.test("expectRabbitMqResult - type inference works correctly", () => {
+  // These tests verify that TypeScript correctly infers the return type
+  // based on the input result type
 
-    await t.step("toSatisfy", async (t) => {
-      await t.step("passes when matcher succeeds", () => {
-        const result = mockRabbitMqConsumeResult();
-        expectRabbitMqResult(result).toSatisfy((content) => {
-          if (content.length === 0) throw new Error("Expected content");
-        });
-      });
+  // Publish result type inference
+  const publishResult = mockRabbitMqPublishResult();
+  const publishExpectation = expectRabbitMqResult(publishResult);
+  // toHaveDuration should be available on publish expectation
+  publishExpectation.toHaveDuration(100);
 
-      await t.step("fails when matcher throws", () => {
-        const result = mockRabbitMqConsumeResult();
-        assertThrows(
-          () =>
-            expectRabbitMqResult(result).toSatisfy((content) => {
-              if (content.length > 0) throw new Error("Expected no content");
-            }),
-          Error,
-          "Expected no content",
-        );
-      });
-    });
+  // Consume result type inference
+  const consumeResult = mockRabbitMqConsumeResult();
+  const consumeExpectation = expectRabbitMqResult(consumeResult);
+  // toHaveMessage should be available on consume expectation
+  consumeExpectation.toHaveMessagePresent();
 
-    await t.step("toHavePropertyContaining", async (t) => {
-      await t.step("passes when properties contain subset", () => {
-        const result = mockRabbitMqConsumeResult({
-          message: {
-            content: new Uint8Array(),
-            properties: { contentType: "application/json", messageId: "123" },
-            fields: {
-              routingKey: "",
-              exchange: "",
-              deliveryTag: 1n,
-              redelivered: false,
-            },
-          },
-        });
-        expectRabbitMqResult(result).toHavePropertyContaining({
-          contentType: "application/json",
-        });
-      });
+  // Queue result type inference
+  const queueResult = mockRabbitMqQueueResult();
+  const queueExpectation = expectRabbitMqResult(queueResult);
+  // toHaveQueue should be available on queue expectation
+  queueExpectation.toHaveQueue("test-queue");
 
-      await t.step("fails when properties do not contain subset", () => {
-        const result = mockRabbitMqConsumeResult();
-        assertThrows(
-          () =>
-            expectRabbitMqResult(result).toHavePropertyContaining({
-              messageId: "123",
-            }),
-          Error,
-        );
-      });
-    });
+  // Ack result type inference
+  const ackResult = mockRabbitMqAckResult();
+  const ackExpectation = expectRabbitMqResult(ackResult);
+  // toHaveDuration should be available on ack expectation
+  ackExpectation.toHaveDuration(100);
 
-    await t.step("toHaveRoutingKey", async (t) => {
-      await t.step("passes for matching key", () => {
-        const result = mockRabbitMqConsumeResult({
-          message: {
-            content: new Uint8Array(),
-            properties: {},
-            fields: {
-              routingKey: "test.key",
-              exchange: "",
-              deliveryTag: 1n,
-              redelivered: false,
-            },
-          },
-        });
-        expectRabbitMqResult(result).toHaveRoutingKey("test.key");
-      });
+  // Exchange result type inference
+  const exchangeResult = mockRabbitMqExchangeResult();
+  const exchangeExpectation = expectRabbitMqResult(exchangeResult);
+  // toHaveDuration should be available on exchange expectation
+  exchangeExpectation.toHaveDuration(100);
+});
 
-      await t.step("fails for non-matching key", () => {
-        const result = mockRabbitMqConsumeResult();
-        assertThrows(
-          () => expectRabbitMqResult(result).toHaveRoutingKey("wrong.key"),
-          Error,
-          "Expected routing key wrong.key, got test.key",
-        );
-      });
-    });
+Deno.test("expectRabbitMqResult - all result types support .not", () => {
+  // Publish
+  const publishResult = mockRabbitMqPublishResult({ ok: false });
+  expectRabbitMqResult(publishResult).not.toBeOk();
 
-    await t.step("toHaveExchange", async (t) => {
-      await t.step("passes for matching exchange", () => {
-        const result = mockRabbitMqConsumeResult();
-        expectRabbitMqResult(result).toHaveExchange("test.exchange");
-      });
+  // Consume
+  const consumeResult = mockRabbitMqConsumeResult({ ok: false });
+  expectRabbitMqResult(consumeResult).not.toBeOk();
 
-      await t.step("fails for non-matching exchange", () => {
-        const result = mockRabbitMqConsumeResult();
-        assertThrows(
-          () => expectRabbitMqResult(result).toHaveExchange("wrong.exchange"),
-          Error,
-          "Expected exchange wrong.exchange, got test.exchange",
-        );
-      });
-    });
+  // Queue
+  const queueResult = mockRabbitMqQueueResult({ ok: false });
+  expectRabbitMqResult(queueResult).not.toBeOk();
 
-    await t.step("method chaining", () => {
-      const result = mockRabbitMqConsumeResult({ ok: true, duration: 50 });
-      expectRabbitMqResult(result)
-        .toBeSuccessful()
-        .toHaveContent()
-        .toHaveRoutingKey("test.key")
-        .toHaveExchange("test.exchange")
-        .toHaveDurationLessThan(100);
-    });
-  });
+  // Ack
+  const ackResult = mockRabbitMqAckResult({ ok: false });
+  expectRabbitMqResult(ackResult).not.toBeOk();
 
-  await t.step("RabbitMqQueueResult", async (t) => {
-    await t.step("toBeSuccessful", () => {
-      const result = mockRabbitMqQueueResult({ ok: true });
-      expectRabbitMqResult(result).toBeSuccessful();
-    });
-
-    await t.step("toHaveMessageCount", async (t) => {
-      await t.step("passes for matching count", () => {
-        const result = mockRabbitMqQueueResult({ messageCount: 10 });
-        expectRabbitMqResult(result).toHaveMessageCount(10);
-      });
-
-      await t.step("fails for non-matching count", () => {
-        const result = mockRabbitMqQueueResult({ messageCount: 10 });
-        assertThrows(
-          () => expectRabbitMqResult(result).toHaveMessageCount(5),
-          Error,
-          "Expected 5 message count, got 10",
-        );
-      });
-    });
-
-    await t.step("toHaveMessageCountGreaterThan", async (t) => {
-      await t.step("passes when count is greater", () => {
-        const result = mockRabbitMqQueueResult({ messageCount: 10 });
-        expectRabbitMqResult(result).toHaveMessageCountGreaterThan(5);
-      });
-
-      await t.step("fails when count is equal", () => {
-        const result = mockRabbitMqQueueResult({ messageCount: 10 });
-        assertThrows(
-          () => expectRabbitMqResult(result).toHaveMessageCountGreaterThan(10),
-          Error,
-          "Expected message count > 10, but got 10",
-        );
-      });
-    });
-
-    await t.step("toHaveMessageCountGreaterThanOrEqual", () => {
-      const result = mockRabbitMqQueueResult({ messageCount: 10 });
-      expectRabbitMqResult(result).toHaveMessageCountGreaterThanOrEqual(10);
-      expectRabbitMqResult(result).toHaveMessageCountGreaterThanOrEqual(5);
-    });
-
-    await t.step("toHaveMessageCountLessThan", () => {
-      const result = mockRabbitMqQueueResult({ messageCount: 5 });
-      expectRabbitMqResult(result).toHaveMessageCountLessThan(10);
-    });
-
-    await t.step("toHaveMessageCountLessThanOrEqual", () => {
-      const result = mockRabbitMqQueueResult({ messageCount: 10 });
-      expectRabbitMqResult(result).toHaveMessageCountLessThanOrEqual(10);
-      expectRabbitMqResult(result).toHaveMessageCountLessThanOrEqual(15);
-    });
-
-    await t.step("toHaveConsumerCount", async (t) => {
-      await t.step("passes for matching count", () => {
-        const result = mockRabbitMqQueueResult({ consumerCount: 2 });
-        expectRabbitMqResult(result).toHaveConsumerCount(2);
-      });
-
-      await t.step("fails for non-matching count", () => {
-        const result = mockRabbitMqQueueResult({ consumerCount: 2 });
-        assertThrows(
-          () => expectRabbitMqResult(result).toHaveConsumerCount(5),
-          Error,
-          "Expected 5 consumer count, got 2",
-        );
-      });
-    });
-
-    await t.step("consumer count comparison methods", () => {
-      const result = mockRabbitMqQueueResult({ consumerCount: 5 });
-      expectRabbitMqResult(result)
-        .toHaveConsumerCountGreaterThan(2)
-        .toHaveConsumerCountGreaterThanOrEqual(5)
-        .toHaveConsumerCountLessThan(10)
-        .toHaveConsumerCountLessThanOrEqual(5);
-    });
-
-    await t.step("method chaining", () => {
-      const result = mockRabbitMqQueueResult({
-        ok: true,
-        messageCount: 10,
-        consumerCount: 2,
-        duration: 50,
-      });
-      expectRabbitMqResult(result)
-        .toBeSuccessful()
-        .toHaveMessageCount(10)
-        .toHaveConsumerCount(2)
-        .toHaveDurationLessThan(100);
-    });
-  });
+  // Exchange
+  const exchangeResult = mockRabbitMqExchangeResult({ ok: false });
+  expectRabbitMqResult(exchangeResult).not.toBeOk();
 });

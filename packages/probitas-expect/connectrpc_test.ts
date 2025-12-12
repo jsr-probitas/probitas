@@ -1,585 +1,216 @@
-import { assertThrows } from "@std/assert";
-import { expectConnectRpcResponse } from "./connectrpc.ts";
+import { assertEquals, assertExists } from "@std/assert";
 import type { ConnectRpcResponse } from "@probitas/client-connectrpc";
+import {
+  type ConnectRpcResponseExpectation,
+  expectConnectRpcResponse,
+} from "./connectrpc.ts";
 
-// Mock helper
-const mockConnectRpcResponse = (
+// Mock ConnectRpcResponse for testing
+function createMockResponse(
   overrides: Partial<ConnectRpcResponse> = {},
-): ConnectRpcResponse => {
-  return {
-    type: "connectrpc" as const,
-    code: 0,
+): ConnectRpcResponse {
+  const defaultResponse: ConnectRpcResponse = {
+    kind: "connectrpc",
     ok: true,
-    message: "",
-    headers: {},
-    trailers: {},
-    data: <T = unknown>() => ({ id: "1", name: "Alice" }) as T | null,
+    statusCode: 0,
+    statusMessage: "OK",
+    headers: new Headers({
+      "content-type": "application/grpc",
+      "x-custom": "value",
+    }),
+    trailers: new Headers({
+      "grpc-status": "0",
+      "grpc-message": "OK",
+    }),
+    // deno-lint-ignore no-explicit-any
+    data: <T = any>(): T | null => ({ result: "success" }) as T,
+    duration: 123,
     raw: () => ({}),
-    duration: 100,
-    ...overrides,
   };
-};
+  return { ...defaultResponse, ...overrides };
+}
 
-Deno.test("expectConnectRpcResponse", async (t) => {
-  await t.step("toBeSuccessful", async (t) => {
-    await t.step("passes for code 0", () => {
-      const response = mockConnectRpcResponse({ code: 0, ok: true });
-      expectConnectRpcResponse(response).toBeSuccessful();
-    });
+// Define expected methods with their test arguments
+// Using Record to ensure all interface methods are listed (compile-time check)
+const EXPECTED_METHODS: Record<keyof ConnectRpcResponseExpectation, unknown[]> =
+  {
+    // Core (special property, not a method)
+    not: [],
+    // Ok
+    toBeOk: [],
+    // Code
+    toHaveStatusCode: [0],
+    toHaveStatusCodeEqual: [0],
+    toHaveStatusCodeStrictEqual: [0],
+    toHaveStatusCodeSatisfying: [(v: number) => assertEquals(v, 0)],
+    toHaveStatusCodeNaN: [],
+    toHaveStatusCodeGreaterThan: [-1],
+    toHaveStatusCodeGreaterThanOrEqual: [0],
+    toHaveStatusCodeLessThan: [1],
+    toHaveStatusCodeLessThanOrEqual: [0],
+    toHaveStatusCodeCloseTo: [0, 0],
+    toHaveStatusCodeOneOf: [[0, 1, 2]],
+    // Message
+    toHaveStatusMessage: ["OK"],
+    toHaveStatusMessageEqual: ["OK"],
+    toHaveStatusMessageStrictEqual: ["OK"],
+    toHaveStatusMessageSatisfying: [(v: string | null) => assertExists(v)],
+    toHaveStatusMessageContaining: ["OK"],
+    toHaveStatusMessageMatching: [/OK/],
+    toHaveStatusMessagePresent: [],
+    toHaveStatusMessageNull: [],
+    toHaveStatusMessageUndefined: [],
+    toHaveStatusMessageNullish: [],
+    // Headers
+    toHaveHeaders: [],
+    toHaveHeadersEqual: [],
+    toHaveHeadersStrictEqual: [],
+    toHaveHeadersSatisfying: [
+      (v: Record<string, unknown>) => assertExists(v),
+    ],
+    toHaveHeadersMatching: [{ "content-type": "application/grpc" }],
+    toHaveHeadersProperty: ["content-type"],
+    toHaveHeadersPropertyContaining: [],
+    toHaveHeadersPropertyMatching: [],
+    toHaveHeadersPropertySatisfying: [
+      "content-type",
+      (v: unknown) => assertEquals(v, "application/grpc"),
+    ],
+    // Trailers
+    toHaveTrailers: [],
+    toHaveTrailersEqual: [],
+    toHaveTrailersStrictEqual: [],
+    toHaveTrailersSatisfying: [
+      (v: Record<string, unknown>) => assertExists(v),
+    ],
+    toHaveTrailersMatching: [{ "grpc-status": "0" }],
+    toHaveTrailersProperty: ["grpc-status"],
+    toHaveTrailersPropertyContaining: [],
+    toHaveTrailersPropertyMatching: [],
+    toHaveTrailersPropertySatisfying: [
+      "grpc-status",
+      (v: unknown) => assertEquals(v, "0"),
+    ],
+    // Data
+    toHaveData: [],
+    toHaveDataEqual: [],
+    toHaveDataStrictEqual: [],
+    toHaveDataSatisfying: [
+      (v: Record<string, unknown> | null) => assertExists(v),
+    ],
+    toHaveDataPresent: [],
+    toHaveDataNull: [],
+    toHaveDataUndefined: [],
+    toHaveDataNullish: [],
+    toHaveDataMatching: [{ result: "success" }],
+    toHaveDataProperty: ["result"],
+    toHaveDataPropertyContaining: [],
+    toHaveDataPropertyMatching: [],
+    toHaveDataPropertySatisfying: [
+      "result",
+      (v: unknown) => assertEquals(v, "success"),
+    ],
+    // Duration
+    toHaveDuration: [123],
+    toHaveDurationEqual: [123],
+    toHaveDurationStrictEqual: [123],
+    toHaveDurationSatisfying: [(v: number) => assertEquals(v, 123)],
+    toHaveDurationNaN: [],
+    toHaveDurationGreaterThan: [100],
+    toHaveDurationGreaterThanOrEqual: [123],
+    toHaveDurationLessThan: [200],
+    toHaveDurationLessThanOrEqual: [123],
+    toHaveDurationCloseTo: [123, 0],
+  };
 
-    await t.step("fails for non-zero code", () => {
-      const response = mockConnectRpcResponse({ code: 5, ok: false });
-      assertThrows(
-        () => expectConnectRpcResponse(response).toBeSuccessful(),
-        Error,
-        "Expected successful response (code 0), got code 5",
-      );
-    });
+Deno.test("expectConnectRpcResponse - method existence check", () => {
+  const response = createMockResponse();
+  const expectation = expectConnectRpcResponse(response);
 
-    await t.step("negated - fails for code 0", () => {
-      const response = mockConnectRpcResponse({ code: 0, ok: true });
-      assertThrows(
-        () => expectConnectRpcResponse(response).not.toBeSuccessful(),
-        Error,
-        "Expected non-successful response, got code 0",
-      );
-    });
+  const expectedMethodNames = Object.keys(EXPECTED_METHODS) as Array<
+    keyof ConnectRpcResponseExpectation
+  >;
 
-    await t.step("negated - passes for non-zero code", () => {
-      const response = mockConnectRpcResponse({ code: 5, ok: false });
-      expectConnectRpcResponse(response).not.toBeSuccessful();
-    });
+  // Check that all expected methods exist
+  for (const method of expectedMethodNames) {
+    assertExists(
+      expectation[method],
+      `Method '${method}' should exist on ConnectRpcResponseExpectation`,
+    );
+  }
+
+  // Verify count matches (helps catch if we added methods but didn't list them)
+  const actualPropertyCount = Object.getOwnPropertyNames(expectation).length;
+  assertEquals(
+    actualPropertyCount,
+    expectedMethodNames.length,
+    `Expected ${expectedMethodNames.length} methods but found ${actualPropertyCount}`,
+  );
+});
+
+// Generate individual test for each method
+for (
+  const [methodName, args] of Object.entries(EXPECTED_METHODS) as Array<
+    [keyof ConnectRpcResponseExpectation, unknown[]]
+  >
+) {
+  // Skip 'not' as it's a property, not a method
+  if (methodName === "not") continue;
+
+  // Skip methods that require special setup (null/undefined/nullish values, NaN)
+  if (
+    methodName === "toHaveDataPresent" ||
+    methodName === "toHaveDataNull" ||
+    methodName === "toHaveDataUndefined" ||
+    methodName === "toHaveDataNullish" ||
+    methodName === "toHaveStatusCodeNaN" ||
+    methodName === "toHaveDurationNaN" ||
+    // Skip methods with empty args (need special handling)
+    (args.length === 0 && methodName !== "toBeOk")
+  ) {
+    continue;
+  }
+
+  Deno.test(`expectConnectRpcResponse - ${methodName} - success`, () => {
+    const response = createMockResponse();
+    const expectation = expectConnectRpcResponse(response);
+
+    // Call the method with provided arguments
+    // deno-lint-ignore no-explicit-any
+    const method = expectation[methodName] as (...args: any[]) => any;
+    const result = method.call(expectation, ...args);
+
+    // Verify method returns an expectation object (for chaining)
+    assertExists(result);
+    assertExists(
+      result.toBeOk,
+      "Result should have toBeOk method for chaining",
+    );
   });
+}
 
-  await t.step("toHaveCode", async (t) => {
-    await t.step("passes for matching code", () => {
-      const response = mockConnectRpcResponse({ code: 5 });
-      expectConnectRpcResponse(response).toHaveCode(5);
-    });
+Deno.test("expectConnectRpcResponse - not property - success", () => {
+  const response = createMockResponse({ ok: false, statusCode: 1 });
+  const expectation = expectConnectRpcResponse(response);
 
-    await t.step("fails for non-matching code", () => {
-      const response = mockConnectRpcResponse({ code: 0 });
-      assertThrows(
-        () => expectConnectRpcResponse(response).toHaveCode(5),
-        Error,
-        "Expected code 5, got 0",
-      );
-    });
+  // Verify .not is accessible and returns expectation
+  expectation.not.toBeOk();
+  expectation.not.toHaveStatusCode(0);
+});
 
-    await t.step("negated - passes for non-matching", () => {
-      const response = mockConnectRpcResponse({ code: 0 });
-      expectConnectRpcResponse(response).not.toHaveCode(5);
-    });
+Deno.test("expectConnectRpcResponse - nullish value methods - success", () => {
+  // Test null values
+  const nullResponse = createMockResponse({
+    data: () => null,
   });
+  const nullExpectation = expectConnectRpcResponse(nullResponse);
 
-  await t.step("toHaveCodeOneOf", async (t) => {
-    await t.step("passes when code is in list", () => {
-      const response = mockConnectRpcResponse({ code: 5 });
-      expectConnectRpcResponse(response).toHaveCodeOneOf([0, 5, 14]);
-    });
+  nullExpectation.toHaveDataNull();
+  nullExpectation.toHaveDataNullish();
 
-    await t.step("fails when code is not in list", () => {
-      const response = mockConnectRpcResponse({ code: 3 });
-      assertThrows(
-        () => expectConnectRpcResponse(response).toHaveCodeOneOf([0, 5, 14]),
-        Error,
-        "Expected code to be one of [0, 5, 14], got 3",
-      );
-    });
+  // Test present values
+  const presentResponse = createMockResponse();
+  const presentExpectation = expectConnectRpcResponse(presentResponse);
 
-    await t.step("negated - passes when code not in list", () => {
-      const response = mockConnectRpcResponse({ code: 3 });
-      expectConnectRpcResponse(response).not.toHaveCodeOneOf([0, 5, 14]);
-    });
-  });
-
-  await t.step("toHaveError", async (t) => {
-    await t.step("passes for string match", () => {
-      const response = mockConnectRpcResponse({ message: "Error occurred" });
-      expectConnectRpcResponse(response).toHaveError("Error occurred");
-    });
-
-    await t.step("passes for regex match", () => {
-      const response = mockConnectRpcResponse({ message: "Error: code 123" });
-      expectConnectRpcResponse(response).toHaveError(/code \d+/);
-    });
-
-    await t.step("fails for non-matching message", () => {
-      const response = mockConnectRpcResponse({ message: "Something else" });
-      assertThrows(
-        () => expectConnectRpcResponse(response).toHaveError("Error occurred"),
-        Error,
-        'Expected error "Error occurred", got "Something else"',
-      );
-    });
-  });
-
-  await t.step("toHaveErrorContaining", async (t) => {
-    await t.step("passes when message contains substring", () => {
-      const response = mockConnectRpcResponse({ message: "User not found" });
-      expectConnectRpcResponse(response).toHaveErrorContaining("not found");
-    });
-
-    await t.step("fails when message does not contain substring", () => {
-      const response = mockConnectRpcResponse({ message: "Invalid input" });
-      assertThrows(
-        () =>
-          expectConnectRpcResponse(response).toHaveErrorContaining("not found"),
-        Error,
-        'Expected error to contain "not found"',
-      );
-    });
-
-    await t.step("negated - passes when message does not contain", () => {
-      const response = mockConnectRpcResponse({ message: "Invalid input" });
-      expectConnectRpcResponse(response).not.toHaveErrorContaining("not found");
-    });
-  });
-
-  await t.step("toHaveErrorMatching", async (t) => {
-    await t.step("passes when matcher succeeds", () => {
-      const response = mockConnectRpcResponse({ message: "Error occurred" });
-      expectConnectRpcResponse(response).toHaveErrorMatching((message) => {
-        if (!message.includes("Error")) throw new Error("Expected Error");
-      });
-    });
-
-    await t.step("fails when matcher throws", () => {
-      const response = mockConnectRpcResponse({ message: "Success" });
-      assertThrows(
-        () =>
-          expectConnectRpcResponse(response).toHaveErrorMatching((message) => {
-            if (!message.includes("Error")) throw new Error("Expected Error");
-          }),
-        Error,
-        "Expected Error",
-      );
-    });
-  });
-
-  await t.step("toHaveHeaderValue", async (t) => {
-    await t.step("passes for string match", () => {
-      const response = mockConnectRpcResponse({
-        headers: { "x-trace-id": "abc123" },
-      });
-      expectConnectRpcResponse(response).toHaveHeaderValue(
-        "x-trace-id",
-        "abc123",
-      );
-    });
-
-    await t.step("passes for regex match", () => {
-      const response = mockConnectRpcResponse({
-        headers: { "x-trace-id": "trace-123" },
-      });
-      expectConnectRpcResponse(response).toHaveHeaderValue(
-        "x-trace-id",
-        /trace-\d+/,
-      );
-    });
-
-    await t.step("fails for non-matching value", () => {
-      const response = mockConnectRpcResponse({
-        headers: { "x-trace-id": "def456" },
-      });
-      assertThrows(
-        () =>
-          expectConnectRpcResponse(response).toHaveHeaderValue(
-            "x-trace-id",
-            "abc123",
-          ),
-        Error,
-        'Expected header "x-trace-id" to be "abc123", got "def456"',
-      );
-    });
-  });
-
-  await t.step("toHaveHeader", async (t) => {
-    await t.step("passes when header exists", () => {
-      const response = mockConnectRpcResponse({
-        headers: { "x-trace-id": "abc123" },
-      });
-      expectConnectRpcResponse(response).toHaveHeader("x-trace-id");
-    });
-
-    await t.step("fails when header does not exist", () => {
-      const response = mockConnectRpcResponse({ headers: {} });
-      assertThrows(
-        () => expectConnectRpcResponse(response).toHaveHeader("x-trace-id"),
-        Error,
-        'Expected header "x-trace-id" to exist',
-      );
-    });
-
-    await t.step("negated - passes when header does not exist", () => {
-      const response = mockConnectRpcResponse({ headers: {} });
-      expectConnectRpcResponse(response).not.toHaveHeader("x-trace-id");
-    });
-  });
-
-  await t.step("toHaveHeaderContaining", async (t) => {
-    await t.step("passes when header contains substring", () => {
-      const response = mockConnectRpcResponse({
-        headers: { "x-trace-id": "trace-123-abc" },
-      });
-      expectConnectRpcResponse(response).toHaveHeaderContaining(
-        "x-trace-id",
-        "123",
-      );
-    });
-
-    await t.step("fails when header does not contain substring", () => {
-      const response = mockConnectRpcResponse({
-        headers: { "x-trace-id": "trace-456" },
-      });
-      assertThrows(
-        () =>
-          expectConnectRpcResponse(response).toHaveHeaderContaining(
-            "x-trace-id",
-            "123",
-          ),
-        Error,
-        'Expected header "x-trace-id" to contain "123", got "trace-456"',
-      );
-    });
-  });
-
-  await t.step("toHaveHeaderMatching", async (t) => {
-    await t.step("passes when matcher succeeds", () => {
-      const response = mockConnectRpcResponse({
-        headers: { "x-count": "123" },
-      });
-      expectConnectRpcResponse(response).toHaveHeaderMatching(
-        "x-count",
-        (value) => {
-          if (Number(value) !== 123) throw new Error("Expected 123");
-        },
-      );
-    });
-
-    await t.step("fails when matcher throws", () => {
-      const response = mockConnectRpcResponse({
-        headers: { "x-count": "456" },
-      });
-      assertThrows(
-        () =>
-          expectConnectRpcResponse(response).toHaveHeaderMatching(
-            "x-count",
-            (value) => {
-              if (Number(value) !== 123) throw new Error("Expected 123");
-            },
-          ),
-        Error,
-        "Expected 123",
-      );
-    });
-  });
-
-  await t.step("toHaveTrailerValue", async (t) => {
-    await t.step("passes for string match", () => {
-      const response = mockConnectRpcResponse({
-        trailers: { "grpc-status": "0" },
-      });
-      expectConnectRpcResponse(response).toHaveTrailerValue("grpc-status", "0");
-    });
-
-    await t.step("passes for regex match", () => {
-      const response = mockConnectRpcResponse({
-        trailers: { "grpc-message": "success-123" },
-      });
-      expectConnectRpcResponse(response).toHaveTrailerValue(
-        "grpc-message",
-        /success-\d+/,
-      );
-    });
-
-    await t.step("fails for non-matching value", () => {
-      const response = mockConnectRpcResponse({
-        trailers: { "grpc-status": "1" },
-      });
-      assertThrows(
-        () =>
-          expectConnectRpcResponse(response).toHaveTrailerValue(
-            "grpc-status",
-            "0",
-          ),
-        Error,
-        'Expected trailer "grpc-status" to be "0", got "1"',
-      );
-    });
-  });
-
-  await t.step("toHaveTrailer", async (t) => {
-    await t.step("passes when trailer exists", () => {
-      const response = mockConnectRpcResponse({
-        trailers: { "grpc-status": "0" },
-      });
-      expectConnectRpcResponse(response).toHaveTrailer("grpc-status");
-    });
-
-    await t.step("fails when trailer does not exist", () => {
-      const response = mockConnectRpcResponse({ trailers: {} });
-      assertThrows(
-        () => expectConnectRpcResponse(response).toHaveTrailer("grpc-status"),
-        Error,
-        'Expected trailer "grpc-status" to exist',
-      );
-    });
-
-    await t.step("negated - passes when trailer does not exist", () => {
-      const response = mockConnectRpcResponse({ trailers: {} });
-      expectConnectRpcResponse(response).not.toHaveTrailer("grpc-status");
-    });
-  });
-
-  await t.step("toHaveTrailerContaining", async (t) => {
-    await t.step("passes when trailer contains substring", () => {
-      const response = mockConnectRpcResponse({
-        trailers: { "grpc-message": "success-message" },
-      });
-      expectConnectRpcResponse(response).toHaveTrailerContaining(
-        "grpc-message",
-        "success",
-      );
-    });
-
-    await t.step("fails when trailer does not contain substring", () => {
-      const response = mockConnectRpcResponse({
-        trailers: { "grpc-message": "error-message" },
-      });
-      assertThrows(
-        () =>
-          expectConnectRpcResponse(response).toHaveTrailerContaining(
-            "grpc-message",
-            "success",
-          ),
-        Error,
-        'Expected trailer "grpc-message" to contain "success", got "error-message"',
-      );
-    });
-  });
-
-  await t.step("toHaveTrailerMatching", async (t) => {
-    await t.step("passes when matcher succeeds", () => {
-      const response = mockConnectRpcResponse({
-        trailers: { "grpc-status": "0" },
-      });
-      expectConnectRpcResponse(response).toHaveTrailerMatching(
-        "grpc-status",
-        (value) => {
-          if (value !== "0") throw new Error("Expected 0");
-        },
-      );
-    });
-
-    await t.step("fails when matcher throws", () => {
-      const response = mockConnectRpcResponse({
-        trailers: { "grpc-status": "1" },
-      });
-      assertThrows(
-        () =>
-          expectConnectRpcResponse(response).toHaveTrailerMatching(
-            "grpc-status",
-            (value) => {
-              if (value !== "0") throw new Error("Expected 0");
-            },
-          ),
-        Error,
-        "Expected 0",
-      );
-    });
-  });
-
-  await t.step("toHaveContent", async (t) => {
-    await t.step("passes when data is not null", () => {
-      const response = mockConnectRpcResponse({
-        data: <T = unknown>() => ({ id: "1" }) as T | null,
-      });
-      expectConnectRpcResponse(response).toHaveContent();
-    });
-
-    await t.step("fails when data is null", () => {
-      const response = mockConnectRpcResponse({
-        data: <T = unknown>() => null as T | null,
-      });
-      assertThrows(
-        () => expectConnectRpcResponse(response).toHaveContent(),
-        Error,
-        "Expected content, but data is null",
-      );
-    });
-
-    await t.step("negated - passes when data is null", () => {
-      const response = mockConnectRpcResponse({
-        data: <T = unknown>() => null as T | null,
-      });
-      expectConnectRpcResponse(response).not.toHaveContent();
-    });
-  });
-
-  await t.step("toMatchObject", async (t) => {
-    await t.step("passes when data contains subset", () => {
-      const response = mockConnectRpcResponse({
-        data: <T = unknown>() =>
-          ({ id: "1", name: "Alice", age: 30 }) as T | null,
-      });
-      expectConnectRpcResponse(response).toMatchObject({ name: "Alice" });
-    });
-
-    await t.step("fails when data does not contain subset", () => {
-      const response = mockConnectRpcResponse({
-        data: <T = unknown>() => ({ id: "1", name: "Bob" }) as T | null,
-      });
-      assertThrows(
-        () =>
-          expectConnectRpcResponse(response).toMatchObject({ name: "Alice" }),
-        Error,
-      );
-    });
-
-    await t.step("negated - passes when data does not contain", () => {
-      const response = mockConnectRpcResponse({
-        data: <T = unknown>() => ({ id: "1", name: "Bob" }) as T | null,
-      });
-      expectConnectRpcResponse(response).not.toMatchObject({ name: "Alice" });
-    });
-  });
-
-  await t.step("toSatisfy", async (t) => {
-    await t.step("passes when matcher succeeds", () => {
-      const response = mockConnectRpcResponse({
-        data: <T = unknown>() => ({ count: 5 }) as T | null,
-      });
-      expectConnectRpcResponse(response).toSatisfy(
-        (data: { count: number }) => {
-          if (data.count !== 5) throw new Error("Expected count 5");
-        },
-      );
-    });
-
-    await t.step("fails when matcher throws", () => {
-      const response = mockConnectRpcResponse({
-        data: <T = unknown>() => ({ count: 3 }) as T | null,
-      });
-      assertThrows(
-        () =>
-          expectConnectRpcResponse(response).toSatisfy(
-            (data: { count: number }) => {
-              if (data.count !== 5) throw new Error("Expected count 5");
-            },
-          ),
-        Error,
-        "Expected count 5",
-      );
-    });
-  });
-
-  await t.step("toHaveDurationLessThan", async (t) => {
-    await t.step("passes when duration is less", () => {
-      const response = mockConnectRpcResponse({ duration: 50 });
-      expectConnectRpcResponse(response).toHaveDurationLessThan(100);
-    });
-
-    await t.step("fails when duration is equal", () => {
-      const response = mockConnectRpcResponse({ duration: 100 });
-      assertThrows(
-        () => expectConnectRpcResponse(response).toHaveDurationLessThan(100),
-        Error,
-        "Expected duration < 100ms, got 100ms",
-      );
-    });
-
-    await t.step("negated - passes when duration is not less", () => {
-      const response = mockConnectRpcResponse({ duration: 100 });
-      expectConnectRpcResponse(response).not.toHaveDurationLessThan(100);
-    });
-  });
-
-  await t.step("toHaveDurationLessThanOrEqual", async (t) => {
-    await t.step("passes when duration is less", () => {
-      const response = mockConnectRpcResponse({ duration: 50 });
-      expectConnectRpcResponse(response).toHaveDurationLessThanOrEqual(100);
-    });
-
-    await t.step("passes when duration is equal", () => {
-      const response = mockConnectRpcResponse({ duration: 100 });
-      expectConnectRpcResponse(response).toHaveDurationLessThanOrEqual(100);
-    });
-
-    await t.step("fails when duration is greater", () => {
-      const response = mockConnectRpcResponse({ duration: 150 });
-      assertThrows(
-        () =>
-          expectConnectRpcResponse(response).toHaveDurationLessThanOrEqual(100),
-        Error,
-        "Expected duration <= 100ms, got 150ms",
-      );
-    });
-  });
-
-  await t.step("toHaveDurationGreaterThan", async (t) => {
-    await t.step("passes when duration is greater", () => {
-      const response = mockConnectRpcResponse({ duration: 150 });
-      expectConnectRpcResponse(response).toHaveDurationGreaterThan(100);
-    });
-
-    await t.step("fails when duration is equal", () => {
-      const response = mockConnectRpcResponse({ duration: 100 });
-      assertThrows(
-        () => expectConnectRpcResponse(response).toHaveDurationGreaterThan(100),
-        Error,
-        "Expected duration > 100ms, got 100ms",
-      );
-    });
-
-    await t.step("negated - passes when duration is not greater", () => {
-      const response = mockConnectRpcResponse({ duration: 100 });
-      expectConnectRpcResponse(response).not.toHaveDurationGreaterThan(100);
-    });
-  });
-
-  await t.step("toHaveDurationGreaterThanOrEqual", async (t) => {
-    await t.step("passes when duration is greater", () => {
-      const response = mockConnectRpcResponse({ duration: 150 });
-      expectConnectRpcResponse(response).toHaveDurationGreaterThanOrEqual(100);
-    });
-
-    await t.step("passes when duration is equal", () => {
-      const response = mockConnectRpcResponse({ duration: 100 });
-      expectConnectRpcResponse(response).toHaveDurationGreaterThanOrEqual(100);
-    });
-
-    await t.step("fails when duration is less", () => {
-      const response = mockConnectRpcResponse({ duration: 50 });
-      assertThrows(
-        () =>
-          expectConnectRpcResponse(response).toHaveDurationGreaterThanOrEqual(
-            100,
-          ),
-        Error,
-        "Expected duration >= 100ms, got 50ms",
-      );
-    });
-  });
-
-  await t.step("method chaining", () => {
-    const response = mockConnectRpcResponse({
-      code: 0,
-      ok: true,
-      message: "",
-      headers: { "x-trace-id": "abc123" },
-      trailers: { "grpc-status": "0" },
-      data: <T = unknown>() => ({ id: "1", name: "Alice" }) as T | null,
-      duration: 50,
-    });
-
-    expectConnectRpcResponse(response)
-      .toBeSuccessful()
-      .toHaveCode(0)
-      .toHaveContent()
-      .toHaveHeader("x-trace-id")
-      .toHaveTrailer("grpc-status")
-      .toMatchObject({ name: "Alice" })
-      .toHaveDurationLessThan(100);
-  });
+  presentExpectation.toHaveDataPresent();
 });

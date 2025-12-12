@@ -1,524 +1,385 @@
-import {
-  buildCountAtLeastError,
-  buildCountAtMostError,
-  buildCountError,
-  containsSubset,
-  createDurationMethods,
-} from "./common.ts";
-import type { SqlQueryResult, SqlRows } from "@probitas/client-sql";
+import type { SqlQueryResult } from "@probitas/client-sql";
+import { ensureNonNullish } from "./utils.ts";
+import * as mixin from "./mixin.ts";
 
 /**
  * Expectation interface for SQL query results.
  * All methods return `this` for chaining.
  */
-export interface SqlQueryResultExpectation<T> {
+export interface SqlQueryResultExpectation {
   /**
    * Negates the next assertion.
    *
    * @example
    * ```ts
-   * expectSqlQueryResult(result).not.toBeSuccessful();
+   * expectSqlQueryResult(result).not.toBeOk();
    * expectSqlQueryResult(result).not.toHaveContent();
    * ```
    */
   readonly not: this;
 
   /**
-   * Asserts that the query succeeded.
+   * Asserts that the result is successful.
    *
    * @example
    * ```ts
-   * expectSqlQueryResult(result).toBeSuccessful();
+   * expectSqlQueryResult(result).toBeOk();
    * ```
    */
-  toBeSuccessful(): this;
+  toBeOk(): this;
 
   /**
-   * Asserts that the result has at least one row.
-   *
-   * @example
-   * ```ts
-   * expectSqlQueryResult(result).toHaveContent();
-   * ```
+   * Asserts that the rows equal the expected value.
+   * @param expected - The expected rows value
    */
-  toHaveContent(): this;
+  toHaveRows(expected: unknown): this;
 
   /**
-   * Asserts that the row count matches the expected value.
-   *
-   * @param expected - The expected number of rows
-   * @example
-   * ```ts
-   * expectSqlQueryResult(result).toHaveLength(10);
-   * ```
+   * Asserts that the rows equal the expected value using deep equality.
+   * @param expected - The expected rows value
    */
-  toHaveLength(expected: number): this;
+  toHaveRowsEqual(expected: unknown): this;
 
   /**
-   * Asserts that the row count is at least the expected value.
-   *
-   * @param expected - The minimum expected number of rows
-   * @example
-   * ```ts
-   * expectSqlQueryResult(result).toHaveLengthGreaterThanOrEqual(5);
-   * ```
+   * Asserts that the rows strictly equal the expected value.
+   * @param expected - The expected rows value
    */
-  toHaveLengthGreaterThanOrEqual(expected: number): this;
+  toHaveRowsStrictEqual(expected: unknown): this;
 
   /**
-   * Asserts that the row count is at most the expected value.
-   *
-   * @param expected - The maximum expected number of rows
-   * @example
-   * ```ts
-   * expectSqlQueryResult(result).toHaveLengthLessThanOrEqual(100);
-   * ```
-   */
-  toHaveLengthLessThanOrEqual(expected: number): this;
-
-  /**
-   * Asserts that the affected row count matches the expected value.
-   *
-   * @param count - The expected affected row count
-   * @example
-   * ```ts
-   * expectSqlQueryResult(result).toHaveRowCount(1);
-   * ```
-   */
-  toHaveRowCount(count: number): this;
-
-  /**
-   * Asserts that the affected row count is at least the expected value.
-   *
-   * @param count - The minimum expected affected row count
-   * @example
-   * ```ts
-   * expectSqlQueryResult(result).toHaveRowCountGreaterThanOrEqual(1);
-   * ```
-   */
-  toHaveRowCountGreaterThanOrEqual(count: number): this;
-
-  /**
-   * Asserts that the affected row count is at most the expected value.
-   *
-   * @param count - The maximum expected affected row count
-   * @example
-   * ```ts
-   * expectSqlQueryResult(result).toHaveRowCountLessThanOrEqual(10);
-   * ```
-   */
-  toHaveRowCountLessThanOrEqual(count: number): this;
-
-  /**
-   * Asserts that at least one row contains the given subset of properties.
-   *
-   * @param subset - The partial object to match against rows
-   * @example
-   * ```ts
-   * expectSqlQueryResult(result).toMatchObject({ name: "Alice", active: true });
-   * ```
-   */
-  toMatchObject(subset: Partial<T>): this;
-
-  /**
-   * Validates the rows using a custom matcher function.
-   *
+   * Asserts that the rows satisfy the provided matcher function.
    * @param matcher - A function that receives the rows and performs assertions
-   * @example
-   * ```ts
-   * expectSqlQueryResult(result).toSatisfy((rows) => {
-   *   assertEquals(rows.length, 2);
-   *   assertEquals(rows[0].name, "Alice");
-   * });
-   * ```
    */
-  toSatisfy(matcher: (rows: SqlRows<T>) => void): this;
+  toHaveRowsSatisfying(matcher: (value: unknown[]) => void): this;
 
   /**
-   * Asserts that at least one mapped row contains the given subset.
-   *
-   * @param mapper - A function to transform each row
-   * @param subset - The partial object to match against mapped rows
-   * @example
-   * ```ts
-   * expectSqlQueryResult(result).toHaveMapContaining(
-   *   (row) => ({ upperName: row.name.toUpperCase() }),
-   *   { upperName: "ALICE" }
-   * );
-   * ```
+   * Asserts that the rows array contains the specified item.
+   * @param item - The item to search for
    */
-  toHaveMapContaining<U>(mapper: (row: T) => U, subset: Partial<U>): this;
+  toHaveRowsContaining(item: unknown): this;
 
   /**
-   * Validates the mapped rows using a custom matcher function.
-   *
-   * @param mapper - A function to transform each row
-   * @param matcher - A function that receives the mapped rows and performs assertions
-   * @example
-   * ```ts
-   * expectSqlQueryResult(result).toHaveMapMatching(
-   *   (row) => row.name.toUpperCase(),
-   *   (names) => assertEquals(names, ["ALICE", "BOB"])
-   * );
-   * ```
+   * Asserts that the rows array contains an item equal to the specified value.
+   * @param item - The item to search for using deep equality
    */
-  toHaveMapMatching<U>(
-    mapper: (row: T) => U,
-    matcher: (mapped: U[]) => void,
+  toHaveRowsContainingEqual(item: unknown): this;
+
+  /**
+   * Asserts that the rows array matches the specified subset.
+   * @param subset - The subset to match against
+   */
+  toHaveRowsMatching(
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
   ): this;
 
   /**
-   * Asserts that at least one instance created from rows contains the given subset.
-   *
-   * @param ctor - The constructor to instantiate with each row
-   * @param subset - The partial object to match against instances
-   * @example
-   * ```ts
-   * class User {
-   *   constructor(row: { name: string }) {
-   *     this.displayName = row.name.toUpperCase();
-   *   }
-   *   displayName: string;
-   * }
-   * expectSqlQueryResult(result).toHaveInstanceContaining(User, { displayName: "ALICE" });
-   * ```
+   * Asserts that the rows array is empty.
    */
-  toHaveInstanceContaining<U>(
-    ctor: new (row: T) => U,
-    subset: Partial<U>,
+  toHaveRowsEmpty(): this;
+
+  /**
+   * Asserts that the row count equals the expected value.
+   * @param expected - The expected row count
+   */
+  toHaveRowCount(expected: unknown): this;
+
+  /**
+   * Asserts that the row count equals the expected value using deep equality.
+   * @param expected - The expected row count
+   */
+  toHaveRowCountEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the row count strictly equals the expected value.
+   * @param expected - The expected row count
+   */
+  toHaveRowCountStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the row count satisfies the provided matcher function.
+   * @param matcher - A function that receives the row count and performs assertions
+   */
+  toHaveRowCountSatisfying(matcher: (value: number) => void): this;
+
+  /**
+   * Asserts that the row count is NaN.
+   */
+  toHaveRowCountNaN(): this;
+
+  /**
+   * Asserts that the row count is greater than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveRowCountGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the row count is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveRowCountGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the row count is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveRowCountLessThan(expected: number): this;
+
+  /**
+   * Asserts that the row count is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveRowCountLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the row count is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveRowCountCloseTo(expected: number, numDigits?: number): this;
+
+  /**
+   * Asserts that the last insert ID equals the expected value.
+   * @param expected - The expected last insert ID
+   */
+  toHaveLastInsertId(expected: unknown): this;
+
+  /**
+   * Asserts that the last insert ID equals the expected value using deep equality.
+   * @param expected - The expected last insert ID
+   */
+  toHaveLastInsertIdEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the last insert ID strictly equals the expected value.
+   * @param expected - The expected last insert ID
+   */
+  toHaveLastInsertIdStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the last insert ID satisfies the provided matcher function.
+   * @param matcher - A function that receives the last insert ID and performs assertions
+   */
+  toHaveLastInsertIdSatisfying(matcher: (value: unknown) => void): this;
+
+  /**
+   * Asserts that the last insert ID is present (not null or undefined).
+   */
+  toHaveLastInsertIdPresent(): this;
+
+  /**
+   * Asserts that the last insert ID is null.
+   */
+  toHaveLastInsertIdNull(): this;
+
+  /**
+   * Asserts that the last insert ID is undefined.
+   */
+  toHaveLastInsertIdUndefined(): this;
+
+  /**
+   * Asserts that the last insert ID is nullish (null or undefined).
+   */
+  toHaveLastInsertIdNullish(): this;
+
+  /**
+   * Asserts that the warnings equal the expected value.
+   * @param expected - The expected warnings value
+   */
+  toHaveWarnings(expected: unknown): this;
+
+  /**
+   * Asserts that the warnings equal the expected value using deep equality.
+   * @param expected - The expected warnings value
+   */
+  toHaveWarningsEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the warnings strictly equal the expected value.
+   * @param expected - The expected warnings value
+   */
+  toHaveWarningsStrictEqual(expected: unknown): this;
+
+  /**
+   * Asserts that the warnings satisfy the provided matcher function.
+   * @param matcher - A function that receives the warnings and performs assertions
+   */
+  toHaveWarningsSatisfying(matcher: (value: unknown[]) => void): this;
+
+  /**
+   * Asserts that the warnings are present (not null or undefined).
+   */
+  toHaveWarningsPresent(): this;
+
+  /**
+   * Asserts that the warnings are null.
+   */
+  toHaveWarningsNull(): this;
+
+  /**
+   * Asserts that the warnings are undefined.
+   */
+  toHaveWarningsUndefined(): this;
+
+  /**
+   * Asserts that the warnings are nullish (null or undefined).
+   */
+  toHaveWarningsNullish(): this;
+
+  /**
+   * Asserts that the warnings array contains the specified item.
+   * @param item - The item to search for
+   */
+  toHaveWarningsContaining(item: unknown): this;
+
+  /**
+   * Asserts that the warnings array contains an item equal to the specified value.
+   * @param item - The item to search for using deep equality
+   */
+  toHaveWarningsContainingEqual(item: unknown): this;
+
+  /**
+   * Asserts that the warnings array matches the specified subset.
+   * @param subset - The subset to match against
+   */
+  toHaveWarningsMatching(
+    subset: Record<PropertyKey, unknown> | Record<PropertyKey, unknown>[],
   ): this;
 
   /**
-   * Validates instances created from rows using a custom matcher function.
-   *
-   * @param ctor - The constructor to instantiate with each row
-   * @param matcher - A function that receives the instances and performs assertions
-   * @example
-   * ```ts
-   * class User {
-   *   constructor(row: { name: string }) {
-   *     this.displayName = row.name.toUpperCase();
-   *   }
-   *   displayName: string;
-   * }
-   * expectSqlQueryResult(result).toHaveInstanceMatching(User, (users) => {
-   *   assertEquals(users.length, 2);
-   * });
-   * ```
+   * Asserts that the warnings array is empty.
    */
-  toHaveInstanceMatching<U>(
-    ctor: new (row: T) => U,
-    matcher: (instances: U[]) => void,
-  ): this;
+  toHaveWarningsEmpty(): this;
 
   /**
-   * Asserts that the lastInsertId matches the expected value.
-   *
-   * @param expected - The expected lastInsertId value
-   * @example
-   * ```ts
-   * expectSqlQueryResult(result).toHaveLastInsertId(1n);
-   * expectSqlQueryResult(result).toHaveLastInsertId("uuid-string");
-   * ```
+   * Asserts that the duration equals the expected value.
+   * @param expected - The expected duration value
    */
-  toHaveLastInsertId(expected: bigint | string): this;
+  toHaveDuration(expected: unknown): this;
 
   /**
-   * Asserts that the lastInsertId is present.
-   *
-   * @example
-   * ```ts
-   * expectSqlQueryResult(result).toHaveLastInsertId();
-   * ```
+   * Asserts that the duration equals the expected value using deep equality.
+   * @param expected - The expected duration value
    */
-  toHaveLastInsertId(): this;
+  toHaveDurationEqual(expected: unknown): this;
 
   /**
-   * Asserts that the query duration is less than the threshold.
-   *
-   * @param ms - The maximum duration in milliseconds (exclusive)
-   * @example
-   * ```ts
-   * expectSqlQueryResult(result).toHaveDurationLessThan(100);
-   * ```
+   * Asserts that the duration strictly equals the expected value.
+   * @param expected - The expected duration value
    */
-  toHaveDurationLessThan(ms: number): this;
+  toHaveDurationStrictEqual(expected: unknown): this;
 
   /**
-   * Asserts that the query duration is at most the threshold.
-   *
-   * @param ms - The maximum duration in milliseconds (inclusive)
-   * @example
-   * ```ts
-   * expectSqlQueryResult(result).toHaveDurationLessThanOrEqual(100);
-   * ```
+   * Asserts that the duration satisfies the provided matcher function.
+   * @param matcher - A function that receives the duration and performs assertions
    */
-  toHaveDurationLessThanOrEqual(ms: number): this;
+  toHaveDurationSatisfying(matcher: (value: number) => void): this;
 
   /**
-   * Asserts that the query duration is greater than the threshold.
-   *
-   * @param ms - The minimum duration in milliseconds (exclusive)
-   * @example
-   * ```ts
-   * expectSqlQueryResult(result).toHaveDurationGreaterThan(50);
-   * ```
+   * Asserts that the duration is NaN.
    */
-  toHaveDurationGreaterThan(ms: number): this;
+  toHaveDurationNaN(): this;
 
   /**
-   * Asserts that the query duration is at least the threshold.
-   *
-   * @param ms - The minimum duration in milliseconds (inclusive)
-   * @example
-   * ```ts
-   * expectSqlQueryResult(result).toHaveDurationGreaterThanOrEqual(50);
-   * ```
+   * Asserts that the duration is greater than the expected value.
+   * @param expected - The value to compare against
    */
-  toHaveDurationGreaterThanOrEqual(ms: number): this;
+  toHaveDurationGreaterThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is greater than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationGreaterThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThan(expected: number): this;
+
+  /**
+   * Asserts that the duration is less than or equal to the expected value.
+   * @param expected - The value to compare against
+   */
+  toHaveDurationLessThanOrEqual(expected: number): this;
+
+  /**
+   * Asserts that the duration is close to the expected value.
+   * @param expected - The expected value
+   * @param numDigits - The number of decimal digits to check (default: 2)
+   */
+  toHaveDurationCloseTo(expected: number, numDigits?: number): this;
 }
 
-/**
- * Create a fluent expectation chain for SQL query result validation.
- *
- * Returns an expectation object with chainable assertion methods.
- * Each assertion throws an Error if it fails, making it ideal for testing.
- *
- * @param result - The SQL query result to validate
- * @param negate - Whether to negate assertions (used internally by .not)
- * @returns A fluent expectation chain
- *
- * @example Basic assertions
- * ```ts
- * const result = await client.query("SELECT * FROM users WHERE active = true");
- *
- * expectSqlQueryResult(result)
- *   .toBeSuccessful()
- *   .toHaveLengthGreaterThanOrEqual(1)
- *   .toMatchObject({ name: "Alice" });
- * ```
- *
- * @example Insert/Update assertions
- * ```ts
- * const result = await client.query(
- *   "INSERT INTO users (name, email) VALUES ($1, $2)",
- *   ["Bob", "bob@example.com"]
- * );
- *
- * expectSqlQueryResult(result)
- *   .toBeSuccessful()
- *   .toHaveRowCount(1)
- *   .toHaveLastInsertId();
- * ```
- *
- * @example Custom matcher with mapped data
- * ```ts
- * expectSqlQueryResult(result)
- *   .toBeSuccessful()
- *   .toHaveMapMatching(
- *     (row) => row.name.toUpperCase(),
- *     (names) => assertEquals(names, ["ALICE", "BOB"])
- *   );
- * ```
- *
- * @example Performance assertions
- * ```ts
- * expectSqlQueryResult(result)
- *   .toBeSuccessful()
- *   .toHaveDurationLessThan(100);  // Must complete within 100ms
- * ```
- */
 // deno-lint-ignore no-explicit-any
 export function expectSqlQueryResult<T = Record<string, any>>(
   result: SqlQueryResult<T>,
-  negate = false,
-): SqlQueryResultExpectation<T> {
-  const self: SqlQueryResultExpectation<T> = {
-    get not(): SqlQueryResultExpectation<T> {
-      return expectSqlQueryResult(result, !negate);
-    },
-
-    toBeSuccessful() {
-      const isSuccess = result.ok;
-      if (negate ? isSuccess : !isSuccess) {
-        throw new Error(
-          negate ? "Expected query to fail" : "Expected query to succeed",
-        );
-      }
-      return this;
-    },
-
-    toHaveContent() {
-      const hasRows = result.rows.length > 0;
-      if (negate ? hasRows : !hasRows) {
-        throw new Error(
-          negate
-            ? `Expected no rows, got ${result.rows.length}`
-            : "Expected rows to be present",
-        );
-      }
-      return this;
-    },
-
-    toHaveLength(expected: number) {
-      const match = result.rows.length === expected;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected row count to not be ${expected}, got ${result.rows.length}`
-            : buildCountError(expected, result.rows.length, "rows"),
-        );
-      }
-      return this;
-    },
-
-    toHaveLengthGreaterThanOrEqual(expected: number) {
-      const match = result.rows.length >= expected;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected row count to not be >= ${expected}, got ${result.rows.length}`
-            : buildCountAtLeastError(expected, result.rows.length, "rows"),
-        );
-      }
-      return this;
-    },
-
-    toHaveLengthLessThanOrEqual(expected: number) {
-      const match = result.rows.length <= expected;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected row count to not be <= ${expected}, got ${result.rows.length}`
-            : buildCountAtMostError(expected, result.rows.length, "rows"),
-        );
-      }
-      return this;
-    },
-
-    toHaveRowCount(count: number) {
-      const match = result.rowCount === count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected rowCount to not be ${count}, got ${result.rowCount}`
-            : buildCountError(count, result.rowCount, "rowCount"),
-        );
-      }
-      return this;
-    },
-
-    toHaveRowCountGreaterThanOrEqual(count: number) {
-      const match = result.rowCount >= count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected rowCount to not be >= ${count}, got ${result.rowCount}`
-            : buildCountAtLeastError(count, result.rowCount, "rowCount"),
-        );
-      }
-      return this;
-    },
-
-    toHaveRowCountLessThanOrEqual(count: number) {
-      const match = result.rowCount <= count;
-      if (negate ? match : !match) {
-        throw new Error(
-          negate
-            ? `Expected rowCount to not be <= ${count}, got ${result.rowCount}`
-            : buildCountAtMostError(count, result.rowCount, "rowCount"),
-        );
-      }
-      return this;
-    },
-
-    toMatchObject(subset: Partial<T>) {
-      const found = result.rows.find((row) => containsSubset(row, subset));
-      if (negate ? found : !found) {
-        throw new Error(
-          negate
-            ? "Expected no row to contain the subset, but found one"
-            : "No row contains the expected subset",
-        );
-      }
-      return this;
-    },
-
-    toSatisfy(matcher: (rows: SqlRows<T>) => void) {
-      matcher(result.rows);
-      return this;
-    },
-
-    toHaveMapContaining<U>(mapper: (row: T) => U, subset: Partial<U>) {
-      const mapped = result.map(mapper);
-      const found = mapped.find((item) => containsSubset(item, subset));
-      if (negate ? found : !found) {
-        throw new Error(
-          negate
-            ? "Expected no mapped row to contain the subset, but found one"
-            : "No mapped row contains the expected subset",
-        );
-      }
-      return this;
-    },
-
-    toHaveMapMatching<U>(
-      mapper: (row: T) => U,
-      matcher: (mapped: U[]) => void,
-    ) {
-      const mapped = result.map(mapper);
-      matcher(mapped);
-      return this;
-    },
-
-    toHaveInstanceContaining<U>(ctor: new (row: T) => U, subset: Partial<U>) {
-      const instances = result.as(ctor);
-      const found = instances.find((item) => containsSubset(item, subset));
-      if (negate ? found : !found) {
-        throw new Error(
-          negate
-            ? "Expected no instance to contain the subset, but found one"
-            : "No instance contains the expected subset",
-        );
-      }
-      return this;
-    },
-
-    toHaveInstanceMatching<U>(
-      ctor: new (row: T) => U,
-      matcher: (instances: U[]) => void,
-    ) {
-      const instances = result.as(ctor);
-      matcher(instances);
-      return this;
-    },
-
-    toHaveLastInsertId(expected?: bigint | string) {
-      const actual = result.metadata.lastInsertId;
-      if (expected !== undefined) {
-        const match = actual === expected;
-        if (negate ? match : !match) {
-          throw new Error(
-            negate
-              ? `Expected lastInsertId to not be ${expected}, got ${actual}`
-              : `Expected lastInsertId ${expected}, got ${actual}`,
-          );
-        }
-      } else {
-        const hasId = actual !== undefined;
-        if (negate ? hasId : !hasId) {
-          throw new Error(
-            negate
-              ? "Expected no lastInsertId, but it exists"
-              : "Expected lastInsertId to be present",
-          );
-        }
-      }
-      return this;
-    },
-
-    ...createDurationMethods(result.duration, negate),
-  };
-
-  return self;
+): SqlQueryResultExpectation {
+  return mixin.defineExpectation((negate) => [
+    mixin.createOkMixin(
+      () => result.ok,
+      negate,
+      { valueName: "result" },
+    ),
+    // Rows
+    mixin.createValueMixin(
+      () => result.rows,
+      negate,
+      { valueName: "rows" },
+    ),
+    mixin.createArrayValueMixin(
+      () => result.rows,
+      negate,
+      { valueName: "rows" },
+    ),
+    // Row count
+    mixin.createValueMixin(
+      () => result.rowCount,
+      negate,
+      { valueName: "row count" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.rowCount,
+      negate,
+      { valueName: "row count" },
+    ),
+    // LastInsertedId
+    mixin.createValueMixin(
+      () => result.lastInsertId,
+      negate,
+      { valueName: "last insert id" },
+    ),
+    mixin.createNullishValueMixin(
+      () => result.lastInsertId,
+      negate,
+      { valueName: "last insert id" },
+    ),
+    // Warnings
+    mixin.createValueMixin(
+      () => result.warnings,
+      negate,
+      { valueName: "warnings" },
+    ),
+    mixin.createNullishValueMixin(
+      () => result.warnings,
+      negate,
+      { valueName: "warnings" },
+    ),
+    mixin.createArrayValueMixin(
+      () => ensureNonNullish(result.warnings, "warnings"),
+      negate,
+      { valueName: "warnings" },
+    ),
+    // Duration
+    mixin.createValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+    mixin.createNumberValueMixin(
+      () => result.duration,
+      negate,
+      { valueName: "duration" },
+    ),
+  ]);
 }

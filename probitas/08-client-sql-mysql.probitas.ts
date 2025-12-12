@@ -38,8 +38,8 @@ export default scenario("MySQL Client Example", {
     );
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveLength(1);
+      .toBeOk()
+      .toHaveRowCount(1);
   })
   .step("Insert multiple rows", async (ctx) => {
     const { mysql } = ctx.resources;
@@ -49,8 +49,8 @@ export default scenario("MySQL Client Example", {
     );
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveLength(2);
+      .toBeOk()
+      .toHaveRowCount(2);
   })
   .step("Select with WHERE clause", async (ctx) => {
     const { mysql } = ctx.resources;
@@ -60,9 +60,9 @@ export default scenario("MySQL Client Example", {
     );
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveLength(1)
-      .toMatchObject({ name: "Widget" });
+      .toBeOk()
+      .toHaveRowCount(1)
+      .toHaveRowsMatching({ name: "Widget" });
   })
   .step("Select all rows", async (ctx) => {
     const { mysql } = ctx.resources;
@@ -73,8 +73,8 @@ export default scenario("MySQL Client Example", {
     );
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveLengthGreaterThanOrEqual(3);
+      .toBeOk()
+      .toHaveRowCountGreaterThanOrEqual(3);
   })
   .step("Update row", async (ctx) => {
     const { mysql } = ctx.resources;
@@ -84,8 +84,8 @@ export default scenario("MySQL Client Example", {
     );
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveLength(1);
+      .toBeOk()
+      .toHaveRowCount(1);
   })
   .step("Transaction - commit", async (ctx) => {
     const { mysql } = ctx.resources;
@@ -102,9 +102,9 @@ export default scenario("MySQL Client Example", {
     );
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveLength(1)
-      .toMatchObject({ name: "TxProduct" });
+      .toBeOk()
+      .toHaveRowCount(1)
+      .toHaveRowsMatching({ name: "TxProduct" });
   })
   .step("Delete row", async (ctx) => {
     const { mysql } = ctx.resources;
@@ -114,7 +114,7 @@ export default scenario("MySQL Client Example", {
     );
 
     expect(result)
-      .toBeSuccessful()
-      .toHaveLength(1);
+      .toBeOk()
+      .toHaveRowCount(1);
   })
   .build();
