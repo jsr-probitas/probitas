@@ -1,4 +1,5 @@
 import type { Origin } from "@probitas/core/origin";
+import type { Theme } from "@probitas/core/theme";
 import { assertType, type IsExact } from "@std/testing/types";
 import type { Unit } from "./_typeutils.ts";
 import type {
@@ -14,6 +15,7 @@ Deno.test("MixinConfig - type check with default methodBase", () => {
     readonly valueName: "string";
     readonly methodBase?: "String";
     readonly expectOrigin?: Origin;
+    readonly theme?: Theme;
   };
   assertType<IsExact<Config, Expected>>(true);
 });
@@ -24,6 +26,7 @@ Deno.test("MixinConfig - type check with custom methodBase", () => {
     readonly valueName: "custom_type";
     readonly methodBase?: "CustomType";
     readonly expectOrigin?: Origin;
+    readonly theme?: Theme;
   };
   assertType<IsExact<Config, Expected>>(true);
 });

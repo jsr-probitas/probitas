@@ -109,6 +109,7 @@ export function createNumberValueMixin<
             ? `Expected ${valueName} to not be NaN, but got ${valueStr}`
             : `Expected ${valueName} to be NaN, but got ${valueStr}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;
@@ -128,6 +129,7 @@ export function createNumberValueMixin<
             ? `Expected ${valueName} to not be greater than ${expected}, but got ${value}`
             : `Expected ${valueName} to be greater than ${expected}, but got ${value}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;
@@ -147,6 +149,7 @@ export function createNumberValueMixin<
             ? `Expected ${valueName} to not be greater than or equal to ${expected}, but got ${value}`
             : `Expected ${valueName} to be greater than or equal to ${expected}, but got ${value}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;
@@ -166,6 +169,7 @@ export function createNumberValueMixin<
             ? `Expected ${valueName} to not be less than ${expected}, but got ${value}`
             : `Expected ${valueName} to be less than ${expected}, but got ${value}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;
@@ -185,6 +189,7 @@ export function createNumberValueMixin<
             ? `Expected ${valueName} to not be less than or equal to ${expected}, but got ${value}`
             : `Expected ${valueName} to be less than or equal to ${expected}, but got ${value}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;
@@ -209,6 +214,7 @@ export function createNumberValueMixin<
             ? `Expected ${valueName} to not be close to ${expected} (within ${digits} digits), but got ${value}`
             : `Expected ${valueName} to be close to ${expected} (within ${digits} digits), but got ${value}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;

@@ -106,6 +106,7 @@ export function createValueMixin<
             ? `Expected ${valueName} to not be ${expectedStr}, but got ${valueStr}`
             : `Expected ${valueName} to be ${expectedStr}, but got ${valueStr}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;
@@ -128,6 +129,7 @@ export function createValueMixin<
             ? `Expected ${valueName} to not equal ${expectedStr}, but it did`
             : `Expected ${valueName} to equal ${expectedStr}, but got ${valueStr}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;
@@ -150,6 +152,7 @@ export function createValueMixin<
             ? `Expected ${valueName} to not strictly equal ${expectedStr}, but it did`
             : `Expected ${valueName} to strictly equal ${expectedStr}, but got ${valueStr}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;
@@ -181,6 +184,7 @@ export function createValueMixin<
             ? `Expected ${valueName} to not satisfy the matcher, but it did`
             : `Expected ${valueName} to satisfy the matcher, but it failed: ${matcherError?.message}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;

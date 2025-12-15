@@ -1,5 +1,7 @@
 import { assertEquals } from "@std/assert";
+import { assertSnapshot } from "@std/testing/snapshot";
 import { assertType, type IsExact } from "@std/testing/types";
+import { colorTheme } from "@probitas/core/theme";
 import { catchError } from "../utils.ts";
 import { assertSnapshotWithoutColors } from "./_testutils.ts";
 import { createArrayValueMixin } from "./array_value_mixin.ts";
@@ -148,17 +150,34 @@ Deno.test("createArrayValueMixin - toHaveItemsEmpty", async (t) => {
 });
 
 Deno.test("createArrayValueMixin - toHaveItemsContaining with source context", async (t) => {
-  await t.step("fail", async () => {
+  await t.step("fail (noColor)", async () => {
     const mixin = createArrayValueMixin(
       () => ["apple", "banana"],
       () => false,
       {
         valueName: "items",
-        expectOrigin: { path: testFilePath, line: 152, column: 5 },
+        expectOrigin: { path: testFilePath, line: 154, column: 5 },
       },
     );
     const applied = mixin({ dummy: true });
     await assertSnapshotWithoutColors(
+      t,
+      catchError(() => applied.toHaveItemsContaining("grape")).message,
+    );
+  });
+
+  await t.step("fail (withColor)", async () => {
+    const mixin = createArrayValueMixin(
+      () => ["apple", "banana"],
+      () => false,
+      {
+        valueName: "items",
+        expectOrigin: { path: testFilePath, line: 169, column: 5 },
+        theme: colorTheme,
+      },
+    );
+    const applied = mixin({ dummy: true });
+    await assertSnapshot(
       t,
       catchError(() => applied.toHaveItemsContaining("grape")).message,
     );

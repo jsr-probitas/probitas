@@ -105,6 +105,7 @@ export function createArrayValueMixin<
             ? `Expected ${valueName} to not contain ${itemStr}, but got ${valueStr}`
             : `Expected ${valueName} to contain ${itemStr}, but got ${valueStr}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;
@@ -127,6 +128,7 @@ export function createArrayValueMixin<
             ? `Expected ${valueName} to not contain equal ${itemStr}, but it did`
             : `Expected ${valueName} to contain equal ${itemStr}, but got ${valueStr}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;
@@ -152,6 +154,7 @@ export function createArrayValueMixin<
             ? `Expected ${valueName} to not contain item matching ${subsetStr}, but it did`
             : `Expected ${valueName} to contain item matching ${subsetStr}, but got ${valueStr}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;
@@ -171,6 +174,7 @@ export function createArrayValueMixin<
             ? `Expected ${valueName} to not be empty, but it is`
             : `Expected ${valueName} to be empty, but got length ${value.length}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;

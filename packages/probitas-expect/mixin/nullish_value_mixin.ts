@@ -97,6 +97,7 @@ export function createNullishValueMixin<
             ? `Expected ${valueName} to not be null, but got ${valueStr}`
             : `Expected ${valueName} to be null, but got ${valueStr}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;
@@ -116,6 +117,7 @@ export function createNullishValueMixin<
             ? `Expected ${valueName} to not be undefined, but got ${valueStr}`
             : `Expected ${valueName} to be undefined, but got ${valueStr}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;
@@ -132,6 +134,7 @@ export function createNullishValueMixin<
             ? `Expected ${valueName} to not be null nor undefined, but got ${valueStr}`
             : `Expected ${valueName} to be null or undefined, but got ${valueStr}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;
@@ -154,6 +157,7 @@ export function createNullishValueMixin<
             ? `Expected ${valueName} to not be present, but got ${valueStr}`
             : `Expected ${valueName} to be present, but got ${valueStr}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;

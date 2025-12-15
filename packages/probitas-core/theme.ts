@@ -6,13 +6,19 @@
  * @module
  */
 
-import { bold, cyan, gray, green, red, yellow } from "@std/fmt/colors";
+import { cyan, gray, green, red, yellow } from "@std/fmt/colors";
 
 /**
  * Apply light gray color (ANSI 256-color mode).
  * Used for resource and setup step titles as subtle secondary information.
  */
 const lightGray = (text: string): string => `\x1b[38;5;243m${text}\x1b[0m`;
+
+/**
+ * Apply bold style with full reset.
+ * Uses \x1b[0m instead of \x1b[22m for better terminal compatibility.
+ */
+const boldWithReset = (text: string): string => `\x1b[1m${text}\x1b[0m`;
 
 /**
  * Function type for theme color/styling transformations.
@@ -84,7 +90,7 @@ export const colorTheme: Theme = {
   failure: red,
   skip: yellow,
   dim: gray,
-  title: bold,
+  title: boldWithReset,
   info: cyan,
   warning: yellow,
   lightGray: lightGray,

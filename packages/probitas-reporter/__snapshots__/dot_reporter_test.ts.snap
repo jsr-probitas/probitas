@@ -68,7 +68,7 @@ snapshot[`after onRunEnd 2`] = `
 
 2 passed, 1 failed (35ms)
 
-[1mFailed Tests[22m
+[1mFailed Tests[0m
 
   [31m✗[39m Scenario with failing step [90m>[39m Step that fails(test.scenario.ts:20)
 "

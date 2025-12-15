@@ -1,5 +1,7 @@
 import { assertEquals } from "@std/assert";
+import { assertSnapshot } from "@std/testing/snapshot";
 import { assertType, type IsExact } from "@std/testing/types";
+import { colorTheme } from "@probitas/core/theme";
 import { catchError } from "../utils.ts";
 import { assertSnapshotWithoutColors } from "./_testutils.ts";
 import { createOkMixin } from "./ok_mixin.ts";
@@ -51,13 +53,26 @@ Deno.test("createOkMixin - toBeOk", async (t) => {
     );
   });
 
-  await t.step("fail with source context", async () => {
+  await t.step("fail with source context (noColor)", async () => {
     const applier = createOkMixin(() => false, () => false, {
       valueName: "response",
-      expectOrigin: { path: testFilePath, line: 55, column: 5 },
+      expectOrigin: { path: testFilePath, line: 57, column: 5 },
     });
     const applied = applier({ dummy: true });
     await assertSnapshotWithoutColors(
+      t,
+      catchError(() => applied.toBeOk()).message,
+    );
+  });
+
+  await t.step("fail with source context (withColor)", async () => {
+    const applier = createOkMixin(() => false, () => false, {
+      valueName: "response",
+      expectOrigin: { path: testFilePath, line: 69, column: 5 },
+      theme: colorTheme,
+    });
+    const applied = applier({ dummy: true });
+    await assertSnapshot(
       t,
       catchError(() => applied.toBeOk()).message,
     );

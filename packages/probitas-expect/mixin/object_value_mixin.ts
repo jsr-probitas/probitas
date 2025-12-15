@@ -139,6 +139,7 @@ export function createObjectValueMixin<
             ? `Expected ${valueName} to not match ${subsetStr}, but it did`
             : `Expected ${valueName} to match ${subsetStr}, but got ${valueStr}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;
@@ -172,6 +173,7 @@ export function createObjectValueMixin<
               ? `Expected ${valueName} to not have property "${keyPathStr}" with value ${valueStr}, but it did`
               : `Expected ${valueName} to have property "${keyPathStr}" with value ${valueStr}`,
             expectOrigin: config.expectOrigin,
+            theme: config.theme,
           });
         } else {
           throw createExpectationError({
@@ -179,6 +181,7 @@ export function createObjectValueMixin<
               ? `Expected ${valueName} to not have property "${keyPathStr}", but it did`
               : `Expected ${valueName} to have property "${keyPathStr}"`,
             expectOrigin: config.expectOrigin,
+            theme: config.theme,
           });
         }
       }
@@ -210,6 +213,7 @@ export function createObjectValueMixin<
             ? `Expected ${valueName} property "${keyPathStr}" to not contain ${expectedStr}, but it did`
             : `Expected ${valueName} property "${keyPathStr}" to contain ${expectedStr}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;
@@ -240,6 +244,7 @@ export function createObjectValueMixin<
             ? `Expected ${valueName} property "${keyPathStr}" to not match ${subsetStr}, but it did`
             : `Expected ${valueName} property "${keyPathStr}" to match ${subsetStr}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;
@@ -284,6 +289,7 @@ export function createObjectValueMixin<
             message:
               `Expected ${valueName} property "${keyPathStr}" to exist and satisfy the matcher, but it does not exist`,
             expectOrigin: config.expectOrigin,
+            theme: config.theme,
           });
         }
 
@@ -292,6 +298,7 @@ export function createObjectValueMixin<
             ? `Expected ${valueName} property "${keyPathStr}" to not satisfy the matcher, but it did`
             : `Expected ${valueName} property "${keyPathStr}" to satisfy the matcher, but it failed: ${matcherError?.message}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;

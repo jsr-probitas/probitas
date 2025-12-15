@@ -1,5 +1,7 @@
 import { assertEquals } from "@std/assert";
+import { assertSnapshot } from "@std/testing/snapshot";
 import { assertType, type IsExact } from "@std/testing/types";
+import { colorTheme } from "@probitas/core/theme";
 import { catchError } from "../utils.ts";
 import { assertSnapshotWithoutColors } from "./_testutils.ts";
 import { createObjectValueMixin } from "./object_value_mixin.ts";
@@ -230,17 +232,34 @@ Deno.test("createObjectValueMixin - toHaveUserPropertySatisfying", async (t) => 
 });
 
 Deno.test("createObjectValueMixin - toHaveUserMatching with source context", async (t) => {
-  await t.step("fail", async () => {
+  await t.step("fail (noColor)", async () => {
     const mixin = createObjectValueMixin(
       () => ({ name: "Alice", age: 30 }),
       () => false,
       {
         valueName: "user",
-        expectOrigin: { path: testFilePath, line: 234, column: 5 },
+        expectOrigin: { path: testFilePath, line: 236, column: 5 },
       },
     );
     const applied = mixin({ dummy: true });
     await assertSnapshotWithoutColors(
+      t,
+      catchError(() => applied.toHaveUserMatching({ name: "Bob" })).message,
+    );
+  });
+
+  await t.step("fail (withColor)", async () => {
+    const mixin = createObjectValueMixin(
+      () => ({ name: "Alice", age: 30 }),
+      () => false,
+      {
+        valueName: "user",
+        expectOrigin: { path: testFilePath, line: 251, column: 5 },
+        theme: colorTheme,
+      },
+    );
+    const applied = mixin({ dummy: true });
+    await assertSnapshot(
       t,
       catchError(() => applied.toHaveUserMatching({ name: "Bob" })).message,
     );

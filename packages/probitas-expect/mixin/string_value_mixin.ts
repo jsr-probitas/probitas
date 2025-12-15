@@ -91,6 +91,7 @@ export function createStringValueMixin<
             ? `Expected ${valueName} to not contain ${substrStr}, but got ${valueStr}`
             : `Expected ${valueName} to contain ${substrStr}, but got ${valueStr}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;
@@ -113,6 +114,7 @@ export function createStringValueMixin<
             ? `Expected ${valueName} to not match ${expectedStr}, but got ${valueStr}`
             : `Expected ${valueName} to match ${expectedStr}, but got ${valueStr}`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;

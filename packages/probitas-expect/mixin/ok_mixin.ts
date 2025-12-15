@@ -62,6 +62,7 @@ export function createOkMixin(
             ? `Expected ${valueName} to not be ok, but it succeeded`
             : `Expected ${valueName} to be ok, but it failed`,
           expectOrigin: config.expectOrigin,
+          theme: config.theme,
         });
       }
       return this;

@@ -1,5 +1,7 @@
 import { assertEquals } from "@std/assert";
+import { assertSnapshot } from "@std/testing/snapshot";
 import { assertType, type IsExact } from "@std/testing/types";
+import { colorTheme } from "@probitas/core/theme";
 import { catchError } from "../utils.ts";
 import { assertSnapshotWithoutColors } from "./_testutils.ts";
 import { createNumberValueMixin } from "./number_value_mixin.ts";
@@ -178,13 +180,26 @@ Deno.test("createNumberValueMixin - toHaveScoreCloseTo", async (t) => {
 });
 
 Deno.test("createNumberValueMixin - toHaveScoreGreaterThan with source context", async (t) => {
-  await t.step("fail", async () => {
+  await t.step("fail (noColor)", async () => {
     const mixin = createNumberValueMixin(() => 100, () => false, {
       valueName: "score",
-      expectOrigin: { path: testFilePath, line: 182, column: 5 },
+      expectOrigin: { path: testFilePath, line: 184, column: 5 },
     });
     const applied = mixin({ dummy: true });
     await assertSnapshotWithoutColors(
+      t,
+      catchError(() => applied.toHaveScoreGreaterThan(200)).message,
+    );
+  });
+
+  await t.step("fail (withColor)", async () => {
+    const mixin = createNumberValueMixin(() => 100, () => false, {
+      valueName: "score",
+      expectOrigin: { path: testFilePath, line: 196, column: 5 },
+      theme: colorTheme,
+    });
+    const applied = mixin({ dummy: true });
+    await assertSnapshot(
       t,
       catchError(() => applied.toHaveScoreGreaterThan(200)).message,
     );

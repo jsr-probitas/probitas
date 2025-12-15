@@ -10,6 +10,7 @@
 import type { Origin } from "@probitas/core/origin";
 import { formatOrigin } from "@probitas/core/origin";
 import { captureStack } from "@probitas/core/stack";
+import type { Theme } from "@probitas/core/theme";
 
 /**
  * Source code context information for error messages.
@@ -217,10 +218,33 @@ export function formatSourceContext(
   options?: {
     /** Base directory to make paths relative */
     cwd?: string;
+    /** Theme for styling */
+    theme?: Theme;
   },
 ): string {
-  const location = formatOrigin(ctx.start, { cwd: options?.cwd });
-  const header = `Context (${location})`;
-  const body = ctx.content.join("\n");
+  const { cwd, theme } = options ?? {};
+  const location = formatOrigin(ctx.start, { cwd });
+  // Header: "Context" is bold, "(path)" is dim
+  const header = theme
+    ? `${theme.title("Context")} ${theme.dim(`(${location})`)}`
+    : `Context (${location})`;
+
+  // Apply styles to body content if theme provided
+  let body: string;
+  if (theme) {
+    // Style each line: ^ markers get failure color, rest gets dim
+    body = ctx.content.map((line) => {
+      // Check if this is a marker line (contains only spaces, separator, and ^)
+      const markerMatch = line.match(/^(\s*[│┆]\s*)(\^+)$/);
+      if (markerMatch) {
+        // Apply dim to prefix, failure (red) to ^ marker only
+        return theme.dim(markerMatch[1]) + theme.failure(markerMatch[2]);
+      }
+      return theme.dim(line);
+    }).join("\n");
+  } else {
+    body = ctx.content.join("\n");
+  }
+
   return `${header}\n\n${body}`;
 }
