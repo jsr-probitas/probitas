@@ -181,7 +181,7 @@ function outputText(
   const byFile = new Map<string, ScenarioDefinition[]>();
 
   for (const scenario of allScenarios) {
-    const file = scenario.source?.file || "unknown";
+    const file = scenario.origin?.path || "unknown";
     if (!byFile.has(file)) {
       byFile.set(file, []);
     }
@@ -215,7 +215,7 @@ function outputJson(scenarios: ScenarioDefinition[]): void {
     name: scenario.name,
     tags: scenario.tags,
     steps: scenario.steps.filter((e) => e.kind === "step").length,
-    file: scenario.source?.file || "unknown",
+    file: scenario.origin?.path || "unknown",
   }));
 
   console.log(JSON.stringify(output, null, 2));

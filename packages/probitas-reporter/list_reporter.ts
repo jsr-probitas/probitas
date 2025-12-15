@@ -20,11 +20,11 @@
  * ```
  */
 
-import type { ScenarioMetadata, Source, StepMetadata } from "@probitas/core";
+import type { ScenarioMetadata, StepMetadata } from "@probitas/core";
+import { formatOrigin, type Origin } from "@probitas/core/origin";
 import type { Reporter, RunResult, StepResult } from "@probitas/runner";
 import { Writer, type WriterOptions } from "./writer.ts";
 import { defaultTheme, type Theme, type ThemeFunction } from "./theme.ts";
-import { formatSource } from "./utils/source.ts";
 
 /**
  * Options for ListReporter initialization.
@@ -48,7 +48,7 @@ export interface ListReporterOptions extends WriterOptions {
  * Features:
  * - Real-time per-step output as tests execute
  * - Status indicators (✓ passed, ✗ failed, ⊘ skipped)
- * - Source location information
+ * - Origin location information
  * - Execution timing for each step
  * - Skip reasons for conditional skips
  * - Error messages and stack traces for failures
@@ -94,8 +94,8 @@ export class ListReporter implements Reporter {
     return this.#writer.write(`${text}\n`);
   }
 
-  #formatSource(source?: Source): string {
-    return this.#theme.dim(formatSource(source, {
+  #formatOrigin(origin?: Origin): string {
+    return this.#theme.dim(formatOrigin(origin, {
       prefix: "(",
       suffix: ")",
       cwd: this.#cwd,
@@ -140,7 +140,7 @@ export class ListReporter implements Reporter {
       : result.status === "skipped"
       ? this.#theme.skip("⊘")
       : this.#theme.failure("✗");
-    const source = this.#formatSource(result.metadata.source);
+    const source = this.#formatOrigin(result.metadata.origin);
     const time = this.#formatTime(result.duration);
 
     // Format scenario and step names based on kind
@@ -234,7 +234,7 @@ export class ListReporter implements Reporter {
             kind as "resource" | "setup" | "step",
           );
 
-          const source = this.#formatSource(step.metadata.source);
+          const source = this.#formatOrigin(step.metadata.origin);
           const time = this.#formatTime(step.duration);
           const icon = this.#theme.failure("✗");
 

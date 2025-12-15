@@ -1,5 +1,5 @@
 export const snapshot = {};
 
-snapshot[`createStringValueMixin - toHaveMessageMatching 1`] = `"Expected message to match /hello/, but got goodbye world"`;
-
 snapshot[`createStringValueMixin - toHaveMessageContaining 1`] = `"Expected message to contain hello, but got goodbye world"`;
+
+snapshot[`createStringValueMixin - toHaveMessageMatching 1`] = `"Expected message to match /hello/, but got goodbye world"`;

@@ -1,13 +1,5 @@
 export const snapshot = {};
 
-snapshot[`createObjectValueMixin - toHaveUserPropertyMatching 1`] = `
-'Expected data property "config" to match {
-  port: 3000,
-}'
-`;
-
-snapshot[`createObjectValueMixin - toHaveUserPropertyContaining 1`] = `'Expected data property "message" to contain goodbye'`;
-
 snapshot[`createObjectValueMixin - toHaveUserMatching 1`] = `
 'Expected user to match {
   name: "Bob",
@@ -17,8 +9,16 @@ snapshot[`createObjectValueMixin - toHaveUserMatching 1`] = `
 }'
 `;
 
-snapshot[`createObjectValueMixin - toHaveUserPropertySatisfying 1`] = `'Expected data property "message" to satisfy the matcher, but it failed: Must be goodbye'`;
-
 snapshot[`createObjectValueMixin - toHaveUserProperty 1`] = `'Expected user to have property "email"'`;
 
 snapshot[`createObjectValueMixin - toHaveUserProperty 2`] = `'Expected user to have property "name" with value Bob'`;
+
+snapshot[`createObjectValueMixin - toHaveUserPropertyContaining 1`] = `'Expected data property "message" to contain goodbye'`;
+
+snapshot[`createObjectValueMixin - toHaveUserPropertyMatching 1`] = `
+'Expected data property "config" to match {
+  port: 3000,
+}'
+`;
+
+snapshot[`createObjectValueMixin - toHaveUserPropertySatisfying 1`] = `'Expected data property "message" to satisfy the matcher, but it failed: Must be goodbye'`;

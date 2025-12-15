@@ -1,3 +1,2 @@
-export * from "./types/scenario.ts";
-export * from "./types/source.ts";
-export * from "./types/step.ts";
+export type * from "./types/scenario.ts";
+export type * from "./types/step.ts";

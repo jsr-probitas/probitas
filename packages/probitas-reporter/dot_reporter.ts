@@ -8,10 +8,10 @@
  */
 
 import type { ScenarioMetadata } from "@probitas/core";
+import { formatOrigin } from "@probitas/core/origin";
 import type { Reporter, RunResult, ScenarioResult } from "@probitas/runner";
 import { Writer, type WriterOptions } from "./writer.ts";
 import { defaultTheme, type Theme } from "./theme.ts";
-import { formatSource } from "./utils/source.ts";
 
 export interface DotReporterOptions extends WriterOptions {
   theme?: Theme;
@@ -70,7 +70,7 @@ export class DotReporter implements Reporter {
         // Show failed steps
         const failedSteps = scenario.steps.filter((s) => s.status === "failed");
         for (const step of failedSteps) {
-          const source = formatSource(step.metadata.source, {
+          const source = formatOrigin(step.metadata.origin, {
             prefix: "(",
             suffix: ")",
           });

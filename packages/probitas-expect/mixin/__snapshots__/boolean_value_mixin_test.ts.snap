@@ -1,5 +1,5 @@
 export const snapshot = {};
 
-snapshot[`createBooleanValueMixin - toHaveValueFalsy 1`] = `"Expected value to be falsy, but got hello"`;
-
 snapshot[`createBooleanValueMixin - toHaveValueTruthy 1`] = `"Expected value to be truthy, but got 0"`;
+
+snapshot[`createBooleanValueMixin - toHaveValueFalsy 1`] = `"Expected value to be falsy, but got hello"`;

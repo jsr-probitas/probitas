@@ -1,15 +1,15 @@
 export const snapshot = {};
 
-snapshot[`createNullishValueMixin - toHaveValueNullish 1`] = `"Expected value to be null, but got 200"`;
-
 snapshot[`createNullishValueMixin - toHaveValueNull 1`] = `"Expected value to be null, but got undefined"`;
 
 snapshot[`createNullishValueMixin - toHaveValueNull 2`] = `"Expected value to be null, but got 200"`;
 
-snapshot[`createNullishValueMixin - toHaveValuePresent 1`] = `"Expected value to be present, but got null"`;
-
-snapshot[`createNullishValueMixin - toHaveValuePresent 2`] = `"Expected value to be present, but got undefined"`;
-
 snapshot[`createNullishValueMixin - toHaveValueUndefined 1`] = `"Expected value to be undefined, but got null"`;
 
 snapshot[`createNullishValueMixin - toHaveValueUndefined 2`] = `"Expected value to be undefined, but got 200"`;
+
+snapshot[`createNullishValueMixin - toHaveValueNullish 1`] = `"Expected value to be null, but got 200"`;
+
+snapshot[`createNullishValueMixin - toHaveValuePresent 1`] = `"Expected value to be present, but got null"`;
+
+snapshot[`createNullishValueMixin - toHaveValuePresent 2`] = `"Expected value to be present, but got undefined"`;

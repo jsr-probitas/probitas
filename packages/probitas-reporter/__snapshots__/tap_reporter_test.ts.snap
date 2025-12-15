@@ -174,13 +174,11 @@ ok 1 - Simple passing scenario > Step that passes
 ok 2 - Scenario with failing step > Step that passes
 not ok 3 - Scenario with failing step > Step that fails
   ---
-  source: test.scenario.ts:20
+  origin: test.scenario.ts:20
   message: Assertion failed
   stack: |
 
-    Error: Assertion failed
-
-        at <file>:131:12
+    at <anonymous> (/Users/alisue/ogh/jsr-probitas/probitas/packages/probitas-reporter/testkit.ts:131:12)
 
   ...
 "
@@ -193,13 +191,11 @@ ok 1 - Simple passing scenario > Step that passes
 ok 2 - Scenario with failing step > Step that passes
 not ok 3 - Scenario with failing step > Step that fails
   ---
-  source: test.scenario.ts:20
+  origin: test.scenario.ts:20
   message: Assertion failed
   stack: |
 
-    Error: Assertion failed
-
-        at <file>:131:12
+    at <anonymous> (/Users/alisue/ogh/jsr-probitas/probitas/packages/probitas-reporter/testkit.ts:131:12)
 
   ...
 "
@@ -212,13 +208,11 @@ ok 1 - Simple passing scenario > Step that passes
 ok 2 - Scenario with failing step > Step that passes
 not ok 3 - Scenario with failing step > Step that fails
   ---
-  source: test.scenario.ts:20
+  origin: test.scenario.ts:20
   message: Assertion failed
   stack: |
 
-    Error: Assertion failed
-
-        at <file>:131:12
+    at <anonymous> (/Users/alisue/ogh/jsr-probitas/probitas/packages/probitas-reporter/testkit.ts:131:12)
 
   ...
 "
@@ -231,13 +225,11 @@ ok 1 - Simple passing scenario > Step that passes
 ok 2 - Scenario with failing step > Step that passes
 not ok 3 - Scenario with failing step > Step that fails
   ---
-  source: test.scenario.ts:20
+  origin: test.scenario.ts:20
   message: Assertion failed
   stack: |
 
-    Error: Assertion failed
-
-        at <file>:131:12
+    at <anonymous> (/Users/alisue/ogh/jsr-probitas/probitas/packages/probitas-reporter/testkit.ts:131:12)
 
   ...
 "
@@ -250,13 +242,11 @@ ok 1 - Simple passing scenario > Step that passes
 ok 2 - Scenario with failing step > Step that passes
 not ok 3 - Scenario with failing step > Step that fails
   ---
-  source: test.scenario.ts:20
+  origin: test.scenario.ts:20
   message: Assertion failed
   stack: |
 
-    Error: Assertion failed
-
-        at <file>:131:12
+    at <anonymous> (/Users/alisue/ogh/jsr-probitas/probitas/packages/probitas-reporter/testkit.ts:131:12)
 
   ...
 ok 4 - Simple passing scenario > Step that passes
@@ -270,13 +260,11 @@ ok 1 - Simple passing scenario > Step that passes
 ok 2 - Scenario with failing step > Step that passes
 not ok 3 - Scenario with failing step > Step that fails
   ---
-  source: test.scenario.ts:20
+  origin: test.scenario.ts:20
   message: Assertion failed
   stack: |
 
-    Error: Assertion failed
-
-        at <file>:131:12
+    at <anonymous> (/Users/alisue/ogh/jsr-probitas/probitas/packages/probitas-reporter/testkit.ts:131:12)
 
   ...
 ok 4 - Simple passing scenario > Step that passes
@@ -290,13 +278,11 @@ ok 1 - Simple passing scenario > Step that passes
 ok 2 - Scenario with failing step > Step that passes
 not ok 3 - Scenario with failing step > Step that fails
   ---
-  source: test.scenario.ts:20
+  origin: test.scenario.ts:20
   message: Assertion failed
   stack: |
 
-    Error: Assertion failed
-
-        at <file>:131:12
+    at <anonymous> (/Users/alisue/ogh/jsr-probitas/probitas/packages/probitas-reporter/testkit.ts:131:12)
 
   ...
 ok 4 - Simple passing scenario > Step that passes
@@ -489,13 +475,11 @@ ok 1 - Simple passing scenario > Step that passes
 ok 2 - Scenario with failing step > Step that passes
 not ok 3 - Scenario with failing step > Step that fails
   ---
-  source: test.scenario.ts:20
+  origin: test.scenario.ts:20
   message: Assertion failed
   stack: |
 
-    Error: Assertion failed
-
-        at <file>:131:12
+    at <anonymous> (/Users/alisue/ogh/jsr-probitas/probitas/packages/probitas-reporter/testkit.ts:131:12)
 
   ...
 "
@@ -508,13 +492,11 @@ ok 1 - Simple passing scenario > Step that passes
 ok 2 - Scenario with failing step > Step that passes
 not ok 3 - Scenario with failing step > Step that fails
   ---
-  source: test.scenario.ts:20
+  origin: test.scenario.ts:20
   message: Assertion failed
   stack: |
 
-    Error: Assertion failed
-
-        at <file>:131:12
+    at <anonymous> (/Users/alisue/ogh/jsr-probitas/probitas/packages/probitas-reporter/testkit.ts:131:12)
 
   ...
 "
@@ -527,13 +509,11 @@ ok 1 - Simple passing scenario > Step that passes
 ok 2 - Scenario with failing step > Step that passes
 not ok 3 - Scenario with failing step > Step that fails
   ---
-  source: test.scenario.ts:20
+  origin: test.scenario.ts:20
   message: Assertion failed
   stack: |
 
-    Error: Assertion failed
-
-        at <file>:131:12
+    at <anonymous> (/Users/alisue/ogh/jsr-probitas/probitas/packages/probitas-reporter/testkit.ts:131:12)
 
   ...
 "
@@ -546,13 +526,11 @@ ok 1 - Simple passing scenario > Step that passes
 ok 2 - Scenario with failing step > Step that passes
 not ok 3 - Scenario with failing step > Step that fails
   ---
-  source: test.scenario.ts:20
+  origin: test.scenario.ts:20
   message: Assertion failed
   stack: |
 
-    Error: Assertion failed
-
-        at <file>:131:12
+    at <anonymous> (/Users/alisue/ogh/jsr-probitas/probitas/packages/probitas-reporter/testkit.ts:131:12)
 
   ...
 "
@@ -565,13 +543,11 @@ ok 1 - Simple passing scenario > Step that passes
 ok 2 - Scenario with failing step > Step that passes
 not ok 3 - Scenario with failing step > Step that fails
   ---
-  source: test.scenario.ts:20
+  origin: test.scenario.ts:20
   message: Assertion failed
   stack: |
 
-    Error: Assertion failed
-
-        at <file>:131:12
+    at <anonymous> (/Users/alisue/ogh/jsr-probitas/probitas/packages/probitas-reporter/testkit.ts:131:12)
 
   ...
 ok 4 - Simple passing scenario > Step that passes
@@ -585,13 +561,11 @@ ok 1 - Simple passing scenario > Step that passes
 ok 2 - Scenario with failing step > Step that passes
 not ok 3 - Scenario with failing step > Step that fails
   ---
-  source: test.scenario.ts:20
+  origin: test.scenario.ts:20
   message: Assertion failed
   stack: |
 
-    Error: Assertion failed
-
-        at <file>:131:12
+    at <anonymous> (/Users/alisue/ogh/jsr-probitas/probitas/packages/probitas-reporter/testkit.ts:131:12)
 
   ...
 ok 4 - Simple passing scenario > Step that passes
@@ -605,13 +579,11 @@ ok 1 - Simple passing scenario > Step that passes
 ok 2 - Scenario with failing step > Step that passes
 not ok 3 - Scenario with failing step > Step that fails
   ---
-  source: test.scenario.ts:20
+  origin: test.scenario.ts:20
   message: Assertion failed
   stack: |
 
-    Error: Assertion failed
-
-        at <file>:131:12
+    at <anonymous> (/Users/alisue/ogh/jsr-probitas/probitas/packages/probitas-reporter/testkit.ts:131:12)
 
   ...
 ok 4 - Simple passing scenario > Step that passes

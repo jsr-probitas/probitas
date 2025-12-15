@@ -34,7 +34,7 @@
  *
  * - {@linkcode ScenarioOptions} - Scenario-level configuration (tags, default step options)
  * - {@linkcode StepOptions} - Step execution settings (timeout, retry strategy)
- * - {@linkcode Source} - File and line number for error reporting
+ * - Import `Origin` from `@probitas/core/origin` for file and line information
  *
  * ## Function Types
  *

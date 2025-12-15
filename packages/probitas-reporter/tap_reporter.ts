@@ -8,9 +8,9 @@
  */
 
 import type { ScenarioMetadata, StepMetadata } from "@probitas/core";
+import { parseStack } from "@probitas/core/stack";
 import type { Reporter, RunResult, StepResult } from "@probitas/runner";
 import { Writer, type WriterOptions } from "./writer.ts";
-import { sanitizeStack } from "./utils/stack.ts";
 
 export interface TAPReporterOptions extends WriterOptions {
 }
@@ -75,11 +75,11 @@ export class TAPReporter implements Reporter {
     if (result.status === "failed") {
       await this.#writeln("  ---");
 
-      const source = result.metadata.source
-        ? `${result.metadata.source.file}:${result.metadata.source.line}`
+      const origin = result.metadata.origin
+        ? `${result.metadata.origin.path}:${result.metadata.origin.line}`
         : "unknown";
 
-      await this.#writeln(`  source: ${source}`);
+      await this.#writeln(`  origin: ${origin}`);
 
       if (result.error) {
         const m = result.error instanceof Error
@@ -88,10 +88,18 @@ export class TAPReporter implements Reporter {
         await this.#writeln(`  message: ${m}`);
 
         if (result.error instanceof Error && result.error.stack) {
-          const sanitizedStack = sanitizeStack(result.error.stack);
-          await this.#writeln(`  stack: |\n`);
-          for (const line of sanitizedStack.split("\n")) {
-            await this.#writeln(`    ${line}\n`);
+          const frames = parseStack(result.error.stack)
+            .filter((frame) => frame.user);
+          if (frames.length > 0) {
+            await this.#writeln(`  stack: |\n`);
+            for (const frame of frames) {
+              const location = frame.line !== undefined
+                ? `${frame.path}:${frame.line}${
+                  frame.column !== undefined ? `:${frame.column}` : ""
+                }`
+                : frame.path;
+              await this.#writeln(`    at ${frame.context} (${location})\n`);
+            }
           }
         }
       }

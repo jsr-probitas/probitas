@@ -1,5 +1,15 @@
 export const snapshot = {};
 
+snapshot[`createValueMixin - toHaveStatus 1`] = `"Expected status to be 404, but got 200"`;
+
+snapshot[`createValueMixin - toHaveStatusEqual 1`] = `
+"Expected data to equal {
+  x: 2,
+}, but got {
+  x: 1,
+}"
+`;
+
 snapshot[`createValueMixin - toHaveStatusStrictEqual 1`] = `
 "Expected data to strictly equal {
   x: 1,
@@ -9,14 +19,4 @@ snapshot[`createValueMixin - toHaveStatusStrictEqual 1`] = `
 }"
 `;
 
-snapshot[`createValueMixin - toHaveStatus 1`] = `"Expected status to be 404, but got 200"`;
-
 snapshot[`createValueMixin - toHaveStatusSatisfying 1`] = `"Expected status to satisfy the matcher, but it failed: Must be 404"`;
-
-snapshot[`createValueMixin - toHaveStatusEqual 1`] = `
-"Expected data to equal {
-  x: 2,
-}, but got {
-  x: 1,
-}"
-`;
