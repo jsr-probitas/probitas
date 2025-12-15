@@ -1,7 +1,7 @@
 import { assertEquals } from "@std/assert";
 import { assertType, type IsExact } from "@std/testing/types";
-import { assertSnapshot } from "@std/testing/snapshot";
 import { catchError } from "../utils.ts";
+import { assertSnapshotWithoutColors } from "./_testutils.ts";
 import { createBooleanValueMixin } from "./boolean_value_mixin.ts";
 
 Deno.test("createBooleanValueMixin - type check", () => {
@@ -45,7 +45,7 @@ Deno.test("createBooleanValueMixin - toHaveValueTruthy", async (t) => {
       valueName: "value",
     });
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveValueTruthy()).message,
     );
@@ -66,7 +66,7 @@ Deno.test("createBooleanValueMixin - toHaveValueFalsy", async (t) => {
       valueName: "value",
     });
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveValueFalsy()).message,
     );

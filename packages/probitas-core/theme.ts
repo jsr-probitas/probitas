@@ -105,3 +105,36 @@ export const noColorTheme: Theme = {
 };
 
 export const defaultTheme = Deno.noColor ? noColorTheme : colorTheme;
+
+/**
+ * Regular expression pattern for ANSI escape sequences.
+ *
+ * Matches SGR (Select Graphic Rendition) sequences like:
+ * - `\x1b[0m` (reset)
+ * - `\x1b[32m` (green)
+ * - `\x1b[1;31m` (bold red)
+ */
+// deno-lint-ignore no-control-regex
+const ANSI_ESCAPE_SEQUENCE_PATTERN = /\x1b\[[0-9;]*m/g;
+
+/**
+ * Remove ANSI color codes from a string.
+ *
+ * Useful for testing output that may contain color codes,
+ * ensuring consistent snapshot comparisons across environments.
+ *
+ * @param text - The text to strip color codes from
+ * @returns The text without ANSI color codes
+ *
+ * @example
+ * ```ts
+ * import { removeColors } from "@probitas/core/theme";
+ *
+ * const colored = "\x1b[32mSuccess\x1b[0m";
+ * const plain = removeColors(colored);
+ * // => "Success"
+ * ```
+ */
+export function removeColors(text: string): string {
+  return text.replace(ANSI_ESCAPE_SEQUENCE_PATTERN, "");
+}

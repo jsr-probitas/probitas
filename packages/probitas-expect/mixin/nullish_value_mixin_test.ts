@@ -1,7 +1,7 @@
 import { assertEquals } from "@std/assert";
 import { assertType, type IsExact } from "@std/testing/types";
-import { assertSnapshot } from "@std/testing/snapshot";
 import { catchError } from "../utils.ts";
+import { assertSnapshotWithoutColors } from "./_testutils.ts";
 import { createNullishValueMixin } from "./nullish_value_mixin.ts";
 
 type Nullish<T> = T | null | undefined;
@@ -67,7 +67,7 @@ Deno.test("createNullishValueMixin - toHaveValueNull", async (t) => {
       },
     );
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveValueNull()).message,
     );
@@ -82,7 +82,7 @@ Deno.test("createNullishValueMixin - toHaveValueNull", async (t) => {
       },
     );
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveValueNull()).message,
     );
@@ -111,7 +111,7 @@ Deno.test("createNullishValueMixin - toHaveValueUndefined", async (t) => {
       },
     );
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveValueUndefined()).message,
     );
@@ -126,7 +126,7 @@ Deno.test("createNullishValueMixin - toHaveValueUndefined", async (t) => {
       },
     );
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveValueUndefined()).message,
     );
@@ -167,7 +167,7 @@ Deno.test("createNullishValueMixin - toHaveValueNullish", async (t) => {
       },
     );
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveValueNull()).message,
     );
@@ -196,7 +196,7 @@ Deno.test("createNullishValueMixin - toHaveValuePresent", async (t) => {
       },
     );
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveValuePresent()).message,
     );
@@ -211,7 +211,7 @@ Deno.test("createNullishValueMixin - toHaveValuePresent", async (t) => {
       },
     );
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveValuePresent()).message,
     );

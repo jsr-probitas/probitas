@@ -1,7 +1,7 @@
 import { assertEquals } from "@std/assert";
 import { assertType, type IsExact } from "@std/testing/types";
-import { assertSnapshot } from "@std/testing/snapshot";
 import { catchError } from "../utils.ts";
+import { assertSnapshotWithoutColors } from "./_testutils.ts";
 import { createOkMixin } from "./ok_mixin.ts";
 
 Deno.test("createOkMixin - type check", () => {
@@ -43,6 +43,9 @@ Deno.test("createOkMixin - toBeOk", async (t) => {
       valueName: "response",
     });
     const applied = applier({ dummy: true });
-    await assertSnapshot(t, catchError(() => applied.toBeOk()).message);
+    await assertSnapshotWithoutColors(
+      t,
+      catchError(() => applied.toBeOk()).message,
+    );
   });
 });

@@ -1,7 +1,7 @@
 import { assertEquals } from "@std/assert";
 import { assertType, type IsExact } from "@std/testing/types";
-import { assertSnapshot } from "@std/testing/snapshot";
 import { catchError } from "../utils.ts";
+import { assertSnapshotWithoutColors } from "./_testutils.ts";
 import { createObjectValueMixin } from "./object_value_mixin.ts";
 
 Deno.test("createObjectValueMixin - type check", () => {
@@ -78,7 +78,7 @@ Deno.test("createObjectValueMixin - toHaveUserMatching", async (t) => {
       { valueName: "user" },
     );
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveUserMatching({ name: "Bob" })).message,
     );
@@ -113,7 +113,7 @@ Deno.test("createObjectValueMixin - toHaveUserProperty", async (t) => {
       { valueName: "user" },
     );
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveUserProperty("email")).message,
     );
@@ -126,7 +126,7 @@ Deno.test("createObjectValueMixin - toHaveUserProperty", async (t) => {
       { valueName: "user" },
     );
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveUserProperty("name", "Bob")).message,
     );
@@ -154,7 +154,7 @@ Deno.test("createObjectValueMixin - toHaveUserPropertyContaining", async (t) => 
       { valueName: "data" },
     );
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() =>
         applied.toHaveDataPropertyContaining("message", "goodbye")
@@ -184,7 +184,7 @@ Deno.test("createObjectValueMixin - toHaveUserPropertyMatching", async (t) => {
       { valueName: "data" },
     );
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() =>
         applied.toHaveDataPropertyMatching("config", { port: 3000 })
@@ -216,7 +216,7 @@ Deno.test("createObjectValueMixin - toHaveUserPropertySatisfying", async (t) => 
       { valueName: "data" },
     );
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() =>
         applied.toHaveDataPropertySatisfying("message", (v) => {

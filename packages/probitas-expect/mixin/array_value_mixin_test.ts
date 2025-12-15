@@ -1,7 +1,7 @@
 import { assertEquals } from "@std/assert";
 import { assertType, type IsExact } from "@std/testing/types";
-import { assertSnapshot } from "@std/testing/snapshot";
 import { catchError } from "../utils.ts";
+import { assertSnapshotWithoutColors } from "./_testutils.ts";
 import { createArrayValueMixin } from "./array_value_mixin.ts";
 
 Deno.test("createArrayValueMixin - type check", () => {
@@ -60,7 +60,7 @@ Deno.test("createArrayValueMixin - toHaveItemsContaining", async (t) => {
       },
     );
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveItemsContaining("grape")).message,
     );
@@ -85,7 +85,7 @@ Deno.test("createArrayValueMixin - toHaveItemsContainingEqual", async (t) => {
       { valueName: "items" },
     );
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveItemsContainingEqual({ id: 3 })).message,
     );
@@ -116,7 +116,7 @@ Deno.test("createArrayValueMixin - toHaveItemsMatching", async (t) => {
       { valueName: "items" },
     );
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveItemsMatching({ name: "Charlie" }))
         .message,
@@ -138,7 +138,7 @@ Deno.test("createArrayValueMixin - toHaveItemsEmpty", async (t) => {
       valueName: "items",
     });
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveItemsEmpty()).message,
     );

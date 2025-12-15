@@ -1,7 +1,7 @@
 import { assertEquals } from "@std/assert";
 import { assertType, type IsExact } from "@std/testing/types";
-import { assertSnapshot } from "@std/testing/snapshot";
 import { catchError } from "../utils.ts";
+import { assertSnapshotWithoutColors } from "./_testutils.ts";
 import { createNumberValueMixin } from "./number_value_mixin.ts";
 
 Deno.test("createNumberValueMixin - type check", () => {
@@ -60,7 +60,7 @@ Deno.test("createNumberValueMixin - toHaveScoreNaN", async (t) => {
       valueName: "score",
     });
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveScoreNaN()).message,
     );
@@ -81,7 +81,7 @@ Deno.test("createNumberValueMixin - toHaveScoreGreaterThan", async (t) => {
       valueName: "score",
     });
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveScoreGreaterThan(200)).message,
     );
@@ -104,7 +104,7 @@ Deno.test(
         valueName: "score",
       });
       const applied = mixin({ dummy: true });
-      await assertSnapshot(
+      await assertSnapshotWithoutColors(
         t,
         catchError(() => applied.toHaveScoreGreaterThanOrEqual(200)).message,
       );
@@ -126,7 +126,7 @@ Deno.test("createNumberValueMixin - toHaveScoreLessThan", async (t) => {
       valueName: "score",
     });
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveScoreLessThan(50)).message,
     );
@@ -147,7 +147,7 @@ Deno.test("createNumberValueMixin - toHaveScoreLessThanOrEqual", async (t) => {
       valueName: "score",
     });
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveScoreLessThanOrEqual(50)).message,
     );
@@ -168,7 +168,7 @@ Deno.test("createNumberValueMixin - toHaveScoreCloseTo", async (t) => {
       valueName: "score",
     });
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveScoreCloseTo(200, 2)).message,
     );

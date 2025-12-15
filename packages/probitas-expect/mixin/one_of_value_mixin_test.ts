@@ -1,7 +1,7 @@
 import { assertEquals } from "@std/assert";
 import { assertType, type IsExact } from "@std/testing/types";
-import { assertSnapshot } from "@std/testing/snapshot";
 import { catchError } from "../utils.ts";
+import { assertSnapshotWithoutColors } from "./_testutils.ts";
 import { createOneOfValueMixin } from "./one_of_value_mixin.ts";
 
 Deno.test("createOneOfValueMixin - type check", () => {
@@ -43,7 +43,7 @@ Deno.test("applyOneOfValueMixin - toHaveStatusOneOf", async (t) => {
       valueName: "status",
     });
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveStatusOneOf([200, 201])).message,
     );

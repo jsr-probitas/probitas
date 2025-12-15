@@ -1,7 +1,7 @@
 import { assertEquals } from "@std/assert";
 import { assertType, type IsExact } from "@std/testing/types";
-import { assertSnapshot } from "@std/testing/snapshot";
 import { catchError } from "../utils.ts";
+import { assertSnapshotWithoutColors } from "./_testutils.ts";
 import { createStringValueMixin } from "./string_value_mixin.ts";
 
 Deno.test("createStringValueMixin - type check", () => {
@@ -45,7 +45,7 @@ Deno.test("createStringValueMixin - toHaveMessageContaining", async (t) => {
       valueName: "message",
     });
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveMessageContaining("hello")).message,
     );
@@ -66,7 +66,7 @@ Deno.test("createStringValueMixin - toHaveMessageMatching", async (t) => {
       valueName: "message",
     });
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveMessageMatching(/hello/)).message,
     );

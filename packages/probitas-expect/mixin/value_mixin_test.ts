@@ -1,7 +1,7 @@
 import { assertEquals } from "@std/assert";
 import { assertType, type IsExact } from "@std/testing/types";
-import { assertSnapshot } from "@std/testing/snapshot";
 import { catchError } from "../utils.ts";
+import { assertSnapshotWithoutColors } from "./_testutils.ts";
 import { createValueMixin } from "./value_mixin.ts";
 
 Deno.test("createValueMixin - type check", () => {
@@ -52,7 +52,7 @@ Deno.test("createValueMixin - toHaveStatus", async (t) => {
       valueName: "status",
     });
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveStatus(404)).message,
     );
@@ -73,7 +73,7 @@ Deno.test("createValueMixin - toHaveStatusEqual", async (t) => {
       valueName: "data",
     });
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveDataEqual({ x: 2 })).message,
     );
@@ -94,7 +94,7 @@ Deno.test("createValueMixin - toHaveStatusStrictEqual", async (t) => {
       valueName: "data",
     });
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveDataStrictEqual({ x: 1, y: undefined }))
         .message,
@@ -121,7 +121,7 @@ Deno.test("createValueMixin - toHaveStatusSatisfying", async (t) => {
       valueName: "status",
     });
     const applied = mixin({ dummy: true });
-    await assertSnapshot(
+    await assertSnapshotWithoutColors(
       t,
       catchError(() =>
         applied.toHaveStatusSatisfying((v) => {
