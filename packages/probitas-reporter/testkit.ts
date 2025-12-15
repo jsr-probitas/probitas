@@ -405,7 +405,7 @@ function getRawBufferOutput(buffer: Buffer): string {
  *
  * @example
  * ```typescript
- * testReporter(DotReporter);
+ * testReporter(ListReporter);
  * ```
  */
 export function testReporter(
