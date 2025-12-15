@@ -210,6 +210,14 @@ export function getSourceContext(
 /**
  * Format source context as a string for error messages.
  *
+ * Output format (with theme):
+ * ```
+ * **Context** (dim:path:line:col)
+ *
+ *   dim:123│ code line
+ *   dim:   │     ^
+ * ```
+ *
  * @param ctx - The source context to format
  * @param options - Formatting options
  */
@@ -224,26 +232,27 @@ export function formatSourceContext(
 ): string {
   const { cwd, theme } = options ?? {};
   const location = formatOrigin(ctx.start, { cwd });
-  // Header: "Context" is bold, "(path)" is dim
+
+  // Format header: "Context" is bold, "(path)" is dim
   const header = theme
     ? `${theme.title("Context")} ${theme.dim(`(${location})`)}`
     : `Context (${location})`;
 
-  // Apply styles to body content if theme provided
+  // Format body: add 2-space indent and apply styling
+  // Marker lines (ending with ^) get red color, others get dim
   let body: string;
   if (theme) {
-    // Style each line: ^ markers get failure color, rest gets dim
     body = ctx.content.map((line) => {
-      // Check if this is a marker line (contains only spaces, separator, and ^)
-      const markerMatch = line.match(/^(\s*[│┆]\s*)(\^+)$/);
-      if (markerMatch) {
-        // Apply dim to prefix, failure (red) to ^ marker only
-        return theme.dim(markerMatch[1]) + theme.failure(markerMatch[2]);
+      if (line.trimEnd().endsWith("^")) {
+        // Marker line: dim the prefix, red for the caret
+        const caretIndex = line.lastIndexOf("^");
+        const prefix = line.slice(0, caretIndex);
+        return `  ${theme.dim(prefix)}${theme.failure("^")}`;
       }
-      return theme.dim(line);
+      return `  ${theme.dim(line)}`;
     }).join("\n");
   } else {
-    body = ctx.content.join("\n");
+    body = ctx.content.map((line) => `  ${line}`).join("\n");
   }
 
   return `${header}\n\n${body}`;

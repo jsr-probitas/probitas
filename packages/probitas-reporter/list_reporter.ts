@@ -23,6 +23,7 @@
 import type { ScenarioMetadata, StepMetadata } from "@probitas/core";
 import { formatOrigin, type Origin } from "@probitas/core/origin";
 import type { Reporter, RunResult, StepResult } from "@probitas/runner";
+import { isExpectationError } from "@probitas/expect";
 import { Writer, type WriterOptions } from "./writer.ts";
 import {
   defaultTheme,
@@ -168,7 +169,13 @@ export class ListReporter implements Reporter {
       const errorMessage = getErrorMessage(result.error)
         .split("\n")
         .at(0) ?? "No error message";
-      lines.push(this.#formatErrorLine(errorMessage, this.#theme.failure));
+      // ExpectationError is already styled, other errors need failure color
+      const styledMessage = isExpectationError(result.error)
+        ? errorMessage
+        : this.#theme.failure(errorMessage);
+      lines.push(
+        `${this.#theme.dim(" ┆")} └ ${styledMessage}`,
+      );
     } else if (
       result.status === "skipped" && "error" in result && result.error
     ) {
@@ -252,21 +259,39 @@ export class ListReporter implements Reporter {
           if (step.status === "failed" && "error" in step && step.error) {
             failedTestsLines.push(`${this.#theme.dim(" ┆")}`);
             const message = getErrorMessage(step.error);
+            const isExpErr = isExpectationError(step.error);
+
+            // Format error message lines
             for (const line of message.split("\n")) {
+              // ExpectationError is already styled, other errors need failure color
+              const styledLine = isExpErr
+                ? `   ${line}`
+                : this.#theme.failure(`   ${line}`);
               failedTestsLines.push(
-                `${this.#theme.dim(" ┆")}${this.#theme.failure(`   ${line}`)}`,
+                `${this.#theme.dim(" ┆")}${styledLine}`,
               );
             }
+
+            // Add stack trace section
             if (step.error instanceof Error && step.error.stack) {
-              const stack = step.error.stack.split("\n")
-                .slice(1) // Skip first line (already shown as message)
-                .join("\n")
-                .trim();
-              if (stack) {
+              // Extract only "at ..." lines from stack (excludes message and Context)
+              const stackLines = step.error.stack.split("\n")
+                .filter((line) => line.trimStart().startsWith("at "));
+              if (stackLines.length > 0) {
                 failedTestsLines.push(`${this.#theme.dim(" ┆")}`);
-                for (const line of stack.split("\n")) {
+                // Stack trace title (bold)
+                failedTestsLines.push(
+                  `${this.#theme.dim(" ┆")}   ${
+                    this.#theme.title("Stack trace")
+                  }`,
+                );
+                failedTestsLines.push(`${this.#theme.dim(" ┆")}`);
+                // Stack trace body (dim, 2-space indent from title)
+                for (const line of stackLines) {
                   failedTestsLines.push(
-                    `${this.#theme.dim(" ┆")}   ${this.#theme.dim(line)}`,
+                    `${this.#theme.dim(" ┆")}     ${
+                      this.#theme.dim(line.trim())
+                    }`,
                   );
                 }
               }
@@ -291,6 +316,11 @@ export class ListReporter implements Reporter {
 }
 
 function getErrorMessage(err: unknown): string {
+  // ExpectationError: use message directly (already styled)
+  if (isExpectationError(err)) {
+    return (err as Error).message;
+  }
+  // Other errors: include error name prefix
   if (err instanceof Error) {
     if (err.message) {
       return `${err.name}: ${err.message}`;

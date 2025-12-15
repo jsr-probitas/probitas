@@ -8,12 +8,43 @@
  */
 
 import type { Origin } from "@probitas/core/origin";
-import type { Theme } from "@probitas/core/theme";
+import { defaultTheme, type Theme } from "@probitas/core/theme";
 import {
   captureOrigin,
   formatSourceContext,
   getSourceContext,
 } from "./context.ts";
+
+/**
+ * Custom error class for expectation failures.
+ *
+ * This class is used to identify expectation errors and format them differently
+ * from regular errors (e.g., without "Error:" prefix in reporters).
+ */
+export class ExpectationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ExpectationError";
+  }
+}
+
+/**
+ * Check if an error is an ExpectationError.
+ *
+ * Handles both same-process (instanceof) and cross-process (name check)
+ * scenarios, supporting worker serialization.
+ */
+export function isExpectationError(err: unknown): boolean {
+  // Check by instanceof first (same process)
+  if (err instanceof ExpectationError) {
+    return true;
+  }
+  // Fallback to name check (cross-process serialization)
+  if (err instanceof Error && err.name === "ExpectationError") {
+    return true;
+  }
+  return false;
+}
 
 /**
  * Options for creating an expectation error.
@@ -23,7 +54,7 @@ export interface ExpectationErrorOptions {
   readonly message: string;
   /** The expect() call site origin */
   readonly expectOrigin?: Origin;
-  /** Theme for styling the error message */
+  /** Theme for styling (defaults to defaultTheme) */
   readonly theme?: Theme;
 }
 
@@ -31,32 +62,35 @@ export interface ExpectationErrorOptions {
  * Create an error with source code context.
  *
  * The matcher origin is captured automatically from the call stack.
- * If a theme is provided, the error message is styled with theme.failure
- * and the source context is styled with theme.dim.
+ * Returns an ExpectationError with styled message including:
+ * - Error message: bold + red (failure color)
+ * - Context title: bold
+ * - Context path: dim (gray)
+ * - Context body: dim (gray)
  *
  * @param options - Error options
- * @returns Error with formatted message including source context
+ * @returns ExpectationError with styled and formatted message
  */
 export function createExpectationError(
   options: ExpectationErrorOptions,
-): Error {
-  const { message, expectOrigin, theme } = options;
+): ExpectationError {
+  const { message, expectOrigin, theme = defaultTheme } = options;
 
-  // Apply theme styling if provided (failure color + bold)
-  const styledMessage = theme ? theme.title(theme.failure(message)) : message;
+  // Style the error message: bold + red
+  const styledMessage = theme.title(theme.failure(message));
 
   // Capture matcher origin from current call stack
   const matcherOrigin = captureOrigin();
 
-  // If we have both origins, add source context
+  // If we have both origins, include source context in message
   if (expectOrigin && matcherOrigin) {
     const ctx = getSourceContext(expectOrigin, matcherOrigin);
     if (ctx) {
       const contextStr = formatSourceContext(ctx, { cwd: Deno.cwd(), theme });
-      return new Error(`${styledMessage}\n\n${contextStr}`);
+      return new ExpectationError(`${styledMessage}\n\n${contextStr}`);
     }
   }
 
-  // Fallback to plain message
-  return new Error(styledMessage);
+  // Fallback to styled message without context
+  return new ExpectationError(styledMessage);
 }
