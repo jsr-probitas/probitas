@@ -39,6 +39,11 @@ export interface ListReporterOptions extends WriterOptions {
    * If not provided, uses defaultTheme (or noColorTheme if Deno.noColor is set).
    */
   theme?: Theme;
+  /**
+   * Base directory for making paths relative in output.
+   * If not provided, absolute paths are displayed as-is.
+   */
+  cwd?: string;
 }
 
 /**
@@ -75,15 +80,17 @@ export interface ListReporterOptions extends WriterOptions {
 export class ListReporter implements Reporter {
   #writer: Writer;
   #theme: Theme;
+  #cwd?: string;
 
   /**
    * Create a new ListReporter.
    *
-   * @param options - Configuration (output stream, theme)
+   * @param options - Configuration (output stream, theme, cwd)
    */
   constructor(options: ListReporterOptions = {}) {
     this.#writer = new Writer(options);
     this.#theme = options.theme ?? defaultTheme;
+    this.#cwd = options.cwd;
   }
 
   #writeln(...terms: string[]): Promise<void> {
@@ -95,6 +102,7 @@ export class ListReporter implements Reporter {
     return this.#theme.dim(formatSource(source, {
       prefix: "(",
       suffix: ")",
+      cwd: this.#cwd,
     }));
   }
 
