@@ -1,5 +1,40 @@
 export const snapshot = {};
 
+snapshot[`createArrayValueMixin - toHaveItemsContaining with source context 1`] = `
+'Expected items to contain grape, but got [
+  "apple",
+  "banana",
+]
+
+Context (packages/probitas-expect/mixin/array_value_mixin_test.ts:152:5)
+
+151│   await t.step("fail", async () => {
+152│     const mixin = createArrayValueMixin(
+153│       () => ["apple", "banana"],
+   ┆
+162│       t,
+163│       catchError(() => applied.toHaveItemsContaining("grape")).message,
+   │                                ^
+164│     );'
+`;
+
+snapshot[`createArrayValueMixin - toHaveItemsMatching 1`] = `
+'Expected items to contain item matching {
+  name: "Charlie",
+}, but got [
+  {
+    age: 30,
+    id: 1,
+    name: "Alice",
+  },
+  {
+    age: 25,
+    id: 2,
+    name: "Bob",
+  },
+]'
+`;
+
 snapshot[`createArrayValueMixin - toHaveItemsContaining 1`] = `
 'Expected items to contain grape, but got [
   "apple",
@@ -18,23 +53,6 @@ snapshot[`createArrayValueMixin - toHaveItemsContainingEqual 1`] = `
     id: 2,
   },
 ]"
-`;
-
-snapshot[`createArrayValueMixin - toHaveItemsMatching 1`] = `
-'Expected items to contain item matching {
-  name: "Charlie",
-}, but got [
-  {
-    age: 30,
-    id: 1,
-    name: "Alice",
-  },
-  {
-    age: 25,
-    id: 2,
-    name: "Bob",
-  },
-]'
 `;
 
 snapshot[`createArrayValueMixin - toHaveItemsEmpty 1`] = `"Expected items to be empty, but got length 1"`;

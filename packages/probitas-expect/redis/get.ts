@@ -143,38 +143,38 @@ export interface RedisGetResultExpectation {
 export function expectRedisGetResult(
   result: RedisGetResult,
 ): RedisGetResultExpectation {
-  return mixin.defineExpectation((negate) => [
+  return mixin.defineExpectation((negate, expectOrigin) => [
     mixin.createOkMixin(
       () => result.ok,
       negate,
-      { valueName: "get result" },
+      { valueName: "get result", expectOrigin },
     ),
     // Value
     mixin.createValueMixin(
       () => result.value,
       negate,
-      { valueName: "value" },
+      { valueName: "value", expectOrigin },
     ),
     mixin.createNullishValueMixin(
       () => result.value,
       negate,
-      { valueName: "value" },
+      { valueName: "value", expectOrigin },
     ),
     mixin.createStringValueMixin(
       () => ensureNonNullish(result.value, "value"),
       negate,
-      { valueName: "value" },
+      { valueName: "value", expectOrigin },
     ),
     // Duration
     mixin.createValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
   ]);
 }

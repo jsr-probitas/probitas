@@ -1,5 +1,29 @@
 export const snapshot = {};
 
+snapshot[`ListReporter - multiline error messages > with colors > shows only first line of multiline error in onStepEnd 1`] = `
+"[90mT┆[39m [31m✗[39m Simple passing scenario [90m>[39m Step with multiline error [90m(test.scenario.ts:20)[39m [36m[5.000ms][39m
+[90m ┆[39m[31m └ Error: First line of error[39m
+"
+`;
+
+snapshot[`ListReporter - multiline error messages > with colors > shows only first line of multiline skip reason in onStepEnd 1`] = `
+"[90mT┆[39m [33m⊘[39m Simple passing scenario [90m>[39m Step skipped with multiline reason [90m(test.scenario.ts:25)[39m [36m[0.000ms][39m
+[90m ┆[39m[33m └ Skipped due to:[39m
+"
+`;
+
+snapshot[`ListReporter - multiline error messages > without colors > shows only first line of multiline error in onStepEnd 1`] = `
+"T┆ ✗ Simple passing scenario > Step with multiline error (test.scenario.ts:20) [5.000ms]
+ ┆ └ Error: First line of error
+"
+`;
+
+snapshot[`ListReporter - multiline error messages > without colors > shows only first line of multiline skip reason in onStepEnd 1`] = `
+"T┆ ⊘ Simple passing scenario > Step skipped with multiline reason (test.scenario.ts:25) [0.000ms]
+ ┆ └ Skipped due to:
+"
+`;
+
 snapshot[`after onRunStart 1`] = `""`;
 
 snapshot[`after onScenarioStart - Simple passing scenario (1) 1`] = `""`;
@@ -387,29 +411,5 @@ snapshot[`after onRunEnd 6`] = `
 Summary
   ✓ 0 scenarios passed
 0 scenarios total [0.000ms]
-"
-`;
-
-snapshot[`ListReporter - multiline error messages > with colors > shows only first line of multiline error in onStepEnd 1`] = `
-"[90mT┆[39m [31m✗[39m Simple passing scenario [90m>[39m Step with multiline error [90m(test.scenario.ts:20)[39m [36m[5.000ms][39m
-[90m ┆[39m[31m └ Error: First line of error[39m
-"
-`;
-
-snapshot[`ListReporter - multiline error messages > with colors > shows only first line of multiline skip reason in onStepEnd 1`] = `
-"[90mT┆[39m [33m⊘[39m Simple passing scenario [90m>[39m Step skipped with multiline reason [90m(test.scenario.ts:25)[39m [36m[0.000ms][39m
-[90m ┆[39m[33m └ Skipped due to:[39m
-"
-`;
-
-snapshot[`ListReporter - multiline error messages > without colors > shows only first line of multiline error in onStepEnd 1`] = `
-"T┆ ✗ Simple passing scenario > Step with multiline error (test.scenario.ts:20) [5.000ms]
- ┆ └ Error: First line of error
-"
-`;
-
-snapshot[`ListReporter - multiline error messages > without colors > shows only first line of multiline skip reason in onStepEnd 1`] = `
-"T┆ ⊘ Simple passing scenario > Step skipped with multiline reason (test.scenario.ts:25) [0.000ms]
- ┆ └ Skipped due to:
 "
 `;

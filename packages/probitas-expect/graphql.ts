@@ -537,108 +537,108 @@ export interface GraphqlResponseExpectation {
 export function expectGraphqlResponse(
   response: GraphqlResponse,
 ): GraphqlResponseExpectation {
-  return mixin.defineExpectation((negate) => [
+  return mixin.defineExpectation((negate, expectOrigin) => [
     mixin.createOkMixin(
       () => response.ok,
       negate,
-      { valueName: "response" },
+      { valueName: "response", expectOrigin },
     ),
     // Status
     mixin.createValueMixin(
       () => response.status,
       negate,
-      { valueName: "status" },
+      { valueName: "status", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => response.status,
       negate,
-      { valueName: "status" },
+      { valueName: "status", expectOrigin },
     ),
     mixin.createOneOfValueMixin(
       () => response.status,
       negate,
-      { valueName: "status" },
+      { valueName: "status", expectOrigin },
     ),
     // Headers
     mixin.createValueMixin(
       () => response.headers,
       negate,
-      { valueName: "headers" },
+      { valueName: "headers", expectOrigin },
     ),
     mixin.createObjectValueMixin(
       () => Object.fromEntries(response.headers.entries()),
       negate,
-      { valueName: "headers" },
+      { valueName: "headers", expectOrigin },
     ),
     // Errors
     mixin.createValueMixin(
       () => response.errors,
       negate,
-      { valueName: "errors" },
+      { valueName: "errors", expectOrigin },
     ),
     mixin.createNullishValueMixin(
       () => response.errors,
       negate,
-      { valueName: "errors" },
+      { valueName: "errors", expectOrigin },
     ),
     mixin.createArrayValueMixin(
       () => ensureNonNullish(response.errors, "errors"),
       negate,
-      { valueName: "errors" },
+      { valueName: "errors", expectOrigin },
     ),
     // Error count
     mixin.createValueMixin(
       () => response.errors?.length ?? 0,
       negate,
-      { valueName: "error count" },
+      { valueName: "error count", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => response.errors?.length ?? 0,
       negate,
-      { valueName: "error count" },
+      { valueName: "error count", expectOrigin },
     ),
     // Extensions
     mixin.createValueMixin(
       () => response.extensions,
       negate,
-      { valueName: "extensions" },
+      { valueName: "extensions", expectOrigin },
     ),
     mixin.createNullishValueMixin(
       () => response.extensions,
       negate,
-      { valueName: "extensions" },
+      { valueName: "extensions", expectOrigin },
     ),
     mixin.createObjectValueMixin(
       () => ensureNonNullish(response.extensions, "extensions"),
       negate,
-      { valueName: "extensions" },
+      { valueName: "extensions", expectOrigin },
     ),
     // Data
     mixin.createValueMixin(
       () => response.data,
       negate,
-      { valueName: "data" },
+      { valueName: "data", expectOrigin },
     ),
     mixin.createNullishValueMixin(
       () => response.data,
       negate,
-      { valueName: "data" },
+      { valueName: "data", expectOrigin },
     ),
     mixin.createObjectValueMixin(
       () => ensureNonNullish(response.data, "data"),
       negate,
-      { valueName: "data" },
+      { valueName: "data", expectOrigin },
     ),
     // Duration
     mixin.createValueMixin(
       () => response.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => response.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
   ]);
 }

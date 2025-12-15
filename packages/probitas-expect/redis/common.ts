@@ -110,28 +110,28 @@ export interface RedisCommonResultExpectation {
 export function expectRedisCommonResult(
   result: RedisCommonResult,
 ): RedisCommonResultExpectation {
-  return mixin.defineExpectation((negate) => [
+  return mixin.defineExpectation((negate, expectOrigin) => [
     mixin.createOkMixin(
       () => result.ok,
       negate,
-      { valueName: "common result" },
+      { valueName: "common result", expectOrigin },
     ),
     // Value
     mixin.createValueMixin(
       () => result.value,
       negate,
-      { valueName: "value" },
+      { valueName: "value", expectOrigin },
     ),
     // Duration
     mixin.createValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
   ]);
 }

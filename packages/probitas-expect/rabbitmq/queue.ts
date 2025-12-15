@@ -243,55 +243,55 @@ export interface RabbitMqQueueResultExpectation {
 export function expectRabbitMqQueueResult(
   result: RabbitMqQueueResult,
 ): RabbitMqQueueResultExpectation {
-  return mixin.defineExpectation((negate) => [
+  return mixin.defineExpectation((negate, expectOrigin) => [
     mixin.createOkMixin(
       () => result.ok,
       negate,
-      { valueName: "queue result" },
+      { valueName: "queue result", expectOrigin },
     ),
     // Queue
     mixin.createValueMixin(
       () => result.queue,
       negate,
-      { valueName: "queue" },
+      { valueName: "queue", expectOrigin },
     ),
     mixin.createStringValueMixin(
       () => result.queue,
       negate,
-      { valueName: "queue" },
+      { valueName: "queue", expectOrigin },
     ),
     // Message count
     mixin.createValueMixin(
       () => result.messageCount,
       negate,
-      { valueName: "message count" },
+      { valueName: "message count", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.messageCount,
       negate,
-      { valueName: "message count" },
+      { valueName: "message count", expectOrigin },
     ),
     // Consumer count
     mixin.createValueMixin(
       () => result.consumerCount,
       negate,
-      { valueName: "consumer count" },
+      { valueName: "consumer count", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.consumerCount,
       negate,
-      { valueName: "consumer count" },
+      { valueName: "consumer count", expectOrigin },
     ),
     // Duration
     mixin.createValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
   ]);
 }

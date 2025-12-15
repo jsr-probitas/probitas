@@ -611,136 +611,136 @@ export interface HttpResponseExpectation {
 export function expectHttpResponse(
   response: HttpResponse,
 ): HttpResponseExpectation {
-  return mixin.defineExpectation((negate) => [
+  return mixin.defineExpectation((negate, expectOrigin) => [
     mixin.createOkMixin(
       () => response.ok,
       negate,
-      { valueName: "response" },
+      { valueName: "response", expectOrigin },
     ),
     // Status
     mixin.createValueMixin(
       () => response.status,
       negate,
-      { valueName: "status" },
+      { valueName: "status", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => response.status,
       negate,
-      { valueName: "status" },
+      { valueName: "status", expectOrigin },
     ),
     mixin.createOneOfValueMixin(
       () => response.status,
       negate,
-      { valueName: "status" },
+      { valueName: "status", expectOrigin },
     ),
     // Status text
     mixin.createValueMixin(
       () => response.statusText,
       negate,
-      { valueName: "status text" },
+      { valueName: "status text", expectOrigin },
     ),
     mixin.createStringValueMixin(
       () => response.statusText,
       negate,
-      { valueName: "status text" },
+      { valueName: "status text", expectOrigin },
     ),
     // Headers
     mixin.createValueMixin(
       () => response.headers,
       negate,
-      { valueName: "headers" },
+      { valueName: "headers", expectOrigin },
     ),
     mixin.createObjectValueMixin(
       () => Object.fromEntries(response.headers.entries()),
       negate,
-      { valueName: "headers" },
+      { valueName: "headers", expectOrigin },
     ),
     // URL
     mixin.createValueMixin(
       () => response.url,
       negate,
-      { valueName: "url" },
+      { valueName: "url", expectOrigin },
     ),
     mixin.createStringValueMixin(
       () => response.url,
       negate,
-      { valueName: "url" },
+      { valueName: "url", expectOrigin },
     ),
     // Body
     mixin.createValueMixin(
       () => response.body,
       negate,
-      { valueName: "body" },
+      { valueName: "body", expectOrigin },
     ),
     mixin.createNullishValueMixin(
       () => response.body,
       negate,
-      { valueName: "body" },
+      { valueName: "body", expectOrigin },
     ),
     // Body length
     mixin.createValueMixin(
       () => ensureNonNullish(response.body?.length, "body length"),
       negate,
-      { valueName: "body length" },
+      { valueName: "body length", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => ensureNonNullish(response.body?.length, "body length"),
       negate,
-      { valueName: "body length" },
+      { valueName: "body length", expectOrigin },
     ),
     // Text
     mixin.createValueMixin(
       () => response.text(),
       negate,
-      { valueName: "text" },
+      { valueName: "text", expectOrigin },
     ),
     mixin.createNullishValueMixin(
       () => response.text(),
       negate,
-      { valueName: "text" },
+      { valueName: "text", expectOrigin },
     ),
     mixin.createStringValueMixin(
       () => ensureNonNullish(response.text(), "text"),
       negate,
-      { valueName: "text" },
+      { valueName: "text", expectOrigin },
     ),
     // Text length
     mixin.createValueMixin(
       () => ensureNonNullish(response.text(), "text length").length,
       negate,
-      { valueName: "text length" },
+      { valueName: "text length", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => ensureNonNullish(response.text(), "text length").length,
       negate,
-      { valueName: "text length" },
+      { valueName: "text length", expectOrigin },
     ),
     // Data
     mixin.createValueMixin(
       () => response.data(),
       negate,
-      { valueName: "data" },
+      { valueName: "data", expectOrigin },
     ),
     mixin.createNullishValueMixin(
       () => response.data(),
       negate,
-      { valueName: "data" },
+      { valueName: "data", expectOrigin },
     ),
     mixin.createObjectValueMixin(
       () => ensureNonNullish(response.data(), "response data"),
       negate,
-      { valueName: "data" },
+      { valueName: "data", expectOrigin },
     ),
     // Duration
     mixin.createValueMixin(
       () => response.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => response.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
   ]);
 }

@@ -1,5 +1,20 @@
 export const snapshot = {};
 
+snapshot[`createStringValueMixin - toHaveMessageContaining with source context 1`] = `
+'Expected message to contain hello, but got goodbye world
+
+Context (packages/probitas-expect/mixin/string_value_mixin_test.ts:80:5)
+
+79│   await t.step("fail", async () => {
+80│     const mixin = createStringValueMixin(() => "goodbye world", () => false, {
+81│       valueName: "message",
+  ┆
+86│       t,
+87│       catchError(() => applied.toHaveMessageContaining("hello")).message,
+  │                                ^
+88│     );'
+`;
+
 snapshot[`createStringValueMixin - toHaveMessageContaining 1`] = `"Expected message to contain hello, but got goodbye world"`;
 
 snapshot[`createStringValueMixin - toHaveMessageMatching 1`] = `"Expected message to match /hello/, but got goodbye world"`;

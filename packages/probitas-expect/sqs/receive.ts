@@ -196,44 +196,44 @@ export interface SqsReceiveResultExpectation {
 export function expectSqsReceiveResult(
   result: SqsReceiveResult,
 ): SqsReceiveResultExpectation {
-  return mixin.defineExpectation((negate) => [
+  return mixin.defineExpectation((negate, expectOrigin) => [
     mixin.createOkMixin(
       () => result.ok,
       negate,
-      { valueName: "receive result" },
+      { valueName: "receive result", expectOrigin },
     ),
     // Messages
     mixin.createValueMixin(
       () => result.messages,
       negate,
-      { valueName: "messages" },
+      { valueName: "messages", expectOrigin },
     ),
     mixin.createArrayValueMixin(
       () => result.messages,
       negate,
-      { valueName: "messages" },
+      { valueName: "messages", expectOrigin },
     ),
     // Message count
     mixin.createValueMixin(
       () => result.messages.length,
       negate,
-      { valueName: "messages count" },
+      { valueName: "messages count", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.messages.length,
       negate,
-      { valueName: "messages count" },
+      { valueName: "messages count", expectOrigin },
     ),
     // Duration
     mixin.createValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
   ]);
 }

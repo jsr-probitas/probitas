@@ -1,3 +1,18 @@
 export const snapshot = {};
 
 snapshot[`createOkMixin - toBeOk 1`] = `"Expected response to be ok, but it failed"`;
+
+snapshot[`createOkMixin - toBeOk 2`] = `
+'Expected response to be ok, but it failed
+
+Context (packages/probitas-expect/mixin/ok_mixin_test.ts:55:5)
+
+54│   await t.step("fail with source context", async () => {
+55│     const applier = createOkMixin(() => false, () => false, {
+56│       valueName: "response",
+  ┆
+61│       t,
+62│       catchError(() => applied.toBeOk()).message,
+  │                                ^
+63│     );'
+`;

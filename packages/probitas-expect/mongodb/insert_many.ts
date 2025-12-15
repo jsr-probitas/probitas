@@ -193,44 +193,44 @@ export interface MongoInsertManyResultExpectation {
 export function expectMongoInsertManyResult(
   result: MongoInsertManyResult,
 ): MongoInsertManyResultExpectation {
-  return mixin.defineExpectation((negate) => [
+  return mixin.defineExpectation((negate, expectOrigin) => [
     mixin.createOkMixin(
       () => result.ok,
       negate,
-      { valueName: "insert result" },
+      { valueName: "insert result", expectOrigin },
     ),
     // Inserted ids
     mixin.createValueMixin(
       () => result.insertedIds,
       negate,
-      { valueName: "inserted ids" },
+      { valueName: "inserted ids", expectOrigin },
     ),
     mixin.createArrayValueMixin(
       () => result.insertedIds,
       negate,
-      { valueName: "inserted ids" },
+      { valueName: "inserted ids", expectOrigin },
     ),
     // Inserted count
     mixin.createValueMixin(
       () => result.insertedCount,
       negate,
-      { valueName: "inserted count" },
+      { valueName: "inserted count", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.insertedCount,
       negate,
-      { valueName: "inserted count" },
+      { valueName: "inserted count", expectOrigin },
     ),
     // Duration
     mixin.createValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
   ]);
 }

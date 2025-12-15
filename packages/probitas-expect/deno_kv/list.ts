@@ -200,44 +200,44 @@ export interface DenoKvListResultExpectation<_T = unknown> {
 export function expectDenoKvListResult<T>(
   result: DenoKvListResult<T>,
 ): DenoKvListResultExpectation {
-  return mixin.defineExpectation((negate) => [
+  return mixin.defineExpectation((negate, expectOrigin) => [
     mixin.createOkMixin(
       () => result.ok,
       negate,
-      { valueName: "result" },
+      { valueName: "result", expectOrigin },
     ),
     // Entries
     mixin.createValueMixin(
       () => result.entries,
       negate,
-      { valueName: "entries" },
+      { valueName: "entries", expectOrigin },
     ),
     mixin.createArrayValueMixin(
       () => result.entries,
       negate,
-      { valueName: "entries" },
+      { valueName: "entries", expectOrigin },
     ),
     // Entry count
     mixin.createValueMixin(
       () => result.entries?.length ?? 0,
       negate,
-      { valueName: "entry count" },
+      { valueName: "entry count", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.entries?.length ?? 0,
       negate,
-      { valueName: "entry count" },
+      { valueName: "entry count", expectOrigin },
     ),
     // Duration
     mixin.createValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
   ]);
 }

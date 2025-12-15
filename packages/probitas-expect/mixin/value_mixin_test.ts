@@ -4,6 +4,8 @@ import { catchError } from "../utils.ts";
 import { assertSnapshotWithoutColors } from "./_testutils.ts";
 import { createValueMixin } from "./value_mixin.ts";
 
+const testFilePath = new URL(import.meta.url).pathname;
+
 Deno.test("createValueMixin - type check", () => {
   const mixin = createValueMixin(() => 200, () => false, {
     valueName: "status",
@@ -128,6 +130,20 @@ Deno.test("createValueMixin - toHaveStatusSatisfying", async (t) => {
           if (v !== 404) throw new Error("Must be 404");
         })
       ).message,
+    );
+  });
+});
+
+Deno.test("createValueMixin - toHaveStatus with source context", async (t) => {
+  await t.step("fail", async () => {
+    const mixin = createValueMixin(() => 200, () => false, {
+      valueName: "status",
+      expectOrigin: { path: testFilePath, line: 138, column: 5 },
+    });
+    const applied = mixin({ dummy: true });
+    await assertSnapshotWithoutColors(
+      t,
+      catchError(() => applied.toHaveStatus(404)).message,
     );
   });
 });

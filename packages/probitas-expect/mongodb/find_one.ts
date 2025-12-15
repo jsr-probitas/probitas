@@ -176,38 +176,38 @@ export interface MongoFindOneResultExpectation<_T = unknown> {
 export function expectMongoFindOneResult<T>(
   result: MongoFindOneResult<T>,
 ): MongoFindOneResultExpectation {
-  return mixin.defineExpectation((negate) => [
+  return mixin.defineExpectation((negate, expectOrigin) => [
     mixin.createOkMixin(
       () => result.ok,
       negate,
-      { valueName: "findOne result" },
+      { valueName: "findOne result", expectOrigin },
     ),
     // Doc
     mixin.createValueMixin(
       () => result.doc,
       negate,
-      { valueName: "doc" },
+      { valueName: "doc", expectOrigin },
     ),
     mixin.createNullishValueMixin(
       () => result.doc,
       negate,
-      { valueName: "doc" },
+      { valueName: "doc", expectOrigin },
     ),
     mixin.createObjectValueMixin(
       () => ensureNonNullish(result.doc, "doc"),
       negate,
-      { valueName: "doc" },
+      { valueName: "doc", expectOrigin },
     ),
     // Duration
     mixin.createValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
   ]);
 }

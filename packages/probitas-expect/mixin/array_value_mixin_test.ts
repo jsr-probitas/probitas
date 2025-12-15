@@ -4,6 +4,8 @@ import { catchError } from "../utils.ts";
 import { assertSnapshotWithoutColors } from "./_testutils.ts";
 import { createArrayValueMixin } from "./array_value_mixin.ts";
 
+const testFilePath = new URL(import.meta.url).pathname;
+
 Deno.test("createArrayValueMixin - type check", () => {
   const mixin = createArrayValueMixin(() => ["a", "b"], () => false, {
     valueName: "items",
@@ -141,6 +143,24 @@ Deno.test("createArrayValueMixin - toHaveItemsEmpty", async (t) => {
     await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveItemsEmpty()).message,
+    );
+  });
+});
+
+Deno.test("createArrayValueMixin - toHaveItemsContaining with source context", async (t) => {
+  await t.step("fail", async () => {
+    const mixin = createArrayValueMixin(
+      () => ["apple", "banana"],
+      () => false,
+      {
+        valueName: "items",
+        expectOrigin: { path: testFilePath, line: 152, column: 5 },
+      },
+    );
+    const applied = mixin({ dummy: true });
+    await assertSnapshotWithoutColors(
+      t,
+      catchError(() => applied.toHaveItemsContaining("grape")).message,
     );
   });
 });

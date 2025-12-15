@@ -281,60 +281,60 @@ export interface RabbitMqConsumeResultExpectation {
 export function expectRabbitMqConsumeResult(
   result: RabbitMqConsumeResult,
 ): RabbitMqConsumeResultExpectation {
-  return mixin.defineExpectation((negate) => [
+  return mixin.defineExpectation((negate, expectOrigin) => [
     mixin.createOkMixin(
       () => result.ok,
       negate,
-      { valueName: "consume result" },
+      { valueName: "consume result", expectOrigin },
     ),
     // Message
     mixin.createValueMixin(
       () => result.message,
       negate,
-      { valueName: "message" },
+      { valueName: "message", expectOrigin },
     ),
     mixin.createNullishValueMixin(
       () => result.message,
       negate,
-      { valueName: "message" },
+      { valueName: "message", expectOrigin },
     ),
     mixin.createObjectValueMixin(
       () => ensureNonNullish(result.message, "message"),
       negate,
-      { valueName: "message" },
+      { valueName: "message", expectOrigin },
     ),
     // Content
     mixin.createValueMixin(
       () => result.message?.content,
       negate,
-      { valueName: "content" },
+      { valueName: "content", expectOrigin },
     ),
     mixin.createNullishValueMixin(
       () => result.message?.content,
       negate,
-      { valueName: "content" },
+      { valueName: "content", expectOrigin },
     ),
     // Content length
     mixin.createValueMixin(
       () => result.message?.content.length ?? 0,
       negate,
-      { valueName: "content length" },
+      { valueName: "content length", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.message?.content.length ?? 0,
       negate,
-      { valueName: "content length" },
+      { valueName: "content length", expectOrigin },
     ),
     // Duration
     mixin.createValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
   ]);
 }

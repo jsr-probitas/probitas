@@ -120,33 +120,33 @@ export interface MongoInsertOneResultExpectation {
 export function expectMongoInsertOneResult(
   result: MongoInsertOneResult,
 ): MongoInsertOneResultExpectation {
-  return mixin.defineExpectation((negate) => [
+  return mixin.defineExpectation((negate, expectOrigin) => [
     mixin.createOkMixin(
       () => result.ok,
       negate,
-      { valueName: "insert result" },
+      { valueName: "insert result", expectOrigin },
     ),
     // Inserted id
     mixin.createValueMixin(
       () => result.insertedId,
       negate,
-      { valueName: "inserted id" },
+      { valueName: "inserted id", expectOrigin },
     ),
     mixin.createStringValueMixin(
       () => result.insertedId,
       negate,
-      { valueName: "inserted id" },
+      { valueName: "inserted id", expectOrigin },
     ),
     // Duration
     mixin.createValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
   ]);
 }

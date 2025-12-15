@@ -4,6 +4,8 @@ import { catchError } from "../utils.ts";
 import { assertSnapshotWithoutColors } from "./_testutils.ts";
 import { createStringValueMixin } from "./string_value_mixin.ts";
 
+const testFilePath = new URL(import.meta.url).pathname;
+
 Deno.test("createStringValueMixin - type check", () => {
   const mixin = createStringValueMixin(() => "hello world", () => false, {
     valueName: "message",
@@ -69,6 +71,20 @@ Deno.test("createStringValueMixin - toHaveMessageMatching", async (t) => {
     await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveMessageMatching(/hello/)).message,
+    );
+  });
+});
+
+Deno.test("createStringValueMixin - toHaveMessageContaining with source context", async (t) => {
+  await t.step("fail", async () => {
+    const mixin = createStringValueMixin(() => "goodbye world", () => false, {
+      valueName: "message",
+      expectOrigin: { path: testFilePath, line: 80, column: 5 },
+    });
+    const applied = mixin({ dummy: true });
+    await assertSnapshotWithoutColors(
+      t,
+      catchError(() => applied.toHaveMessageContaining("hello")).message,
     );
   });
 });

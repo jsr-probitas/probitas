@@ -68,64 +68,64 @@ export interface SqsDeleteBatchResultExpectation {
 export function expectSqsDeleteBatchResult(
   result: SqsDeleteBatchResult,
 ): SqsDeleteBatchResultExpectation {
-  return mixin.defineExpectation((negate) => [
+  return mixin.defineExpectation((negate, expectOrigin) => [
     mixin.createOkMixin(
       () => result.ok,
       negate,
-      { valueName: "delete batch result" },
+      { valueName: "delete batch result", expectOrigin },
     ),
     // Successful
     mixin.createValueMixin(
       () => result.successful,
       negate,
-      { valueName: "successful" },
+      { valueName: "successful", expectOrigin },
     ),
     mixin.createArrayValueMixin(
       () => result.successful,
       negate,
-      { valueName: "successful" },
+      { valueName: "successful", expectOrigin },
     ),
     mixin.createValueMixin(
       () => result.successful.length,
       negate,
-      { valueName: "successful count" },
+      { valueName: "successful count", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.successful.length,
       negate,
-      { valueName: "successful count" },
+      { valueName: "successful count", expectOrigin },
     ),
     // Failed
     mixin.createValueMixin(
       () => result.failed,
       negate,
-      { valueName: "failed" },
+      { valueName: "failed", expectOrigin },
     ),
     mixin.createArrayValueMixin(
       () => result.failed,
       negate,
-      { valueName: "failed" },
+      { valueName: "failed", expectOrigin },
     ),
     mixin.createValueMixin(
       () => result.failed.length,
       negate,
-      { valueName: "failed count" },
+      { valueName: "failed count", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.failed.length,
       negate,
-      { valueName: "failed count" },
+      { valueName: "failed count", expectOrigin },
     ),
     // Duration
     mixin.createValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
   ]);
 }

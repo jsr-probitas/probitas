@@ -315,71 +315,71 @@ export interface SqlQueryResultExpectation {
 export function expectSqlQueryResult<T = Record<string, any>>(
   result: SqlQueryResult<T>,
 ): SqlQueryResultExpectation {
-  return mixin.defineExpectation((negate) => [
+  return mixin.defineExpectation((negate, expectOrigin) => [
     mixin.createOkMixin(
       () => result.ok,
       negate,
-      { valueName: "result" },
+      { valueName: "result", expectOrigin },
     ),
     // Rows
     mixin.createValueMixin(
       () => result.rows,
       negate,
-      { valueName: "rows" },
+      { valueName: "rows", expectOrigin },
     ),
     mixin.createArrayValueMixin(
       () => result.rows,
       negate,
-      { valueName: "rows" },
+      { valueName: "rows", expectOrigin },
     ),
     // Row count
     mixin.createValueMixin(
       () => result.rowCount,
       negate,
-      { valueName: "row count" },
+      { valueName: "row count", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.rowCount,
       negate,
-      { valueName: "row count" },
+      { valueName: "row count", expectOrigin },
     ),
     // LastInsertedId
     mixin.createValueMixin(
       () => result.lastInsertId,
       negate,
-      { valueName: "last insert id" },
+      { valueName: "last insert id", expectOrigin },
     ),
     mixin.createNullishValueMixin(
       () => result.lastInsertId,
       negate,
-      { valueName: "last insert id" },
+      { valueName: "last insert id", expectOrigin },
     ),
     // Warnings
     mixin.createValueMixin(
       () => result.warnings,
       negate,
-      { valueName: "warnings" },
+      { valueName: "warnings", expectOrigin },
     ),
     mixin.createNullishValueMixin(
       () => result.warnings,
       negate,
-      { valueName: "warnings" },
+      { valueName: "warnings", expectOrigin },
     ),
     mixin.createArrayValueMixin(
       () => ensureNonNullish(result.warnings, "warnings"),
       negate,
-      { valueName: "warnings" },
+      { valueName: "warnings", expectOrigin },
     ),
     // Duration
     mixin.createValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
   ]);
 }

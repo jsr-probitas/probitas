@@ -123,33 +123,33 @@ export interface SqsEnsureQueueResultExpectation {
 export function expectSqsEnsureQueueResult(
   result: SqsEnsureQueueResult,
 ): SqsEnsureQueueResultExpectation {
-  return mixin.defineExpectation((negate) => [
+  return mixin.defineExpectation((negate, expectOrigin) => [
     mixin.createOkMixin(
       () => result.ok,
       negate,
-      { valueName: "ensure queue result" },
+      { valueName: "ensure queue result", expectOrigin },
     ),
     // Queue url
     mixin.createValueMixin(
       () => result.queueUrl,
       negate,
-      { valueName: "queue url" },
+      { valueName: "queue url", expectOrigin },
     ),
     mixin.createStringValueMixin(
       () => result.queueUrl,
       negate,
-      { valueName: "queue url" },
+      { valueName: "queue url", expectOrigin },
     ),
     // Duration
     mixin.createValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
   ]);
 }

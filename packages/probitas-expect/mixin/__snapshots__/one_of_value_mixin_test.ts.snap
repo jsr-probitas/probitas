@@ -1,3 +1,18 @@
 export const snapshot = {};
 
 snapshot[`applyOneOfValueMixin - toHaveStatusOneOf 1`] = `"Expected status to be one of 200, 201, but got 500"`;
+
+snapshot[`createOneOfValueMixin - toHaveStatusOneOf with source context 1`] = `
+'Expected status to be one of 200, 201, but got 500
+
+Context (packages/probitas-expect/mixin/one_of_value_mixin_test.ts:56:5)
+
+55│ Deno.test("createOneOfValueMixin - toHaveStatusOneOf with source context", async (t) => {
+56│   await t.step("fail", async () => {
+57│     const mixin = createOneOfValueMixin(() => 500, () => false, {
+  ┆
+63│       t,
+64│       catchError(() => applied.toHaveStatusOneOf([200, 201])).message,
+  │                                ^
+65│     );'
+`;

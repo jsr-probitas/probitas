@@ -144,33 +144,33 @@ export interface MongoCountResultExpectation {
 export function expectMongoCountResult(
   result: MongoCountResult,
 ): MongoCountResultExpectation {
-  return mixin.defineExpectation((negate) => [
+  return mixin.defineExpectation((negate, expectOrigin) => [
     mixin.createOkMixin(
       () => result.ok,
       negate,
-      { valueName: "count result" },
+      { valueName: "count result", expectOrigin },
     ),
     // Count
     mixin.createValueMixin(
       () => result.count,
       negate,
-      { valueName: "count" },
+      { valueName: "count", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.count,
       negate,
-      { valueName: "count" },
+      { valueName: "count", expectOrigin },
     ),
     // Duration
     mixin.createValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
   ]);
 }

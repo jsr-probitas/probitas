@@ -1,5 +1,9 @@
 export const snapshot = {};
 
+snapshot[`createObjectValueMixin - toHaveUserProperty 1`] = `'Expected user to have property "email"'`;
+
+snapshot[`createObjectValueMixin - toHaveUserProperty 2`] = `'Expected user to have property "name" with value Bob'`;
+
 snapshot[`createObjectValueMixin - toHaveUserMatching 1`] = `
 'Expected user to match {
   name: "Bob",
@@ -9,16 +13,32 @@ snapshot[`createObjectValueMixin - toHaveUserMatching 1`] = `
 }'
 `;
 
-snapshot[`createObjectValueMixin - toHaveUserProperty 1`] = `'Expected user to have property "email"'`;
-
-snapshot[`createObjectValueMixin - toHaveUserProperty 2`] = `'Expected user to have property "name" with value Bob'`;
-
 snapshot[`createObjectValueMixin - toHaveUserPropertyContaining 1`] = `'Expected data property "message" to contain goodbye'`;
+
+snapshot[`createObjectValueMixin - toHaveUserMatching with source context 1`] = `
+'Expected user to match {
+  name: "Bob",
+}, but got {
+  age: 30,
+  name: "Alice",
+}
+
+Context (packages/probitas-expect/mixin/object_value_mixin_test.ts:234:5)
+
+233│   await t.step("fail", async () => {
+234│     const mixin = createObjectValueMixin(
+235│       () => ({ name: "Alice", age: 30 }),
+   ┆
+244│       t,
+245│       catchError(() => applied.toHaveUserMatching({ name: "Bob" })).message,
+   │                                ^
+246│     );'
+`;
+
+snapshot[`createObjectValueMixin - toHaveUserPropertySatisfying 1`] = `'Expected data property "message" to satisfy the matcher, but it failed: Must be goodbye'`;
 
 snapshot[`createObjectValueMixin - toHaveUserPropertyMatching 1`] = `
 'Expected data property "config" to match {
   port: 3000,
 }'
 `;
-
-snapshot[`createObjectValueMixin - toHaveUserPropertySatisfying 1`] = `'Expected data property "message" to satisfy the matcher, but it failed: Must be goodbye'`;

@@ -446,92 +446,92 @@ export interface ConnectRpcResponseExpectation {
 export function expectConnectRpcResponse(
   response: ConnectRpcResponse,
 ): ConnectRpcResponseExpectation {
-  return mixin.defineExpectation((negate) => [
+  return mixin.defineExpectation((negate, expectOrigin) => [
     mixin.createOkMixin(
       () => response.ok,
       negate,
-      { valueName: "response" },
+      { valueName: "response", expectOrigin },
     ),
     // Status code
     mixin.createValueMixin(
       () => response.statusCode,
       negate,
-      { valueName: "status code" },
+      { valueName: "status code", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => response.statusCode,
       negate,
-      { valueName: "status code" },
+      { valueName: "status code", expectOrigin },
     ),
     mixin.createOneOfValueMixin(
       () => response.statusCode,
       negate,
-      { valueName: "status code" },
+      { valueName: "status code", expectOrigin },
     ),
     // Message
     mixin.createValueMixin(
       () => response.statusMessage,
       negate,
-      { valueName: "status message" },
+      { valueName: "status message", expectOrigin },
     ),
     mixin.createNullishValueMixin(
       () => response.statusMessage,
       negate,
-      { valueName: "status message" },
+      { valueName: "status message", expectOrigin },
     ),
     mixin.createStringValueMixin(
       () => ensureNonNullish(response.statusMessage, "status message"),
       negate,
-      { valueName: "status message" },
+      { valueName: "status message", expectOrigin },
     ),
     // Headers
     mixin.createValueMixin(
       () => response.headers,
       negate,
-      { valueName: "headers" },
+      { valueName: "headers", expectOrigin },
     ),
     mixin.createObjectValueMixin(
       () => Object.fromEntries(response.headers.entries()),
       negate,
-      { valueName: "headers" },
+      { valueName: "headers", expectOrigin },
     ),
     // Trailers
     mixin.createValueMixin(
       () => response.trailers,
       negate,
-      { valueName: "trailers" },
+      { valueName: "trailers", expectOrigin },
     ),
     mixin.createObjectValueMixin(
       () => Object.fromEntries(response.trailers.entries()),
       negate,
-      { valueName: "trailers" },
+      { valueName: "trailers", expectOrigin },
     ),
     // Data
     mixin.createValueMixin(
       () => response.data(),
       negate,
-      { valueName: "data" },
+      { valueName: "data", expectOrigin },
     ),
     mixin.createNullishValueMixin(
       () => response.data(),
       negate,
-      { valueName: "data" },
+      { valueName: "data", expectOrigin },
     ),
     mixin.createObjectValueMixin(
       () => ensureNonNullish(response.data(), "data"),
       negate,
-      { valueName: "data" },
+      { valueName: "data", expectOrigin },
     ),
     // Duration
     mixin.createValueMixin(
       () => response.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => response.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
   ]);
 }

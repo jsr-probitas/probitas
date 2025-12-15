@@ -1,5 +1,20 @@
 export const snapshot = {};
 
+snapshot[`createBooleanValueMixin - toHaveValueTruthy with source context 1`] = `
+'Expected value to be truthy, but got 0
+
+Context (packages/probitas-expect/mixin/boolean_value_mixin_test.ts:80:5)
+
+79│   await t.step("fail", async () => {
+80│     const mixin = createBooleanValueMixin(() => 0, () => false, {
+81│       valueName: "value",
+  ┆
+86│       t,
+87│       catchError(() => applied.toHaveValueTruthy()).message,
+  │                                ^
+88│     );'
+`;
+
 snapshot[`createBooleanValueMixin - toHaveValueTruthy 1`] = `"Expected value to be truthy, but got 0"`;
 
 snapshot[`createBooleanValueMixin - toHaveValueFalsy 1`] = `"Expected value to be falsy, but got hello"`;

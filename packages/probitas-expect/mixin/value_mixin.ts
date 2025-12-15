@@ -1,4 +1,5 @@
 import { expect as stdExpect } from "@std/expect";
+import { createExpectationError } from "../error.ts";
 import { formatValue } from "../utils.ts";
 import { toPascalCase } from "../utils.ts";
 import { tryOk } from "../utils.ts";
@@ -100,11 +101,12 @@ export function createValueMixin<
         const valueStr = formatValue(value);
         const expectedStr = formatValue(expected);
 
-        throw new Error(
-          isNegated
+        throw createExpectationError({
+          message: isNegated
             ? `Expected ${valueName} to not be ${expectedStr}, but got ${valueStr}`
             : `Expected ${valueName} to be ${expectedStr}, but got ${valueStr}`,
-        );
+          expectOrigin: config.expectOrigin,
+        });
       }
       return this;
     },
@@ -121,11 +123,12 @@ export function createValueMixin<
         const valueStr = formatValue(value);
         const expectedStr = formatValue(expected);
 
-        throw new Error(
-          isNegated
+        throw createExpectationError({
+          message: isNegated
             ? `Expected ${valueName} to not equal ${expectedStr}, but it did`
             : `Expected ${valueName} to equal ${expectedStr}, but got ${valueStr}`,
-        );
+          expectOrigin: config.expectOrigin,
+        });
       }
       return this;
     },
@@ -142,11 +145,12 @@ export function createValueMixin<
         const valueStr = formatValue(value);
         const expectedStr = formatValue(expected);
 
-        throw new Error(
-          isNegated
+        throw createExpectationError({
+          message: isNegated
             ? `Expected ${valueName} to not strictly equal ${expectedStr}, but it did`
             : `Expected ${valueName} to strictly equal ${expectedStr}, but got ${valueStr}`,
-        );
+          expectOrigin: config.expectOrigin,
+        });
       }
       return this;
     },
@@ -172,11 +176,12 @@ export function createValueMixin<
       const passes = matcherError === undefined;
 
       if (isNegated ? passes : !passes) {
-        throw new Error(
-          isNegated
+        throw createExpectationError({
+          message: isNegated
             ? `Expected ${valueName} to not satisfy the matcher, but it did`
             : `Expected ${valueName} to satisfy the matcher, but it failed: ${matcherError?.message}`,
-        );
+          expectOrigin: config.expectOrigin,
+        });
       }
       return this;
     },

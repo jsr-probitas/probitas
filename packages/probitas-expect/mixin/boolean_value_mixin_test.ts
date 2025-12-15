@@ -4,6 +4,8 @@ import { catchError } from "../utils.ts";
 import { assertSnapshotWithoutColors } from "./_testutils.ts";
 import { createBooleanValueMixin } from "./boolean_value_mixin.ts";
 
+const testFilePath = new URL(import.meta.url).pathname;
+
 Deno.test("createBooleanValueMixin - type check", () => {
   const mixin = createBooleanValueMixin(() => true, () => false, {
     valueName: "value",
@@ -69,6 +71,20 @@ Deno.test("createBooleanValueMixin - toHaveValueFalsy", async (t) => {
     await assertSnapshotWithoutColors(
       t,
       catchError(() => applied.toHaveValueFalsy()).message,
+    );
+  });
+});
+
+Deno.test("createBooleanValueMixin - toHaveValueTruthy with source context", async (t) => {
+  await t.step("fail", async () => {
+    const mixin = createBooleanValueMixin(() => 0, () => false, {
+      valueName: "value",
+      expectOrigin: { path: testFilePath, line: 80, column: 5 },
+    });
+    const applied = mixin({ dummy: true });
+    await assertSnapshotWithoutColors(
+      t,
+      catchError(() => applied.toHaveValueTruthy()).message,
     );
   });
 });

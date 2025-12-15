@@ -87,22 +87,22 @@ export interface SqsDeleteQueueResultExpectation {
 export function expectSqsDeleteQueueResult(
   result: SqsDeleteQueueResult,
 ): SqsDeleteQueueResultExpectation {
-  return mixin.defineExpectation((negate) => [
+  return mixin.defineExpectation((negate, expectOrigin) => [
     mixin.createOkMixin(
       () => result.ok,
       negate,
-      { valueName: "delete queue result" },
+      { valueName: "delete queue result", expectOrigin },
     ),
     // Duration
     mixin.createValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
   ]);
 }

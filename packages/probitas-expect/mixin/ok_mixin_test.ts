@@ -4,6 +4,8 @@ import { catchError } from "../utils.ts";
 import { assertSnapshotWithoutColors } from "./_testutils.ts";
 import { createOkMixin } from "./ok_mixin.ts";
 
+const testFilePath = new URL(import.meta.url).pathname;
+
 Deno.test("createOkMixin - type check", () => {
   const applier = createOkMixin(() => true, () => false, {
     valueName: "response",
@@ -41,6 +43,18 @@ Deno.test("createOkMixin - toBeOk", async (t) => {
   await t.step("fail", async () => {
     const applier = createOkMixin(() => false, () => false, {
       valueName: "response",
+    });
+    const applied = applier({ dummy: true });
+    await assertSnapshotWithoutColors(
+      t,
+      catchError(() => applied.toBeOk()).message,
+    );
+  });
+
+  await t.step("fail with source context", async () => {
+    const applier = createOkMixin(() => false, () => false, {
+      valueName: "response",
+      expectOrigin: { path: testFilePath, line: 55, column: 5 },
     });
     const applied = applier({ dummy: true });
     await assertSnapshotWithoutColors(

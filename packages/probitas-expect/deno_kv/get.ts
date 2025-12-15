@@ -286,65 +286,65 @@ export interface DenoKvGetResultExpectation<_T = unknown> {
 export function expectDenoKvGetResult<T>(
   result: DenoKvGetResult<T>,
 ): DenoKvGetResultExpectation {
-  return mixin.defineExpectation((negate) => [
+  return mixin.defineExpectation((negate, expectOrigin) => [
     mixin.createOkMixin(
       () => result.ok,
       negate,
-      { valueName: "result" },
+      { valueName: "result", expectOrigin },
     ),
     // Key
     mixin.createValueMixin(
       () => result.key,
       negate,
-      { valueName: "key" },
+      { valueName: "key", expectOrigin },
     ),
     mixin.createArrayValueMixin(
       () => ensureNonNullish(result.key, "key"),
       negate,
-      { valueName: "key" },
+      { valueName: "key", expectOrigin },
     ),
     // Value
     mixin.createValueMixin(
       () => result.value,
       negate,
-      { valueName: "value" },
+      { valueName: "value", expectOrigin },
     ),
     mixin.createNullishValueMixin(
       () => result.value,
       negate,
-      { valueName: "value" },
+      { valueName: "value", expectOrigin },
     ),
     mixin.createObjectValueMixin(
       () => ensureNonNullish(result.value, "value"),
       negate,
-      { valueName: "value" },
+      { valueName: "value", expectOrigin },
     ),
     // Versionstamp
     mixin.createValueMixin(
       () => result.versionstamp,
       negate,
-      { valueName: "versionstamp" },
+      { valueName: "versionstamp", expectOrigin },
     ),
     mixin.createNullishValueMixin(
       () => result.versionstamp,
       negate,
-      { valueName: "versionstamp" },
+      { valueName: "versionstamp", expectOrigin },
     ),
     mixin.createStringValueMixin(
       () => ensureNonNullish(result.versionstamp, "versionstamp"),
       negate,
-      { valueName: "versionstamp" },
+      { valueName: "versionstamp", expectOrigin },
     ),
     // Duration
     mixin.createValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
   ]);
 }

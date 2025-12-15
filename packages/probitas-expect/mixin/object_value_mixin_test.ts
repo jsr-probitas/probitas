@@ -4,6 +4,8 @@ import { catchError } from "../utils.ts";
 import { assertSnapshotWithoutColors } from "./_testutils.ts";
 import { createObjectValueMixin } from "./object_value_mixin.ts";
 
+const testFilePath = new URL(import.meta.url).pathname;
+
 Deno.test("createObjectValueMixin - type check", () => {
   const mixin = createObjectValueMixin(
     () => ({ name: "Alice", age: 30 }),
@@ -223,6 +225,24 @@ Deno.test("createObjectValueMixin - toHaveUserPropertySatisfying", async (t) => 
           if (v !== "goodbye") throw new Error("Must be goodbye");
         })
       ).message,
+    );
+  });
+});
+
+Deno.test("createObjectValueMixin - toHaveUserMatching with source context", async (t) => {
+  await t.step("fail", async () => {
+    const mixin = createObjectValueMixin(
+      () => ({ name: "Alice", age: 30 }),
+      () => false,
+      {
+        valueName: "user",
+        expectOrigin: { path: testFilePath, line: 234, column: 5 },
+      },
+    );
+    const applied = mixin({ dummy: true });
+    await assertSnapshotWithoutColors(
+      t,
+      catchError(() => applied.toHaveUserMatching({ name: "Bob" })).message,
     );
   });
 });

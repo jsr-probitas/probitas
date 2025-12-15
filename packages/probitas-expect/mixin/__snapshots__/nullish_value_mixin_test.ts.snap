@@ -1,5 +1,22 @@
 export const snapshot = {};
 
+snapshot[`createNullishValueMixin - toHaveValueNull with source context 1`] = `
+"Expected value to be null, but got 200
+
+Context (packages/probitas-expect/mixin/nullish_value_mixin_test.ts:226:5)
+
+225│     const mixin = createNullishValueMixin(
+226│       () => 200 as Nullish<number>,
+227│       () => false,
+   ┆
+235│       t,
+236│       catchError(() => applied.toHaveValueNull()).message,
+   │                                ^
+237│     );"
+`;
+
+snapshot[`createNullishValueMixin - toHaveValueNullish 1`] = `"Expected value to be null, but got 200"`;
+
 snapshot[`createNullishValueMixin - toHaveValueNull 1`] = `"Expected value to be null, but got undefined"`;
 
 snapshot[`createNullishValueMixin - toHaveValueNull 2`] = `"Expected value to be null, but got 200"`;
@@ -7,8 +24,6 @@ snapshot[`createNullishValueMixin - toHaveValueNull 2`] = `"Expected value to be
 snapshot[`createNullishValueMixin - toHaveValueUndefined 1`] = `"Expected value to be undefined, but got null"`;
 
 snapshot[`createNullishValueMixin - toHaveValueUndefined 2`] = `"Expected value to be undefined, but got 200"`;
-
-snapshot[`createNullishValueMixin - toHaveValueNullish 1`] = `"Expected value to be null, but got 200"`;
 
 snapshot[`createNullishValueMixin - toHaveValuePresent 1`] = `"Expected value to be present, but got null"`;
 

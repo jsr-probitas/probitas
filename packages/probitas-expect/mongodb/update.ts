@@ -263,60 +263,60 @@ export interface MongoUpdateResultExpectation {
 export function expectMongoUpdateResult(
   result: MongoUpdateResult,
 ): MongoUpdateResultExpectation {
-  return mixin.defineExpectation((negate) => [
+  return mixin.defineExpectation((negate, expectOrigin) => [
     mixin.createOkMixin(
       () => result.ok,
       negate,
-      { valueName: "update result" },
+      { valueName: "update result", expectOrigin },
     ),
     // Matched count
     mixin.createValueMixin(
       () => result.matchedCount,
       negate,
-      { valueName: "matched count" },
+      { valueName: "matched count", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.matchedCount,
       negate,
-      { valueName: "matched count" },
+      { valueName: "matched count", expectOrigin },
     ),
     // Modified count
     mixin.createValueMixin(
       () => result.modifiedCount,
       negate,
-      { valueName: "modified count" },
+      { valueName: "modified count", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.modifiedCount,
       negate,
-      { valueName: "modified count" },
+      { valueName: "modified count", expectOrigin },
     ),
     // Upserted ID
     mixin.createValueMixin(
       () => result.upsertedId,
       negate,
-      { valueName: "upserted id" },
+      { valueName: "upserted id", expectOrigin },
     ),
     mixin.createNullishValueMixin(
       () => result.upsertedId,
       negate,
-      { valueName: "upserted id" },
+      { valueName: "upserted id", expectOrigin },
     ),
     mixin.createStringValueMixin(
       () => ensureNonNullish(result.upsertedId, "upserted id"),
       negate,
-      { valueName: "upserted id" },
+      { valueName: "upserted id", expectOrigin },
     ),
     // Duration
     mixin.createValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
   ]);
 }

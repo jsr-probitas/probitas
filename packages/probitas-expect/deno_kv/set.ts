@@ -128,33 +128,33 @@ export interface DenoKvSetResultExpectation {
 export function expectDenoKvSetResult(
   result: DenoKvSetResult,
 ): DenoKvSetResultExpectation {
-  return mixin.defineExpectation((negate) => [
+  return mixin.defineExpectation((negate, expectOrigin) => [
     mixin.createOkMixin(
       () => result.ok,
       negate,
-      { valueName: "result" },
+      { valueName: "result", expectOrigin },
     ),
     // Versionstamp
     mixin.createValueMixin(
       () => result.versionstamp,
       negate,
-      { valueName: "versionstamp" },
+      { valueName: "versionstamp", expectOrigin },
     ),
     mixin.createStringValueMixin(
       () => ensureNonNullish(result.versionstamp, "versionstamp"),
       negate,
-      { valueName: "versionstamp" },
+      { valueName: "versionstamp", expectOrigin },
     ),
     // Duration
     mixin.createValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
   ]);
 }

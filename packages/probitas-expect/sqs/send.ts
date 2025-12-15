@@ -196,55 +196,55 @@ export interface SqsSendResultExpectation {
 export function expectSqsSendResult(
   result: SqsSendResult,
 ): SqsSendResultExpectation {
-  return mixin.defineExpectation((negate) => [
+  return mixin.defineExpectation((negate, expectOrigin) => [
     mixin.createOkMixin(
       () => result.ok,
       negate,
-      { valueName: "send result" },
+      { valueName: "send result", expectOrigin },
     ),
     // Message id
     mixin.createValueMixin(
       () => result.messageId,
       negate,
-      { valueName: "message id" },
+      { valueName: "message id", expectOrigin },
     ),
     mixin.createStringValueMixin(
       () => result.messageId,
       negate,
-      { valueName: "message id" },
+      { valueName: "message id", expectOrigin },
     ),
     // md5 of body
     mixin.createValueMixin(
       () => result.md5OfBody,
       negate,
-      { valueName: "md5 of body" },
+      { valueName: "md5 of body", expectOrigin },
     ),
     mixin.createStringValueMixin(
       () => result.md5OfBody,
       negate,
-      { valueName: "md5 of body" },
+      { valueName: "md5 of body", expectOrigin },
     ),
     // Sequence number
     mixin.createValueMixin(
       () => result.sequenceNumber,
       negate,
-      { valueName: "sequence number" },
+      { valueName: "sequence number", expectOrigin },
     ),
     mixin.createStringValueMixin(
       () => ensureNonNullish(result.sequenceNumber, "sequence number"),
       negate,
-      { valueName: "sequence number" },
+      { valueName: "sequence number", expectOrigin },
     ),
     // Duration
     mixin.createValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
   ]);
 }

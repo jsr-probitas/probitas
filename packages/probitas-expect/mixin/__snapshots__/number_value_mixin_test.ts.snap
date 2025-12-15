@@ -1,13 +1,28 @@
 export const snapshot = {};
 
-snapshot[`createNumberValueMixin - toHaveScoreNaN 1`] = `"Expected score to be NaN, but got 100"`;
-
 snapshot[`createNumberValueMixin - toHaveScoreGreaterThan 1`] = `"Expected score to be greater than 200, but got 100"`;
+
+snapshot[`createNumberValueMixin - toHaveScoreGreaterThan with source context 1`] = `
+'Expected score to be greater than 200, but got 100
+
+Context (packages/probitas-expect/mixin/number_value_mixin_test.ts:182:5)
+
+181│   await t.step("fail", async () => {
+182│     const mixin = createNumberValueMixin(() => 100, () => false, {
+183│       valueName: "score",
+   ┆
+188│       t,
+189│       catchError(() => applied.toHaveScoreGreaterThan(200)).message,
+   │                                ^
+190│     );'
+`;
 
 snapshot[`createNumberValueMixin - toHaveScoreGreaterThanOrEqual 1`] = `"Expected score to be greater than or equal to 200, but got 100"`;
 
-snapshot[`createNumberValueMixin - toHaveScoreLessThan 1`] = `"Expected score to be less than 50, but got 100"`;
+snapshot[`createNumberValueMixin - toHaveScoreCloseTo 1`] = `"Expected score to be close to 200 (within 2 digits), but got 100"`;
 
 snapshot[`createNumberValueMixin - toHaveScoreLessThanOrEqual 1`] = `"Expected score to be less than or equal to 50, but got 100"`;
 
-snapshot[`createNumberValueMixin - toHaveScoreCloseTo 1`] = `"Expected score to be close to 200 (within 2 digits), but got 100"`;
+snapshot[`createNumberValueMixin - toHaveScoreLessThan 1`] = `"Expected score to be less than 50, but got 100"`;
+
+snapshot[`createNumberValueMixin - toHaveScoreNaN 1`] = `"Expected score to be NaN, but got 100"`;

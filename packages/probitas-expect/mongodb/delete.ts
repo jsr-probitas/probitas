@@ -144,33 +144,33 @@ export interface MongoDeleteResultExpectation {
 export function expectMongoDeleteResult(
   result: MongoDeleteResult,
 ): MongoDeleteResultExpectation {
-  return mixin.defineExpectation((negate) => [
+  return mixin.defineExpectation((negate, expectOrigin) => [
     mixin.createOkMixin(
       () => result.ok,
       negate,
-      { valueName: "delete result" },
+      { valueName: "delete result", expectOrigin },
     ),
     // Deleted count
     mixin.createValueMixin(
       () => result.deletedCount,
       negate,
-      { valueName: "deleted count" },
+      { valueName: "deleted count", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.deletedCount,
       negate,
-      { valueName: "deleted count" },
+      { valueName: "deleted count", expectOrigin },
     ),
     // Duration
     mixin.createValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
   ]);
 }

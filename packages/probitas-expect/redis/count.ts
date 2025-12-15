@@ -147,33 +147,33 @@ export interface RedisCountResultExpectation {
 export function expectRedisCountResult(
   result: RedisCountResult,
 ): RedisCountResultExpectation {
-  return mixin.defineExpectation((negate) => [
+  return mixin.defineExpectation((negate, expectOrigin) => [
     mixin.createOkMixin(
       () => result.ok,
       negate,
-      { valueName: "count result" },
+      { valueName: "count result", expectOrigin },
     ),
     // Value
     mixin.createValueMixin(
       () => result.value,
       negate,
-      { valueName: "value" },
+      { valueName: "value", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.value,
       negate,
-      { valueName: "value" },
+      { valueName: "value", expectOrigin },
     ),
     // Duration
     mixin.createValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
     mixin.createNumberValueMixin(
       () => result.duration,
       negate,
-      { valueName: "duration" },
+      { valueName: "duration", expectOrigin },
     ),
   ]);
 }
