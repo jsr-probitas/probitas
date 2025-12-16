@@ -123,12 +123,16 @@ export function createArrayValueMixin<
         const valueStr = formatValue(value);
         const itemStr = formatValue(item);
 
+        // For containEqual, expected is the array with the expected item added
+        const expected = [...value, item];
+
         throw createExpectationError({
           message: isNegated
             ? `Expected ${valueName} to not contain equal ${itemStr}, but it did`
             : `Expected ${valueName} to contain equal ${itemStr}, but got ${valueStr}`,
           expectOrigin: config.expectOrigin,
           theme: config.theme,
+          diff: { actual: value, expected, negated: isNegated },
         });
       }
       return this;
@@ -149,12 +153,16 @@ export function createArrayValueMixin<
         const valueStr = formatValue(value);
         const subsetStr = formatValue(subset);
 
+        // For matching, expected is the array with the expected subset added
+        const expected = [...value, subset];
+
         throw createExpectationError({
           message: isNegated
             ? `Expected ${valueName} to not contain item matching ${subsetStr}, but it did`
             : `Expected ${valueName} to contain item matching ${subsetStr}, but got ${valueStr}`,
           expectOrigin: config.expectOrigin,
           theme: config.theme,
+          diff: { actual: value, expected, negated: isNegated },
         });
       }
       return this;

@@ -2,9 +2,45 @@ export const snapshot = {};
 
 snapshot[`createArrayValueMixin - toHaveItemsContaining 1`] = `'Expected items to contain grape, but got [ "apple", "banana" ]'`;
 
-snapshot[`createArrayValueMixin - toHaveItemsContainingEqual 1`] = `"Expected items to contain equal { id: 3 }, but got [ {...}, {...} ]"`;
+snapshot[`createArrayValueMixin - toHaveItemsContainingEqual 1`] = `
+"Expected items to contain equal { id: 3 }, but got [ {...}, {...} ]
 
-snapshot[`createArrayValueMixin - toHaveItemsMatching 1`] = `'Expected items to contain item matching { name: "Charlie" }, but got [ {...}, {...} ]'`;
+Diff (-Actual / +Expected):
+
+    [
+      {
+        id: 1,
+      },
+      {
+        id: 2,
+      },
+  +   {
+  +     id: 3,
+  +   },
+    ]"
+`;
+
+snapshot[`createArrayValueMixin - toHaveItemsMatching 1`] = `
+'Expected items to contain item matching { name: "Charlie" }, but got [ {...}, {...} ]
+
+Diff (-Actual / +Expected):
+
+    [
+      {
+        id: 1,
+        name: "Alice",
+        age: 30,
+      },
+      {
+        id: 2,
+        name: "Bob",
+        age: 25,
+      },
+  +   {
+  +     name: "Charlie",
+  +   },
+    ]'
+`;
 
 snapshot[`createArrayValueMixin - toHaveItemsEmpty 1`] = `"Expected items to be empty, but got length 1"`;
 

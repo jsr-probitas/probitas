@@ -130,6 +130,7 @@ export function createValueMixin<
             : `Expected ${valueName} to equal ${expectedStr}, but got ${valueStr}`,
           expectOrigin: config.expectOrigin,
           theme: config.theme,
+          diff: { actual: value, expected, negated: isNegated },
         });
       }
       return this;
@@ -153,6 +154,7 @@ export function createValueMixin<
             : `Expected ${valueName} to strictly equal ${expectedStr}, but got ${valueStr}`,
           expectOrigin: config.expectOrigin,
           theme: config.theme,
+          diff: { actual: value, expected, negated: isNegated },
         });
       }
       return this;
