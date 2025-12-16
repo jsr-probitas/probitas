@@ -9,21 +9,21 @@ import { describe, it } from "@std/testing/bdd";
 import { Any } from "./diff_any.ts";
 
 describe("Any", () => {
-  it("displays as <Any> when inspected", () => {
+  it("displays as [Any] when inspected", () => {
     const result = Deno.inspect(Any);
-    assertEquals(result, "<Any>");
+    assertEquals(result, "[Any]");
   });
 
-  it("displays as <Any> inside object", () => {
+  it("displays as [Any] inside object", () => {
     const obj = { foo: Any };
     const result = Deno.inspect(obj);
-    assertEquals(result, "{ foo: <Any> }");
+    assertEquals(result, "{ foo: [Any] }");
   });
 
-  it("displays as <Any> inside array", () => {
+  it("displays as [Any] inside array", () => {
     const arr = [1, Any, 3];
     const result = Deno.inspect(arr);
-    assertEquals(result, "[ 1, <Any>, 3 ]");
+    assertEquals(result, "[ 1, [Any], 3 ]");
   });
 
   it("is a singleton", () => {

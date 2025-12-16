@@ -180,7 +180,7 @@ export function createObjectValueMixin<
         const keyPathStr = Array.isArray(keyPath) ? keyPath.join(".") : keyPath;
 
         // Build expected object for diff
-        // Uses <Any> marker when no expected value is specified
+        // Uses [Any] marker when no expected value is specified
         const expected = buildPropertyExpected(
           obj as Record<string, unknown>,
           keyPathStr,

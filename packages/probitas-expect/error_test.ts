@@ -85,3 +85,86 @@ Deno.test("createExpectationError - handles non-existent expectOrigin path grace
   assertExists(error);
   assertEquals(error.message.includes("Error message"), true);
 });
+
+Deno.test("createExpectationError - subject section displays object in multiline format", () => {
+  const subject = { name: "Alice", age: 30 };
+  const error = createExpectationError({
+    message: "Test error",
+    subject,
+  });
+
+  // Should include Subject header
+  assertEquals(error.message.includes("Subject"), true);
+  // Should include the object content
+  assertEquals(error.message.includes("name"), true);
+  assertEquals(error.message.includes("Alice"), true);
+  // Should be multiline (contains newlines after Subject)
+  const subjectIndex = error.message.indexOf("Subject");
+  const afterSubject = error.message.slice(subjectIndex);
+  assertEquals(afterSubject.includes("\n"), true);
+});
+
+Deno.test("createExpectationError - subject with Uint8Array displays as UTF-8", () => {
+  const encoder = new TextEncoder();
+  const subject = { body: encoder.encode("Hello, World!") };
+  const error = createExpectationError({
+    message: "Test error",
+    subject,
+  });
+
+  // Should display as [Utf8: ...] format
+  assertEquals(error.message.includes("[Utf8:"), true);
+  assertEquals(error.message.includes("Hello, World!"), true);
+});
+
+Deno.test("createExpectationError - subject with invalid UTF-8 Uint8Array displays as hex", () => {
+  // Invalid UTF-8 sequence
+  const invalidUtf8 = new Uint8Array([0xff, 0xfe, 0x00, 0x01]);
+  const subject = { data: invalidUtf8 };
+  const error = createExpectationError({
+    message: "Test error",
+    subject,
+  });
+
+  // Should display as [Uint8Array: ...] format with hex
+  assertEquals(error.message.includes("[Uint8Array:"), true);
+  assertEquals(error.message.includes("ff"), true);
+  assertEquals(error.message.includes("fe"), true);
+});
+
+Deno.test("createExpectationError - subject with nested Uint8Array displays correctly", () => {
+  const encoder = new TextEncoder();
+  const subject = {
+    outer: {
+      inner: encoder.encode("nested"),
+    },
+    items: [encoder.encode("first"), encoder.encode("second")],
+  };
+  const error = createExpectationError({
+    message: "Test error",
+    subject,
+  });
+
+  // Should display nested Uint8Array as UTF-8
+  assertEquals(error.message.includes("[Utf8:"), true);
+  assertEquals(error.message.includes("nested"), true);
+  assertEquals(error.message.includes("first"), true);
+  assertEquals(error.message.includes("second"), true);
+});
+
+Deno.test("createExpectationError - subject with escaped characters in Uint8Array", () => {
+  const encoder = new TextEncoder();
+  // String with characters that need escaping: \n, \r, \t, [, ]
+  const subject = { body: encoder.encode("line1\nline2\ttab[bracket]") };
+  const error = createExpectationError({
+    message: "Test error",
+    subject,
+  });
+
+  // Should escape special characters
+  assertEquals(error.message.includes("[Utf8:"), true);
+  assertEquals(error.message.includes("\\n"), true);
+  assertEquals(error.message.includes("\\t"), true);
+  assertEquals(error.message.includes("\\["), true);
+  assertEquals(error.message.includes("\\]"), true);
+});

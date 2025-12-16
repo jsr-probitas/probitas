@@ -70,9 +70,9 @@ export function buildMatchingExpected(
  * ```ts
  * const actual = { name: "Alice" };
  *
- * // Without expected value - shows <Any>
+ * // Without expected value - shows [Any]
  * buildPropertyExpected(actual, "foo");
- * // { name: "Alice", foo: <Any> }
+ * // { name: "Alice", foo: [Any] }
  *
  * // With expected value
  * buildPropertyExpected(actual, "foo", "bar");

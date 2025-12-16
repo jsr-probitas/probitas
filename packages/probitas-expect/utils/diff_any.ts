@@ -9,11 +9,11 @@
 
 /**
  * Internal class for the Any marker.
- * Uses Deno.customInspect to display as `<Any>`.
+ * Uses Deno.customInspect to display as `[Any]`.
  */
 class DiffAny {
   [Symbol.for("Deno.customInspect")](): string {
-    return "<Any>";
+    return "[Any]";
   }
 }
 
@@ -23,7 +23,7 @@ class DiffAny {
  * @example
  * ```ts
  * const expected = { foo: Any };
- * Deno.inspect(expected); // "{ foo: <Any> }"
+ * Deno.inspect(expected); // "{ foo: [Any] }"
  * ```
  */
 export const Any = new DiffAny();

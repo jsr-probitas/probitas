@@ -169,7 +169,71 @@ function buildDiffSection(diff: DiffInfo, theme: Theme): string | undefined {
  * Displays the full object being tested to help debugging.
  */
 function buildSubjectSection(subject: unknown, theme: Theme): string {
-  const subjectStr = Deno.inspect(subject, { depth: Infinity, colors: false });
+  const prepared = prepareForInspect(subject);
+  const subjectStr = Deno.inspect(prepared, {
+    depth: Infinity,
+    colors: false,
+    breakLength: 1, // Force multiline output
+  });
   const lines = subjectStr.split("\n").map((line) => theme.dim(`  ${line}`));
   return `${theme.title("Subject")}\n\n${lines.join("\n")}`;
+}
+
+/**
+ * Prepare a value for inspection by replacing Uint8Array with a readable format.
+ *
+ * Recursively processes objects and arrays to find Uint8Array instances
+ * and wraps them in a custom class that displays UTF-8 content.
+ */
+function prepareForInspect(value: unknown): unknown {
+  if (value instanceof Uint8Array) {
+    return new Uint8ArrayWithUtf8(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map(prepareForInspect);
+  }
+  if (value !== null && typeof value === "object") {
+    const result: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(value)) {
+      result[key] = prepareForInspect(val);
+    }
+    return result;
+  }
+  return value;
+}
+
+/**
+ * Wrapper class for Uint8Array that displays UTF-8 content in inspect output.
+ * Falls back to hex bytes if UTF-8 decoding fails.
+ */
+class Uint8ArrayWithUtf8 {
+  readonly #bytes: Uint8Array;
+
+  constructor(bytes: Uint8Array) {
+    this.#bytes = bytes;
+  }
+
+  [Symbol.for("Deno.customInspect")](): string {
+    // Try UTF-8 decoding with fatal: true to detect invalid sequences
+    try {
+      const utf8 = new TextDecoder("utf-8", { fatal: true }).decode(
+        this.#bytes,
+      );
+      // Escape control characters and square brackets for display
+      const escaped = utf8
+        .replace(/\\/g, "\\\\")
+        .replace(/\[/g, "\\[")
+        .replace(/\]/g, "\\]")
+        .replace(/\n/g, "\\n")
+        .replace(/\r/g, "\\r")
+        .replace(/\t/g, "\\t");
+      return `[Utf8: ${escaped}]`;
+    } catch {
+      // Fall back to hex representation for invalid UTF-8
+      const hex = Array.from(this.#bytes)
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join(" ");
+      return `[Uint8Array: ${hex}]`;
+    }
+  }
 }

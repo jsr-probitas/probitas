@@ -20,7 +20,7 @@ Diff (-Actual / +Expected):
     {
       name: "Alice",
       age: 30,
-  +   email: <Any>,
+  +   email: [Any],
     }'
 `;
 

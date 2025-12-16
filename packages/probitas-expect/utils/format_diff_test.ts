@@ -110,13 +110,13 @@ describe("formatDiff", () => {
   });
 
   describe("with Any marker", () => {
-    it("displays <Any> in expected side", () => {
+    it("displays [Any] in expected side", () => {
       const actual = { bar: "hogehoge" };
       const expected = { bar: "hogehoge", foo: Any };
 
       const result = formatDiff(actual, expected, { theme: noColorTheme });
 
-      assertStringIncludes(result!, "<Any>");
+      assertStringIncludes(result!, "[Any]");
       assertStringIncludes(result!, "foo");
     });
   });
