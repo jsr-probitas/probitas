@@ -1,3 +1,88 @@
+### 2025.12.16
+
+#### @probitas/builder 0.3.0 (minor)
+
+- BREAKING(@probitas/core,@probitas/reporter,@probitas/builder,@probitas/cli):
+  rename Source to Origin and consolidate utilities
+- docs(*): add failure example scenarios for all client types
+- docs(*): add availability checks to external resource scenarios
+
+#### @probitas/cli 0.7.0 (minor)
+
+- BREAKING(@probitas/core,@probitas/reporter,@probitas/builder,@probitas/cli):
+  rename Source to Origin and consolidate utilities
+- docs(*): add failure example scenarios for all client types
+- docs(*): add availability checks to external resource scenarios
+- refactor(@probitas/expect,@probitas/reporter,@probitas/cli): improve error
+  serialization and display
+- refactor(@probitas/core,@probitas/cli): use subpath exports for loader and
+  selector
+
+#### @probitas/core 0.1.0 (minor)
+
+- BREAKING(@probitas/core,@probitas/reporter,@probitas/builder,@probitas/cli):
+  rename Source to Origin and consolidate utilities
+- BREAKING(@probitas/core): rename @probitas/scenario to @probitas/core
+- feat(@probitas/core): add stack trace parsing utilities
+- docs(*): add failure example scenarios for all client types
+- docs(*): add availability checks to external resource scenarios
+- refactor(@probitas/expect,@probitas/core): improve error message styling and
+  formatting
+- refactor(@probitas/core,@probitas/expect): add removeColors and
+  assertSnapshotWithoutColors
+- refactor(@probitas/core,@probitas/reporter): move theme module to
+  @probitas/core
+- refactor(@probitas/core,@probitas/cli): use subpath exports for loader and
+  selector
+
+#### @probitas/discover 0.2.10 (patch)
+
+- docs(*): add failure example scenarios for all client types
+- docs(*): add availability checks to external resource scenarios
+
+#### @probitas/expect 0.2.2 (patch)
+
+- feat(@probitas/expect): improve Subject display with Uint8Array formatting
+- feat(@probitas/expect): add diff display for comparison matchers
+- feat(@probitas/expect): add source code context to expectation errors
+- docs(*): add failure example scenarios for all client types
+- docs(*): add availability checks to external resource scenarios
+- refactor(@probitas/expect): use cfg helper for mixin config and pass subject
+  to errors
+- refactor(@probitas/expect,@probitas/reporter,@probitas/cli): improve error
+  serialization and display
+- refactor(@probitas/expect,@probitas/core): improve error message styling and
+  formatting
+- refactor(@probitas/core,@probitas/expect): add removeColors and
+  assertSnapshotWithoutColors
+
+#### @probitas/logger 0.2.10 (patch)
+
+- docs(*): add failure example scenarios for all client types
+- docs(*): add availability checks to external resource scenarios
+
+#### @probitas/probitas 0.5.2 (patch)
+
+- docs(*): add failure example scenarios for all client types
+- docs(*): add availability checks to external resource scenarios
+
+#### @probitas/reporter 0.5.0 (minor)
+
+- BREAKING(@probitas/reporter): remove DotReporter and TapReporter
+- BREAKING(@probitas/core,@probitas/reporter,@probitas/builder,@probitas/cli):
+  rename Source to Origin and consolidate utilities
+- docs(*): add failure example scenarios for all client types
+- docs(*): add availability checks to external resource scenarios
+- refactor(@probitas/expect,@probitas/reporter,@probitas/cli): improve error
+  serialization and display
+- refactor(@probitas/core,@probitas/reporter): move theme module to
+  @probitas/core
+
+#### @probitas/runner 0.3.1 (patch)
+
+- docs(*): add failure example scenarios for all client types
+- docs(*): add availability checks to external resource scenarios
+
 ### 2025.12.15
 
 #### @probitas/builder 0.2.9 (patch)
