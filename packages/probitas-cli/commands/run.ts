@@ -217,6 +217,7 @@ export async function runCommand(
       maxConcurrency: maxConcurrency ?? 0,
       maxFailures: maxFailures ?? 0,
       timeout: timeoutMs,
+      logLevel,
     });
     const duration = performance.now() - startTime;
 
@@ -272,9 +273,10 @@ async function runWithWorkers(
     maxConcurrency: number;
     maxFailures: number;
     timeout?: number;
+    logLevel?: LogLevel;
   },
 ): Promise<{ results: ScenarioResult[] }> {
-  const { reporter, maxConcurrency, maxFailures, timeout } = options;
+  const { reporter, maxConcurrency, maxFailures, timeout, logLevel } = options;
 
   // Build task list with file paths and indices
   const tasks = buildTaskList(scenarios);
@@ -334,6 +336,7 @@ async function runWithWorkers(
             filePath: task.filePath,
             scenarioIndex: task.scenarioIndex,
             timeout,
+            logLevel,
           },
           callbacks,
         );

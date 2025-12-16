@@ -11,6 +11,7 @@
 
 import type { ScenarioMetadata, StepMetadata } from "@probitas/core";
 import { loadScenarios } from "@probitas/core/loader";
+import { configureLogging } from "@probitas/logger";
 import type { Reporter, ScenarioResult, StepResult } from "@probitas/runner";
 import { Runner } from "@probitas/runner";
 import {
@@ -80,7 +81,12 @@ function postOutput(output: WorkerOutput): void {
  * Execute a scenario from file
  */
 async function runScenario(input: WorkerRunInput): Promise<void> {
-  const { taskId, filePath, scenarioIndex, timeout } = input;
+  const { taskId, filePath, scenarioIndex, timeout, logLevel } = input;
+
+  // Configure logging in worker if log level is provided
+  if (logLevel) {
+    await configureLogging(logLevel);
+  }
 
   try {
     // Load scenarios from file

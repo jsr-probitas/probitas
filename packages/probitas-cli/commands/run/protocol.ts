@@ -6,6 +6,7 @@
 
 import type { ScenarioResult, StepResult } from "@probitas/runner";
 import type { ScenarioMetadata, StepMetadata } from "@probitas/core";
+import type { LogLevel } from "@probitas/logger";
 import {
   type ErrorObject,
   fromErrorObject,
@@ -33,6 +34,8 @@ export interface WorkerRunInput {
   readonly scenarioIndex: number;
   /** Timeout in milliseconds (undefined = no timeout) */
   readonly timeout?: number;
+  /** Log level for worker logging */
+  readonly logLevel?: LogLevel;
 }
 
 /**
