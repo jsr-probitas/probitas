@@ -52,16 +52,16 @@
  * @module
  */
 
-import * as connectrpc from "./connectrpc.ts";
-import * as deno_kv from "./deno_kv.ts";
-import * as graphql from "./graphql.ts";
-import * as grpc from "./grpc.ts";
-import * as http from "./http.ts";
-import * as mongodb from "./mongodb.ts";
-import * as rabbitmq from "./rabbitmq.ts";
-import * as redis from "./redis.ts";
-import * as sql from "./sql/mod.ts";
-import * as sqs from "./sqs.ts";
+import * as connectrpc from "./client/connectrpc.ts";
+import * as deno_kv from "./client/deno_kv.ts";
+import * as graphql from "./client/graphql.ts";
+import * as grpc from "./client/grpc.ts";
+import * as http from "./client/http.ts";
+import * as mongodb from "./client/mongodb.ts";
+import * as rabbitmq from "./client/rabbitmq.ts";
+import * as redis from "./client/redis.ts";
+import * as sql from "./client/sql.ts";
+import * as sqs from "./client/sqs.ts";
 
 export {
   /** Connect-RPC client for type-safe RPC communication */
