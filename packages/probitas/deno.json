@@ -1,6 +1,6 @@
 {
   "name": "@probitas/probitas",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "exports": {
     ".": "./mod.ts",
     "./expect": "./expect.ts",
