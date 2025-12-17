@@ -111,7 +111,7 @@ export * as client from "./client.ts";
 export * from "./expect.ts";
 
 // Re-export useful library for testing
-export * from "@jackfiszr/faker";
+export { faker } from "@faker-js/faker";
 export * from "@std/testing/time";
 export * from "@std/testing/mock";
 export * from "@core/errorutil";

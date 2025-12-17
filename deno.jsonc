@@ -32,7 +32,7 @@
     "@core/errorutil": "jsr:@core/errorutil@^1.2.1",
     "@core/unknownutil": "jsr:@core/unknownutil@^4.3.0",
     "@cspotcode/outdent": "jsr:@cspotcode/outdent@^0.8.0",
-    "@jackfiszr/faker": "jsr:@jackfiszr/faker@1.1.6",
+    "@faker-js/faker": "npm:@faker-js/faker@^9",
     "@lambdalisue/sandbox": "jsr:@lambdalisue/sandbox@^3.0.1",
     "@logtape/logtape": "jsr:@logtape/logtape@^1.2.2",
     "@logtape/pretty": "jsr:@logtape/pretty@^1.2.2",
