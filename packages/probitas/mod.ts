@@ -39,7 +39,7 @@
  *
  * For convenience, this module also re-exports commonly used testing utilities:
  *
- * - `faker` - Fake data generation from `@jackfiszr/faker`
+ * - `faker` - Fake data generation from `@faker-js/faker`
  * - `FakeTime` - Time mocking utilities from `@std/testing/time`
  * - `spy`, `stub`, `assertSpyCalls` - Mock utilities from `@std/testing/mock`
  * - `tryOr`, `raise` - Error handling utilities from `@core/errorutil`
@@ -111,8 +111,35 @@ export * as client from "./client.ts";
 export * from "./expect.ts";
 
 // Re-export useful library for testing
+/**
+ * Faker library for generating fake data.
+ *
+ * Re-exported from {@link https://www.npmjs.com/package/@faker-js/faker | @faker-js/faker}.
+ *
+ * @see {@link https://fakerjs.dev/ | Faker Documentation}
+ */
 export { faker } from "@faker-js/faker";
+/**
+ * Time mocking utilities.
+ *
+ * Re-exported from {@link https://jsr.io/@std/testing | @std/testing/time}.
+ */
 export * from "@std/testing/time";
+/**
+ * Mock and spy utilities.
+ *
+ * Re-exported from {@link https://jsr.io/@std/testing | @std/testing/mock}.
+ */
 export * from "@std/testing/mock";
+/**
+ * Error handling utilities.
+ *
+ * Re-exported from {@link https://jsr.io/@core/errorutil | @core/errorutil}.
+ */
 export * from "@core/errorutil";
+/**
+ * Template literal tag for removing indentation.
+ *
+ * Re-exported from {@link https://jsr.io/@cspotcode/outdent | @cspotcode/outdent}.
+ */
 export * from "@cspotcode/outdent";
