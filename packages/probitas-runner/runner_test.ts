@@ -6,7 +6,7 @@ import {
   createTestScenario,
   createTestStep,
   TestReporter,
-} from "./testutil.ts";
+} from "./_testutils.ts";
 import { Skip } from "./skip.ts";
 import { Runner } from "./runner.ts";
 import { createScopedSignal } from "./utils/signal.ts";

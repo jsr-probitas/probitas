@@ -13,11 +13,11 @@ Each implementation file should export only what is needed for public API:
 
 ```ts
 // runner.ts - Export only public API
-export class Runner { /* ... */ }
+export class Runner {/* ... */}
 export type { RunnerOptions };
 
 // Internal helpers stay unexported
-function internalHelper() { /* ... */ }
+function internalHelper() {/* ... */}
 ```
 
 Entry point files (`mod.ts`, `{module}.ts`) use `export *` to re-export:
@@ -26,7 +26,7 @@ Entry point files (`mod.ts`, `{module}.ts`) use `export *` to re-export:
 // mod.ts
 export * from "./runner.ts";
 export * from "./skip.ts";
-export type * from "./types.ts";  // Type-only for tree-shaking
+export type * from "./types.ts"; // Type-only for tree-shaking
 ```
 
 ### Exporting for Tests
@@ -60,7 +60,7 @@ Usage in tests:
 
 ```ts
 // parser_test.ts
-import { parse, _internal } from "./parser.ts";
+import { _internal, parse } from "./parser.ts";
 
 const { parseValue, validateInput } = _internal;
 

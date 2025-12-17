@@ -7,7 +7,7 @@ import {
   createTestScenarioContext,
   createTestStep,
   TestReporter,
-} from "./testutil.ts";
+} from "./_testutils.ts";
 import { StepRunner } from "./step_runner.ts";
 
 describe("StepRunner", () => {

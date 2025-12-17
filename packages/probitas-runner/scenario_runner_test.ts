@@ -5,7 +5,7 @@ import {
   createTestScenario,
   createTestStep,
   TestReporter,
-} from "./testutil.ts";
+} from "./_testutils.ts";
 import { ScenarioRunner } from "./scenario_runner.ts";
 
 describe("ScenarioRunner", () => {
