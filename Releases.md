@@ -1,3 +1,61 @@
+### 2025.12.17
+
+#### @probitas/builder 0.3.2 (patch)
+
+- docs(*): fix docstring examples to pass --doc type checking
+- docs(*): reorganize .claude documentation structure
+- refactor(*): move --doc flag from test to check task
+
+#### @probitas/core 0.1.2 (patch)
+
+- fix(@probitas/core,@probitas/discover,@probitas/reporter): remove redundant
+  error logging
+- docs(*): fix docstring examples to pass --doc type checking
+- docs(*): reorganize .claude documentation structure
+- refactor(*): move --doc flag from test to check task
+
+#### @probitas/discover 0.2.12 (patch)
+
+- fix(@probitas/core,@probitas/discover,@probitas/reporter): remove redundant
+  error logging
+- docs(*): fix docstring examples to pass --doc type checking
+- docs(*): reorganize .claude documentation structure
+- refactor(*): move --doc flag from test to check task
+
+#### @probitas/expect 0.2.4 (patch)
+
+- docs(*): fix docstring examples to pass --doc type checking
+- docs(*): reorganize .claude documentation structure
+- refactor(*): move --doc flag from test to check task
+
+#### @probitas/logger 0.2.12 (patch)
+
+- docs(*): fix docstring examples to pass --doc type checking
+- docs(*): reorganize .claude documentation structure
+- refactor(*): move --doc flag from test to check task
+
+#### @probitas/probitas 0.5.4 (patch)
+
+- docs(*): fix docstring examples to pass --doc type checking
+- docs(*): reorganize .claude documentation structure
+- refactor(*): move --doc flag from test to check task
+- refactor(@probitas/probitas): use {module}.ts for submodule entry points
+
+#### @probitas/reporter 0.5.2 (patch)
+
+- fix(@probitas/core,@probitas/discover,@probitas/reporter): remove redundant
+  error logging
+- docs(*): fix docstring examples to pass --doc type checking
+- docs(*): reorganize .claude documentation structure
+- refactor(*): move --doc flag from test to check task
+
+#### @probitas/runner 0.3.3 (patch)
+
+- docs(*): fix docstring examples to pass --doc type checking
+- docs(*): reorganize .claude documentation structure
+- refactor(*): move --doc flag from test to check task
+- refactor(@probitas/runner): rename testutil.ts to _testutils.ts
+
 ### 2025.12.16
 
 #### @probitas/builder 0.3.1 (patch)
