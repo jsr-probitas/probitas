@@ -5,15 +5,21 @@
  * @module
  */
 
-import { expectConnectRpcResponse } from "./connectrpc.ts";
-import { expectDenoKvResult } from "./deno_kv.ts";
-import { expectGraphqlResponse } from "./graphql.ts";
-import { expectHttpResponse } from "./http.ts";
-import { expectMongoResult } from "./mongodb.ts";
-import { expectRabbitMqResult } from "./rabbitmq.ts";
-import { expectRedisResult } from "./redis.ts";
+import {
+  type ConnectRpcResponseExpectation,
+  expectConnectRpcResponse,
+} from "./connectrpc.ts";
+import { type DenoKvExpectation, expectDenoKvResult } from "./deno_kv.ts";
+import {
+  expectGraphqlResponse,
+  type GraphqlResponseExpectation,
+} from "./graphql.ts";
+import { expectHttpResponse, type HttpResponseExpectation } from "./http.ts";
+import { expectMongoResult, type MongoExpectation } from "./mongodb.ts";
+import { expectRabbitMqResult, type RabbitMqExpectation } from "./rabbitmq.ts";
+import { expectRedisResult, type RedisExpectation } from "./redis.ts";
 import { expectSqlQueryResult, type SqlQueryResultExpectation } from "./sql.ts";
-import { expectSqsResult } from "./sqs.ts";
+import { expectSqsResult, type SqsExpectation } from "./sqs.ts";
 import { type AnythingExpectation, expectAnything } from "./anything.ts";
 
 import type { ConnectRpcResponse } from "@probitas/client-connectrpc";
@@ -25,11 +31,6 @@ import type { RabbitMqResult } from "@probitas/client-rabbitmq";
 import type { RedisResult } from "@probitas/client-redis";
 import type { SqlQueryResult } from "@probitas/client-sql";
 import type { SqsResult } from "@probitas/client-sqs";
-
-/**
- * Extract row type from SqlQueryResult<T>
- */
-type ExtractSqlRowType<T> = T extends SqlQueryResult<infer R> ? R : never;
 
 /**
  * Type guard for objects with a `kind` property
@@ -59,31 +60,31 @@ function hasKind(value: unknown): value is { kind: string } {
  */
 export function expect<T extends HttpResponse>(
   value: T,
-): ReturnType<typeof expectHttpResponse>;
+): HttpResponseExpectation;
 export function expect<T extends ConnectRpcResponse>(
   value: T,
-): ReturnType<typeof expectConnectRpcResponse>;
+): ConnectRpcResponseExpectation;
 export function expect<T extends GraphqlResponse>(
   value: T,
-): ReturnType<typeof expectGraphqlResponse>;
+): GraphqlResponseExpectation;
 export function expect<T extends SqlQueryResult>(
   value: T,
 ): SqlQueryResultExpectation;
 export function expect<T extends DenoKvResult>(
   value: T,
-): ReturnType<typeof expectDenoKvResult<T>>;
+): DenoKvExpectation<T>;
 export function expect<T extends RedisResult>(
   value: T,
-): ReturnType<typeof expectRedisResult<T>>;
+): RedisExpectation<T>;
 export function expect<T extends MongoResult>(
   value: T,
-): ReturnType<typeof expectMongoResult<T>>;
+): MongoExpectation<T>;
 export function expect<T extends RabbitMqResult>(
   value: T,
-): ReturnType<typeof expectRabbitMqResult<T>>;
+): RabbitMqExpectation<T>;
 export function expect<T extends SqsResult>(
   value: T,
-): ReturnType<typeof expectSqsResult<T>>;
+): SqsExpectation<T>;
 export function expect(value: unknown): AnythingExpectation;
 export function expect(value: unknown): unknown {
   if (hasKind(value)) {
