@@ -7,7 +7,7 @@ import {
   mockRedisGetResult,
   mockRedisHashResult,
   mockRedisSetResult,
-} from "./redis/_test_utils.ts";
+} from "./redis/_testutils.ts";
 
 // Integration tests for expectRedisResult dispatcher
 

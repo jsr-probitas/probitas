@@ -40,7 +40,9 @@ export const mockDenoKvGetResult = <T>(
   overrides: Partial<DenoKvGetResult<T>> = {},
 ): DenoKvGetResult<T> => ({
   kind: "deno-kv:get" as const,
+  processed: true,
   ok: true,
+  error: null,
   key: ["users", "1"],
   value: { name: "Alice" } as T,
   versionstamp: "v1",
@@ -59,7 +61,9 @@ export const mockDenoKvListResult = <T>(
   ];
   return {
     kind: "deno-kv:list" as const,
+    processed: true,
     ok: true,
+    error: null,
     entries: createMockDenoKvEntries(rawEntries ?? defaultEntries),
     duration: 100,
     ...rest,
@@ -70,7 +74,9 @@ export const mockDenoKvSetResult = (
   overrides: Partial<DenoKvSetResult> = {},
 ): DenoKvSetResult => ({
   kind: "deno-kv:set" as const,
+  processed: true,
   ok: true,
+  error: null,
   versionstamp: "v1",
   duration: 100,
   ...overrides,
@@ -80,7 +86,9 @@ export const mockDenoKvDeleteResult = (
   overrides: Partial<DenoKvDeleteResult> = {},
 ): DenoKvDeleteResult => ({
   kind: "deno-kv:delete" as const,
+  processed: true,
   ok: true,
+  error: null,
   duration: 100,
   ...overrides,
 });
@@ -89,7 +97,9 @@ export const mockDenoKvAtomicResult = (
   overrides: Partial<DenoKvAtomicResult> = {},
 ): DenoKvAtomicResult => ({
   kind: "deno-kv:atomic" as const,
+  processed: true,
   ok: true,
+  error: null,
   versionstamp: "v1",
   duration: 100,
   ...overrides,

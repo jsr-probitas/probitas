@@ -3,7 +3,7 @@ import {
   expectRedisCommonResult,
   type RedisCommonResultExpectation,
 } from "./common.ts";
-import { mockRedisCommonResult } from "./_test_utils.ts";
+import { mockRedisCommonResult } from "./_testutils.ts";
 
 // Define expected methods with their test arguments
 // Using Record to ensure all interface methods are listed (compile-time check)

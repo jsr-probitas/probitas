@@ -8,7 +8,9 @@ function createMockResponse(
 ): GrpcResponse {
   const defaultResponse: GrpcResponse = {
     kind: "connectrpc",
+    processed: true,
     ok: true,
+    error: null,
     statusCode: 0,
     statusMessage: "OK",
     headers: new Headers({

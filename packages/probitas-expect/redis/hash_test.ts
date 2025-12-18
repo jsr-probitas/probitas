@@ -3,7 +3,7 @@ import {
   expectRedisHashResult,
   type RedisHashResultExpectation,
 } from "./hash.ts";
-import { mockRedisHashResult } from "./_test_utils.ts";
+import { mockRedisHashResult } from "./_testutils.ts";
 
 // Define expected methods with their test arguments
 // Using Record to ensure all interface methods are listed (compile-time check)

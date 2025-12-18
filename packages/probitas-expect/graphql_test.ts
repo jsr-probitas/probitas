@@ -11,6 +11,7 @@ function createMockResponse(
 ): GraphqlResponse {
   const defaultResponse: GraphqlResponse = {
     kind: "graphql",
+    processed: true,
     ok: true,
     status: 200,
     headers: new Headers({

@@ -10,7 +10,9 @@ export const mockRabbitMqPublishResult = (
   overrides: Partial<RabbitMqPublishResult> = {},
 ): RabbitMqPublishResult => ({
   kind: "rabbitmq:publish" as const,
+  processed: true,
   ok: true,
+  error: null,
   duration: 100,
   ...overrides,
 });
@@ -19,7 +21,9 @@ export const mockRabbitMqConsumeResult = (
   overrides: Partial<RabbitMqConsumeResult> = {},
 ): RabbitMqConsumeResult => ({
   kind: "rabbitmq:consume" as const,
+  processed: true,
   ok: true,
+  error: null,
   message: {
     content: new TextEncoder().encode("test message"),
     properties: { contentType: "text/plain" },
@@ -38,7 +42,9 @@ export const mockRabbitMqQueueResult = (
   overrides: Partial<RabbitMqQueueResult> = {},
 ): RabbitMqQueueResult => ({
   kind: "rabbitmq:queue" as const,
+  processed: true,
   ok: true,
+  error: null,
   queue: "test-queue",
   messageCount: 10,
   consumerCount: 2,
@@ -50,7 +56,9 @@ export const mockRabbitMqAckResult = (
   overrides: Partial<RabbitMqAckResult> = {},
 ): RabbitMqAckResult => ({
   kind: "rabbitmq:ack" as const,
+  processed: true,
   ok: true,
+  error: null,
   duration: 100,
   ...overrides,
 });
@@ -59,7 +67,9 @@ export const mockRabbitMqExchangeResult = (
   overrides: Partial<RabbitMqExchangeResult> = {},
 ): RabbitMqExchangeResult => ({
   kind: "rabbitmq:exchange" as const,
+  processed: true,
   ok: true,
+  error: null,
   duration: 100,
   ...overrides,
 });

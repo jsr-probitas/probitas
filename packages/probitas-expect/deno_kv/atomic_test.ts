@@ -3,7 +3,7 @@ import {
   type DenoKvAtomicResultExpectation,
   expectDenoKvAtomicResult,
 } from "./atomic.ts";
-import { mockDenoKvAtomicResult } from "./_test_utils.ts";
+import { mockDenoKvAtomicResult } from "./_testutils.ts";
 
 // Define expected methods with their test arguments
 // Using Record to ensure all interface methods are listed (compile-time check)

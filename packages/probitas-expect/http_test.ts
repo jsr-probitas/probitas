@@ -9,7 +9,9 @@ function createMockResponse(
   const bodyBytes = new TextEncoder().encode('{"message":"success"}');
   const defaultResponse: HttpResponse = {
     kind: "http",
+    processed: true,
     ok: true,
+    error: null,
     status: 200,
     statusText: "OK",
     headers: new Headers({

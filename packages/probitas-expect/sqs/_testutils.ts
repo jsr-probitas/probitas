@@ -39,7 +39,9 @@ export const mockSqsSendResult = (
   overrides: Partial<SqsSendResult> = {},
 ): SqsSendResult => ({
   kind: "sqs:send" as const,
+  processed: true,
   ok: true,
+  error: null,
   messageId: "msg-123",
   md5OfBody: "md5hash",
   duration: 100,
@@ -50,7 +52,9 @@ export const mockSqsSendBatchResult = (
   overrides: Partial<SqsSendBatchResult> = {},
 ): SqsSendBatchResult => ({
   kind: "sqs:send-batch" as const,
+  processed: true,
   ok: true,
+  error: null,
   successful: [{ id: "1", messageId: "msg-1" }],
   failed: [],
   duration: 100,
@@ -74,7 +78,9 @@ export const mockSqsReceiveResult = (
   ];
   return {
     kind: "sqs:receive" as const,
+    processed: true,
     ok: true,
+    error: null,
     messages: createMockSqsMessages(rawMessages ?? defaultMessages),
     duration: 100,
     ...rest,
@@ -85,7 +91,9 @@ export const mockSqsDeleteResult = (
   overrides: Partial<SqsDeleteResult> = {},
 ): SqsDeleteResult => ({
   kind: "sqs:delete" as const,
+  processed: true,
   ok: true,
+  error: null,
   duration: 100,
   ...overrides,
 });
@@ -94,7 +102,9 @@ export const mockSqsDeleteBatchResult = (
   overrides: Partial<SqsDeleteBatchResult> = {},
 ): SqsDeleteBatchResult => ({
   kind: "sqs:delete-batch" as const,
+  processed: true,
   ok: true,
+  error: null,
   successful: ["1"],
   failed: [],
   duration: 100,
@@ -105,7 +115,9 @@ export const mockSqsEnsureQueueResult = (
   overrides: Partial<SqsEnsureQueueResult> = {},
 ): SqsEnsureQueueResult => ({
   kind: "sqs:ensure-queue" as const,
+  processed: true,
   ok: true,
+  error: null,
   queueUrl: "https://sqs.us-east-1.amazonaws.com/123456/test-queue",
   duration: 100,
   ...overrides,
@@ -115,7 +127,9 @@ export const mockSqsDeleteQueueResult = (
   overrides: Partial<SqsDeleteQueueResult> = {},
 ): SqsDeleteQueueResult => ({
   kind: "sqs:delete-queue" as const,
+  processed: true,
   ok: true,
+  error: null,
   duration: 100,
   ...overrides,
 });

@@ -1,6 +1,6 @@
 import { assertEquals, assertExists } from "@std/assert";
 import { expectSqsSendResult, type SqsSendResultExpectation } from "./send.ts";
-import { mockSqsSendResult } from "./_test_utils.ts";
+import { mockSqsSendResult } from "./_testutils.ts";
 
 // Define expected methods with their test arguments
 // Using Record to ensure all interface methods are listed (compile-time check)

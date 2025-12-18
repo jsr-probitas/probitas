@@ -33,7 +33,9 @@ describe("expect", () => {
     it("dispatches HttpResponse to expectHttpResponse", () => {
       const httpResponse: HttpResponse = {
         kind: "http" as const,
+        processed: true,
         ok: true,
+        error: null,
         status: 200,
         statusText: "OK",
         headers: new Headers(),
@@ -57,7 +59,9 @@ describe("expect", () => {
     it("dispatches ConnectRpcResponse to expectConnectRpcResponse", () => {
       const connectRpcResponse: ConnectRpcResponse = {
         kind: "connectrpc" as const,
+        processed: true,
         ok: true,
+        error: null,
         statusCode: 0,
         statusMessage: "",
         headers: new Headers(),
@@ -75,6 +79,7 @@ describe("expect", () => {
     it("dispatches GraphqlResponse to expectGraphqlResponse", () => {
       const graphqlResponse: GraphqlResponse = {
         kind: "graphql" as const,
+        processed: true,
         ok: true,
         error: null,
         duration: 100,
@@ -92,7 +97,9 @@ describe("expect", () => {
     it("dispatches SqlQueryResult to expectSqlQueryResult", () => {
       const sqlResult: SqlQueryResult = {
         kind: "sql" as const,
+        processed: true,
         ok: true,
+        error: null,
         rows: [] as unknown as SqlQueryResult["rows"],
         rowCount: 0,
         duration: 100,
@@ -108,7 +115,9 @@ describe("expect", () => {
     it("dispatches DenoKvResult (deno-kv:get) to expectDenoKvResult", () => {
       const denoKvResult: DenoKvGetResult<unknown> = {
         kind: "deno-kv:get" as const,
+        processed: true,
         ok: true,
+        error: null,
         key: ["test"],
         value: null,
         versionstamp: null,
@@ -123,7 +132,9 @@ describe("expect", () => {
     it("dispatches DenoKvResult (deno-kv:set) to expectDenoKvResult", () => {
       const denoKvResult: DenoKvSetResult = {
         kind: "deno-kv:set" as const,
+        processed: true,
         ok: true,
+        error: null,
         versionstamp: "00000000",
         duration: 100,
       };
@@ -135,7 +146,9 @@ describe("expect", () => {
     it("dispatches RedisResult (redis:get) to expectRedisResult", () => {
       const redisResult: RedisGetResult = {
         kind: "redis:get" as const,
+        processed: true,
         ok: true,
+        error: null,
         value: "test",
         duration: 100,
       };
@@ -147,7 +160,9 @@ describe("expect", () => {
     it("dispatches RedisResult (redis:set) to expectRedisResult", () => {
       const redisResult: RedisSetResult = {
         kind: "redis:set" as const,
+        processed: true,
         ok: true,
+        error: null,
         value: "OK" as const,
         duration: 100,
       };
@@ -159,7 +174,9 @@ describe("expect", () => {
     it("dispatches MongoResult (mongo:find) to expectMongoResult", () => {
       const mongoResult: MongoFindResult = {
         kind: "mongo:find" as const,
+        processed: true,
         ok: true,
+        error: null,
         docs: [] as unknown as MongoFindResult["docs"],
         duration: 100,
       };
@@ -171,7 +188,9 @@ describe("expect", () => {
     it("dispatches MongoResult (mongo:insert-one) to expectMongoResult", () => {
       const mongoResult: MongoInsertOneResult = {
         kind: "mongo:insert-one" as const,
+        processed: true,
         ok: true,
+        error: null,
         insertedId: "123",
         duration: 100,
       };
@@ -183,7 +202,9 @@ describe("expect", () => {
     it("dispatches RabbitMqResult (rabbitmq:publish) to expectRabbitMqResult", () => {
       const rabbitmqResult: RabbitMqPublishResult = {
         kind: "rabbitmq:publish" as const,
+        processed: true,
         ok: true,
+        error: null,
         duration: 100,
       };
 
@@ -194,7 +215,9 @@ describe("expect", () => {
     it("dispatches RabbitMqResult (rabbitmq:consume) to expectRabbitMqResult", () => {
       const rabbitmqResult: RabbitMqConsumeResult = {
         kind: "rabbitmq:consume" as const,
+        processed: true,
         ok: true,
+        error: null,
         message: null,
         duration: 100,
       };
@@ -206,7 +229,9 @@ describe("expect", () => {
     it("dispatches SqsResult (sqs:send) to expectSqsResult", () => {
       const sqsResult: SqsSendResult = {
         kind: "sqs:send" as const,
+        processed: true,
         ok: true,
+        error: null,
         messageId: "123",
         md5OfBody: "md5hash",
         duration: 100,
@@ -219,7 +244,9 @@ describe("expect", () => {
     it("dispatches SqsResult (sqs:receive) to expectSqsResult", () => {
       const sqsResult: SqsReceiveResult = {
         kind: "sqs:receive" as const,
+        processed: true,
         ok: true,
+        error: null,
         messages: [] as unknown as SqsReceiveResult["messages"],
         duration: 100,
       };
@@ -282,7 +309,9 @@ describe("expect", () => {
     it("infers correct return type for HttpResponse", () => {
       const httpResponse: HttpResponse = {
         kind: "http" as const,
+        processed: true,
         ok: true,
+        error: null,
         status: 200,
         statusText: "OK",
         headers: new Headers(),

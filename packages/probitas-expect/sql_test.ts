@@ -15,7 +15,9 @@ function createMockResult(
 ): SqlQueryResult {
   const defaultResult: SqlQueryResult = {
     kind: "sql",
+    processed: true,
     ok: true,
+    error: null,
     rows: [
       { id: 1, name: "Alice", age: 30 },
       { id: 2, name: "Bob", age: 25 },
