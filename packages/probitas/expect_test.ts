@@ -76,7 +76,7 @@ describe("expect", () => {
       const graphqlResponse: GraphqlResponse = {
         kind: "graphql" as const,
         ok: true,
-        errors: null,
+        error: null,
         duration: 100,
         status: 200,
         headers: new Headers(),
