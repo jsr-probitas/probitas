@@ -101,9 +101,11 @@ describe("expect", () => {
         processed: true,
         ok: true,
         error: null,
-        rows: [] as unknown as SqlQueryResult["rows"],
+        rows: [],
         rowCount: 0,
         duration: 100,
+        lastInsertId: null,
+        warnings: null,
         map: () => [],
         as: () => [],
       };

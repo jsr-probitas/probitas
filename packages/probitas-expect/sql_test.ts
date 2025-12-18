@@ -12,29 +12,29 @@ function createMockResult(
     lastInsertId?: unknown;
     warnings?: unknown[];
   }> = {},
-): SqlQueryResult {
-  const defaultResult: SqlQueryResult = {
+): SqlQueryResult<Record<string, unknown>> {
+  const rows = [
+    { id: 1, name: "Alice", age: 30 },
+    { id: 2, name: "Bob", age: 25 },
+  ];
+  const defaultResult = {
     kind: "sql",
     processed: true,
     ok: true,
     error: null,
-    rows: [
-      { id: 1, name: "Alice", age: 30 },
-      { id: 2, name: "Bob", age: 25 },
-    ] as unknown as SqlQueryResult["rows"],
+    rows,
     rowCount: 2,
     duration: 123,
     lastInsertId: BigInt(42),
     warnings: ["Warning: truncated value"],
-    map: <U>(fn: (row: Record<string, unknown>) => U) =>
-      (defaultResult.rows as Record<string, unknown>[]).map(fn),
-    as: () => defaultResult.rows as unknown as never[],
-  };
+    map: <U>(fn: (row: Record<string, unknown>) => U) => rows.map(fn),
+    as: () => rows,
+  } as unknown as SqlQueryResult<Record<string, unknown>>;
 
   return {
     ...defaultResult,
     ...overrides,
-  } as SqlQueryResult;
+  } as SqlQueryResult<Record<string, unknown>>;
 }
 
 // Define expected methods with their test arguments

@@ -126,7 +126,7 @@ export default scenario("Database Query Test", { tags: ["db"] })
       ["TestUser"],
     );
     expect(result).toBeOk().toHaveRowCount(1);
-    return { userId: result.rows[0].id };
+    return { userId: result.rows![0].id };
   })
   .step("Query inserted user", async (ctx) => {
     const { userId } = ctx.previous!;
