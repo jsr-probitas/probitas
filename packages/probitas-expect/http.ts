@@ -647,28 +647,43 @@ export function expectHttpResponse(
     return [
       mixin.createOkMixin(() => response.ok, negate, cfg("response")),
       // Status
-      mixin.createValueMixin(() => response.status, negate, cfg("status")),
-      mixin.createNumberValueMixin(
-        () => response.status,
+      mixin.createValueMixin(
+        () => ensureNonNullish(response.status, "status"),
         negate,
         cfg("status"),
       ),
-      mixin.createOneOfValueMixin(() => response.status, negate, cfg("status")),
+      mixin.createNumberValueMixin(
+        () => ensureNonNullish(response.status, "status"),
+        negate,
+        cfg("status"),
+      ),
+      mixin.createOneOfValueMixin(
+        () => ensureNonNullish(response.status, "status"),
+        negate,
+        cfg("status"),
+      ),
       // Status text
       mixin.createValueMixin(
-        () => response.statusText,
+        () => ensureNonNullish(response.statusText, "status text"),
         negate,
         cfg("status text"),
       ),
       mixin.createStringValueMixin(
-        () => response.statusText,
+        () => ensureNonNullish(response.statusText, "status text"),
         negate,
         cfg("status text"),
       ),
       // Headers
-      mixin.createValueMixin(() => response.headers, negate, cfg("headers")),
+      mixin.createValueMixin(
+        () => ensureNonNullish(response.headers, "headers"),
+        negate,
+        cfg("headers"),
+      ),
       mixin.createObjectValueMixin(
-        () => Object.fromEntries(response.headers.entries()),
+        () =>
+          Object.fromEntries(
+            ensureNonNullish(response.headers, "headers").entries(),
+          ),
         negate,
         cfg("headers"),
       ),
