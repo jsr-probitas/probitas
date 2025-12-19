@@ -10,8 +10,71 @@ import { getLogger } from "@probitas/logger";
 
 const logger = getLogger("probitas", "discover");
 
+// Match directory name patterns like "**/node_modules/**" -> "node_modules"
+const DIRECTORY_PATTERN_RE = /^\*\*\/([^/*]+)\/\*\*$/;
+
+/**
+ * Build skip patterns for walk() from exclude glob patterns.
+ *
+ * Extracts directory names from patterns like `** /dirname/**` to create
+ * RegExp patterns that match those directory names. This allows walk()
+ * to skip entire directory trees, significantly improving performance.
+ *
+ * @param excludes - Array of glob patterns
+ * @returns Array of RegExp patterns for walk's skip option
+ */
+function buildSkipPatterns(excludes: readonly string[]): RegExp[] {
+  const skipPatterns: RegExp[] = [];
+
+  for (const pattern of excludes) {
+    const match = DIRECTORY_PATTERN_RE.exec(pattern);
+    if (match) {
+      // Pattern matches a directory name, create RegExp to skip it
+      // Use word boundary to match the directory name in paths
+      const dirName = match[1];
+      skipPatterns.push(new RegExp(`(^|/)${escapeRegExp(dirName)}$`));
+    }
+  }
+
+  return skipPatterns;
+}
+
+/**
+ * Escape special RegExp characters in a string
+ */
+function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 const DEFAULT_INCLUDE_PATTERNS = ["**/*.probitas.ts"];
-const DEFAULT_EXCLUDE_PATTERNS: string[] = [];
+
+/**
+ * Default exclude patterns for common large directories.
+ *
+ * These directories are typically generated artifacts or dependencies
+ * that should not contain scenario files.
+ */
+const DEFAULT_EXCLUDE_PATTERNS = [
+  // JavaScript/TypeScript
+  "**/node_modules/**",
+  // Rust
+  "**/target/**",
+  // Python
+  "**/.venv/**",
+  "**/venv/**",
+  "**/__pycache__/**",
+  // Go
+  "**/vendor/**",
+  // Java/Kotlin
+  "**/build/**",
+  // .NET
+  "**/bin/**",
+  "**/obj/**",
+  // General
+  "**/.git/**",
+  "**/dist/**",
+  "**/coverage/**",
+];
 
 /**
  * Progress information during file discovery.
@@ -49,7 +112,7 @@ export interface DiscoverOptions {
   /**
    * Glob patterns for files to exclude.
    *
-   * @default []
+   * @default Excludes common large directories (node_modules, target, .git, etc.)
    */
   excludes?: readonly string[];
 
@@ -161,11 +224,20 @@ export async function discoverScenarioFiles(
           globToRegExp(p, { extended: true, globstar: true })
         );
 
+        // Build skip patterns for walk to avoid entering excluded directories
+        // This is a performance optimization to skip entire directory trees
+        const skipPatterns = buildSkipPatterns(excludes);
+
         // Report progress at start of directory scan
         onProgress?.({ currentPath: path, filesFound: filePaths.size });
 
         let lastReportedDir = "";
-        for await (const entry of walk(path, { includeDirs: false })) {
+        for await (
+          const entry of walk(path, {
+            includeDirs: false,
+            skip: skipPatterns,
+          })
+        ) {
           // Get relative path for pattern matching
           const relativePath = entry.path.slice(path.length + 1);
 
@@ -182,7 +254,7 @@ export async function discoverScenarioFiles(
             });
           }
 
-          // Check if excluded
+          // Check if excluded (for file-level excludes not caught by skip)
           if (excludeRegexps.some((re) => re.test(relativePath))) {
             continue;
           }
