@@ -1,5 +1,12 @@
 ### 2025.12.19
 
+#### @probitas/discover 0.3.2 (patch)
+
+- perf(@probitas/discover): skip excluded directories during walk for faster
+  discovery
+
+### 2025.12.19
+
 #### @probitas/discover 0.3.1 (patch)
 
 - feat(@probitas/discover): add progress callback for real-time feedback
