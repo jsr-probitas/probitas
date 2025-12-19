@@ -1,3 +1,6 @@
+---
+paths: "packages/**/*, deno.jsonc"
+---
 # Package Structure
 
 Workspace organization and dependency management for Probitas.

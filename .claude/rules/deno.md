@@ -1,3 +1,6 @@
+---
+paths: "**/*.ts"
+---
 # Deno/TypeScript Rules
 
 Language-specific conventions and patterns for Deno projects.

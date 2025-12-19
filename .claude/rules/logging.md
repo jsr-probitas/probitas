@@ -1,3 +1,6 @@
+---
+paths: "**/*.ts"
+---
 # Logging Rules
 
 Logging conventions for Probitas packages.

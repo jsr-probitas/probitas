@@ -1,3 +1,6 @@
+---
+paths: "packages/**/*.ts"
+---
 # Design Philosophy
 
 This document describes the design principles and architectural decisions for

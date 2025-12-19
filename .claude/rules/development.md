@@ -1,3 +1,6 @@
+---
+paths: "**/*.ts"
+---
 # Development Patterns
 
 Coding conventions and development practices for Probitas.
