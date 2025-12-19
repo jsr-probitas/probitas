@@ -20,7 +20,8 @@ type Definition<T, MethodBase extends string> = MixinDefinition<[
   [`toHave${MethodBase}StrictEqual`, (this: T, expected: unknown) => T],
   [
     `toHave${MethodBase}Satisfying`,
-    (this: T, matcher: (value: unknown) => void) => T,
+    // deno-lint-ignore no-explicit-any
+    (this: T, matcher: (value: any) => void) => T,
   ],
 ]>;
 
@@ -78,7 +79,8 @@ export type ValueMixin<C extends MixinConfig> = <T extends object>(
  * ```
  */
 export function createValueMixin<
-  V = unknown,
+  // deno-lint-ignore no-explicit-any
+  V extends any = any,
   const C extends MixinConfig = MixinConfig,
 >(
   getter: () => V,

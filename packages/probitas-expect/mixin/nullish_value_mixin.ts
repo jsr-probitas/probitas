@@ -72,7 +72,8 @@ export type NullishValueMixin<C extends MixinConfig> = <T extends object>(
  * ```
  */
 export function createNullishValueMixin<
-  V extends unknown | null = unknown | null,
+  //  deno-lint-ignore no-explicit-any
+  V extends any | null = any | null,
   const C extends MixinConfig = MixinConfig,
 >(
   getter: () => V,

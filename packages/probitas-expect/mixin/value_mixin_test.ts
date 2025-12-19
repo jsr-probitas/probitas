@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-explicit-any
 import { assertEquals } from "@std/assert";
 import { assertSnapshot } from "@std/testing/snapshot";
 import { assertType, type IsExact } from "@std/testing/types";
@@ -20,7 +21,7 @@ Deno.test("createValueMixin - type check", () => {
     toHaveStatusStrictEqual: (this: Expected, expected: unknown) => Expected;
     toHaveStatusSatisfying: (
       this: Expected,
-      matcher: (value: unknown) => void,
+      matcher: (value: any) => void,
     ) => Expected;
   };
   type Actual = typeof applied;
@@ -140,7 +141,7 @@ Deno.test("createValueMixin - toHaveStatus with source context", async (t) => {
   await t.step("fail (noColor)", async () => {
     const mixin = createValueMixin(() => 200, () => false, {
       valueName: "status",
-      expectOrigin: { path: testFilePath, line: 141, column: 5 },
+      expectOrigin: { path: testFilePath, line: 140, column: 5 },
     });
     const applied = mixin({ dummy: true });
     await assertSnapshotWithoutColors(
@@ -152,7 +153,7 @@ Deno.test("createValueMixin - toHaveStatus with source context", async (t) => {
   await t.step("fail (withColor)", async () => {
     const mixin = createValueMixin(() => 200, () => false, {
       valueName: "status",
-      expectOrigin: { path: testFilePath, line: 153, column: 5 },
+      expectOrigin: { path: testFilePath, line: 152, column: 5 },
       theme: colorTheme,
     });
     const applied = mixin({ dummy: true });

@@ -37,7 +37,7 @@ Deno.test("createBooleanValueMixin - attribute check", () => {
 
 Deno.test("createBooleanValueMixin - toHaveValueTruthy", async (t) => {
   await t.step("success", () => {
-    const mixin = createBooleanValueMixin(() => 1, () => false, {
+    const mixin = createBooleanValueMixin(() => true, () => false, {
       valueName: "value",
     });
     const applied = mixin({ dummy: true });
@@ -45,7 +45,7 @@ Deno.test("createBooleanValueMixin - toHaveValueTruthy", async (t) => {
   });
 
   await t.step("fail", async () => {
-    const mixin = createBooleanValueMixin(() => 0, () => false, {
+    const mixin = createBooleanValueMixin(() => false, () => false, {
       valueName: "value",
     });
     const applied = mixin({ dummy: true });
@@ -58,7 +58,7 @@ Deno.test("createBooleanValueMixin - toHaveValueTruthy", async (t) => {
 
 Deno.test("createBooleanValueMixin - toHaveValueFalsy", async (t) => {
   await t.step("success", () => {
-    const mixin = createBooleanValueMixin(() => "", () => false, {
+    const mixin = createBooleanValueMixin(() => false, () => false, {
       valueName: "value",
     });
     const applied = mixin({ dummy: true });
@@ -66,7 +66,7 @@ Deno.test("createBooleanValueMixin - toHaveValueFalsy", async (t) => {
   });
 
   await t.step("fail", async () => {
-    const mixin = createBooleanValueMixin(() => "hello", () => false, {
+    const mixin = createBooleanValueMixin(() => true, () => false, {
       valueName: "value",
     });
     const applied = mixin({ dummy: true });
@@ -79,9 +79,9 @@ Deno.test("createBooleanValueMixin - toHaveValueFalsy", async (t) => {
 
 Deno.test("createBooleanValueMixin - toHaveValueTruthy with source context", async (t) => {
   await t.step("fail (noColor)", async () => {
-    const mixin = createBooleanValueMixin(() => 0, () => false, {
+    const mixin = createBooleanValueMixin(() => false, () => false, {
       valueName: "value",
-      expectOrigin: { path: testFilePath, line: 82, column: 5 },
+      expectOrigin: { path: testFilePath, line: 81, column: 5 },
     });
     const applied = mixin({ dummy: true });
     await assertSnapshotWithoutColors(
@@ -91,9 +91,9 @@ Deno.test("createBooleanValueMixin - toHaveValueTruthy with source context", asy
   });
 
   await t.step("fail (withColor)", async () => {
-    const mixin = createBooleanValueMixin(() => 0, () => false, {
+    const mixin = createBooleanValueMixin(() => false, () => false, {
       valueName: "value",
-      expectOrigin: { path: testFilePath, line: 94, column: 5 },
+      expectOrigin: { path: testFilePath, line: 93, column: 5 },
       theme: colorTheme,
     });
     const applied = mixin({ dummy: true });

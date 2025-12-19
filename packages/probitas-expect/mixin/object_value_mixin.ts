@@ -47,7 +47,7 @@ type Definition<T, MethodBase extends string> = MixinDefinition<[
   [
     `toHave${MethodBase}PropertySatisfying`,
     // deno-lint-ignore no-explicit-any
-    <I extends any>(
+    <I = any>(
       this: T,
       keyPath: string | string[],
       matcher: (value: I) => void,
@@ -279,7 +279,7 @@ export function createObjectValueMixin<
     },
 
     // deno-lint-ignore no-explicit-any
-    [`toHave${methodBase}PropertySatisfying`]<I extends any>(
+    [`toHave${methodBase}PropertySatisfying`]<I = any>(
       this: T,
       keyPath: string | string[],
       matcher: (value: I) => void,

@@ -59,7 +59,8 @@ export type OneOfValueMixin<C extends MixinConfig> = <T extends object>(
  * ```
  */
 export function createOneOfValueMixin<
-  V = unknown,
+  // deno-lint-ignore no-explicit-any
+  V extends any = any,
   const C extends MixinConfig = MixinConfig,
 >(
   getter: () => V,

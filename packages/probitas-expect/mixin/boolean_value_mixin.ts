@@ -66,7 +66,7 @@ export type BooleanValueMixin<C extends MixinConfig> = <T extends object>(
  * ```
  */
 export function createBooleanValueMixin<
-  V = unknown,
+  V extends boolean = boolean,
   const C extends MixinConfig = MixinConfig,
 >(
   getter: () => V,

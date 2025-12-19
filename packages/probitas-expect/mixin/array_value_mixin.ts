@@ -78,7 +78,8 @@ export type ArrayValueMixin<C extends MixinConfig> = <T extends object>(
  * ```
  */
 export function createArrayValueMixin<
-  V extends readonly unknown[] = unknown[],
+  // deno-lint-ignore no-explicit-any
+  V extends readonly any[] = any[],
   const C extends MixinConfig = MixinConfig,
 >(
   getter: () => V,
