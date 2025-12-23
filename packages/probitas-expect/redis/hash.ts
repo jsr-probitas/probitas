@@ -68,14 +68,14 @@ export interface RedisHashResultExpectation {
 
   /**
    * Asserts that the value has the specified property.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param value - Optional expected value at the key path
    */
   toHaveValueProperty(keyPath: string | string[], value?: unknown): this;
 
   /**
    * Asserts that the value property contains the expected value.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param expected - The expected contained value
    */
   toHaveValuePropertyContaining(
@@ -85,7 +85,7 @@ export interface RedisHashResultExpectation {
 
   /**
    * Asserts that the value property matches the specified subset.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param subset - The subset to match against
    */
   toHaveValuePropertyMatching(
@@ -95,7 +95,7 @@ export interface RedisHashResultExpectation {
 
   /**
    * Asserts that the value property satisfies the provided matcher function.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param matcher - A function that receives the property value and performs assertions
    */
   toHaveValuePropertySatisfying(
