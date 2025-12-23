@@ -226,14 +226,14 @@ export interface GrpcResponseExpectation {
 
   /**
    * Asserts that the headers have the specified property.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param value - Optional expected value at the key path
    */
   toHaveHeadersProperty(keyPath: string | string[], value?: unknown): this;
 
   /**
    * Asserts that the headers property contains the expected value.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param expected - The expected contained value
    */
   toHaveHeadersPropertyContaining(
@@ -243,7 +243,7 @@ export interface GrpcResponseExpectation {
 
   /**
    * Asserts that the headers property matches the specified subset.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param subset - The subset to match against
    */
   toHaveHeadersPropertyMatching(
@@ -253,7 +253,7 @@ export interface GrpcResponseExpectation {
 
   /**
    * Asserts that the headers property satisfies the provided matcher function.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param matcher - A function that receives the property value and performs assertions
    */
   toHaveHeadersPropertySatisfying(
@@ -298,14 +298,14 @@ export interface GrpcResponseExpectation {
 
   /**
    * Asserts that the trailers have the specified property.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param value - Optional expected value at the key path
    */
   toHaveTrailersProperty(keyPath: string | string[], value?: unknown): this;
 
   /**
    * Asserts that the trailers property contains the expected value.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param expected - The expected contained value
    */
   toHaveTrailersPropertyContaining(
@@ -315,7 +315,7 @@ export interface GrpcResponseExpectation {
 
   /**
    * Asserts that the trailers property matches the specified subset.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param subset - The subset to match against
    */
   toHaveTrailersPropertyMatching(
@@ -325,7 +325,7 @@ export interface GrpcResponseExpectation {
 
   /**
    * Asserts that the trailers property satisfies the provided matcher function.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param matcher - A function that receives the property value and performs assertions
    */
   toHaveTrailersPropertySatisfying(
@@ -391,14 +391,14 @@ export interface GrpcResponseExpectation {
 
   /**
    * Asserts that the data has the specified property.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param value - Optional expected value at the key path
    */
   toHaveDataProperty(keyPath: string | string[], value?: unknown): this;
 
   /**
    * Asserts that the data property contains the expected value.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param expected - The expected contained value
    */
   toHaveDataPropertyContaining(
@@ -408,7 +408,7 @@ export interface GrpcResponseExpectation {
 
   /**
    * Asserts that the data property matches the specified subset.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param subset - The subset to match against
    */
   toHaveDataPropertyMatching(
@@ -418,7 +418,7 @@ export interface GrpcResponseExpectation {
 
   /**
    * Asserts that the data property satisfies the provided matcher function.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param matcher - A function that receives the property value and performs assertions
    */
   toHaveDataPropertySatisfying(

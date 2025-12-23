@@ -159,14 +159,14 @@ export interface GraphqlResponseExpectation {
 
   /**
    * Asserts that the headers have the specified property.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param value - Optional expected value at the key path
    */
   toHaveHeadersProperty(keyPath: string | string[], value?: unknown): this;
 
   /**
    * Asserts that the headers property contains the expected value.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param expected - The expected contained value
    */
   toHaveHeadersPropertyContaining(
@@ -176,7 +176,7 @@ export interface GraphqlResponseExpectation {
 
   /**
    * Asserts that the headers property matches the specified subset.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param subset - The subset to match against
    */
   toHaveHeadersPropertyMatching(
@@ -186,7 +186,7 @@ export interface GraphqlResponseExpectation {
 
   /**
    * Asserts that the headers property satisfies the provided matcher function.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param matcher - A function that receives the property value and performs assertions
    */
   toHaveHeadersPropertySatisfying(
@@ -277,14 +277,14 @@ export interface GraphqlResponseExpectation {
 
   /**
    * Asserts that the extensions have the specified property.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param value - Optional expected value at the key path
    */
   toHaveExtensionsProperty(keyPath: string | string[], value?: unknown): this;
 
   /**
    * Asserts that the extensions property contains the expected value.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param expected - The expected contained value
    */
   toHaveExtensionsPropertyContaining(
@@ -294,7 +294,7 @@ export interface GraphqlResponseExpectation {
 
   /**
    * Asserts that the extensions property matches the specified subset.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param subset - The subset to match against
    */
   toHaveExtensionsPropertyMatching(
@@ -304,7 +304,7 @@ export interface GraphqlResponseExpectation {
 
   /**
    * Asserts that the extensions property satisfies the provided matcher function.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param matcher - A function that receives the property value and performs assertions
    */
   toHaveExtensionsPropertySatisfying(
@@ -368,14 +368,14 @@ export interface GraphqlResponseExpectation {
 
   /**
    * Asserts that the data has the specified property.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param value - Optional expected value
    */
   toHaveDataProperty(keyPath: string | string[], value?: unknown): this;
 
   /**
    * Asserts that the data property contains the specified value.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param expected - The value to search for
    */
   toHaveDataPropertyContaining(
@@ -385,7 +385,7 @@ export interface GraphqlResponseExpectation {
 
   /**
    * Asserts that the data property matches the specified subset.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param subset - The subset to match against
    */
   toHaveDataPropertyMatching(
@@ -395,7 +395,7 @@ export interface GraphqlResponseExpectation {
 
   /**
    * Asserts that the data property satisfies the provided matcher function.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param matcher - A function that receives the property value and performs assertions
    */
   toHaveDataPropertySatisfying(

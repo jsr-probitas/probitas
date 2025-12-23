@@ -88,14 +88,14 @@ export interface MongoFindOneResultExpectation<_T = unknown> {
 
   /**
    * Asserts that the doc has the specified property.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param value - Optional expected value at the key path
    */
   toHaveDocProperty(keyPath: string | string[], value?: unknown): this;
 
   /**
    * Asserts that the doc property contains the expected value.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param expected - The expected contained value
    */
   toHaveDocPropertyContaining(
@@ -105,7 +105,7 @@ export interface MongoFindOneResultExpectation<_T = unknown> {
 
   /**
    * Asserts that the doc property matches the specified subset.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param subset - The subset to match against
    */
   toHaveDocPropertyMatching(
@@ -115,7 +115,7 @@ export interface MongoFindOneResultExpectation<_T = unknown> {
 
   /**
    * Asserts that the doc property satisfies the provided matcher function.
-   * @param keyPath - The key path to check
+   * @param keyPath - Property path as dot-separated string (`"user.name"`) or array (`["user", "name"]`). Use array format for properties containing dots.
    * @param matcher - A function that receives the property value and performs assertions
    */
   toHaveDocPropertySatisfying(
