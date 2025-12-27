@@ -81,7 +81,7 @@
               pkgs.sqlite
               pkgs.duckdb
             ]}:$LD_LIBRARY_PATH"
-            echo "Entering Probitas development environment"
+            echo "Entering Probitas development environment" >&2
           '';
         };
       }
