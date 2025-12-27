@@ -6,7 +6,7 @@
 
 [![JSR](https://jsr.io/badges/@probitas/probitas)](https://jsr.io/@probitas/probitas)
 [![Test](https://github.com/probitas-test/probitas/actions/workflows/test.yml/badge.svg)](https://github.com/probitas-test/probitas/actions/workflows/test.yml)
-[![Release](https://github.com/probitas-test/probitas/actions/workflows/release.yml/badge.svg)](https://github.com/probitas-test/probitas/actions/workflows/release.yml)
+[![Publish](https://github.com/probitas-test/probitas/actions/workflows/publish.yml/badge.svg)](https://github.com/probitas-test/probitas/actions/workflows/publish.yml)
 [![codecov](https://codecov.io/github/probitas-test/probitas/graph/badge.svg?token=Yu0GPZAMv6)](https://codecov.io/github/probitas-test/probitas)
 [![Docs](https://img.shields.io/badge/docs-probitas--test.github.io-blue)](https://probitas-test.github.io/documents)
 
