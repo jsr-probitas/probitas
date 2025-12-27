@@ -47,13 +47,13 @@
     ".claude/**"
   ],
   "tasks": {
-    "probitas": "deno run -A --unstable-kv ./src/cli.ts",
+    "probitas": "deno run -A --unstable-kv --lock --frozen ./src/cli.ts",
     "check": "deno check --doc && deno check --doc-only **/*.md",
     "test": "deno test -A --parallel --shuffle",
     "test:coverage": "deno task test --coverage=.coverage",
     "coverage": "deno coverage .coverage --include='/src/'",
     "verify": "deno fmt && deno lint && deno task check && deno task test",
-    "update-lock": "rm deno.lock && deno cache -r src/mod.ts src/cli.ts jsr:@probitas/probitas jsr:@probitas/probitas@^0",
+    "update-lock": "deno cache -r **/*.ts jsr:@probitas/probitas jsr:@probitas/probitas@^0",
     "update-version": "deno run -A .scripts/update_version.ts"
   },
   "imports": {
