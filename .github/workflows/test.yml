@@ -348,8 +348,11 @@ jobs:
       - uses: nixbuild/nix-quick-install-action@v34
 
       - run: |
-          nix run . -- --version
+          nix build
 
       - run: |
-          nix run . -- run
+          ./result/bin/probitas --version
+
+      - run: |
+          ./result/bin/probitas run
         timeout-minutes: 5
